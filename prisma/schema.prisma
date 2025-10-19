@@ -1,0 +1,166 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Better Auth Models
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String?
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          String    @default("member") // admin, member
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  sessions      Session[]
+  accounts      Account[]
+  timeEntries   TimeEntry[]
+  projects      Project[]
+  projectMembers ProjectMember[]
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Account {
+  id                String   @id @default(uuid())
+  userId            String
+  accountId         String
+  providerId        String
+  accessToken       String?
+  refreshToken      String?
+  idToken           String?
+  expiresAt         DateTime?
+  password          String?
+
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+
+  createdAt  DateTime @default(now())
+
+  @@unique([identifier, value])
+}
+
+// Time Tracking Models
+model TimeEntry {
+  id           String    @id @default(uuid())
+  userId       String
+  projectId    String?
+  clientId     String?
+  date         DateTime  @db.Date // The day this entry is for
+  duration     Int       // Required: duration in minutes
+  startTime    String?   // Optional: "09:00" format
+  endTime      String?   // Optional: "17:30" format
+  description  String?
+  billable     Boolean   @default(false)
+  billed       Boolean   @default(false) // Has been included in an invoice
+
+  // Relations
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project      Project?  @relation(fields: [projectId], references: [id])
+  client       Client?   @relation(fields: [clientId], references: [id])
+
+  // Audit fields
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([userId, date])
+  @@index([projectId, date])
+  @@index([clientId, date])
+  @@index([projectId, userId])
+}
+
+model Project {
+  id           String    @id @default(uuid())
+  name         String
+  clientId     String?
+  description  String?
+  budgetHours  Float?    // Optional budget in hours
+  hourlyRate   Decimal?  @db.Decimal(10, 2)
+  status       String    @default("active") // active, archived, completed
+  color        String    @default("#6366f1") // For UI display
+  userId       String    // Project owner
+
+  // Relations
+  client       Client?   @relation(fields: [clientId], references: [id])
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timeEntries  TimeEntry[]
+  members      ProjectMember[]
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([userId, status])
+  @@index([clientId])
+}
+
+model ProjectMember {
+  id           String    @id @default(uuid())
+  projectId    String
+  userId       String
+  role         String    @default("member") // owner, manager, member
+  hourlyRate   Decimal   @db.Decimal(10, 2) // Individual pay rate for this user on this project
+  isActive     Boolean   @default(true)
+
+  // Relations
+  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([projectId, userId])
+  @@index([userId, isActive])
+  @@index([projectId, isActive])
+}
+
+model Client {
+  id           String    @id @default(uuid())
+  name         String
+  email        String?
+  company      String?
+  hourlyRate   Decimal?  @db.Decimal(10, 2) // Default rate for this client
+
+  // Relations
+  projects     Project[]
+  timeEntries  TimeEntry[]
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
