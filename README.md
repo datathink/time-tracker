@@ -301,3 +301,7 @@ psql -d timetracker
 UPDATE "User" SET role = 'admin' WHERE email = 'your@email.com';
 \q
 ```
+
+## Licensing
+
+This project is owned by DataThink.
