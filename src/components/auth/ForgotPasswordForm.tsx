@@ -105,7 +105,6 @@ export function ForgotPasswordForm() {
                         </Button>
                     )}
                     <p className="text-sm text-center text-gray-600">
-                        Remember your password?{" "}
                         <Link
                             href="/login"
                             className="text-blue-600 hover:underline"
