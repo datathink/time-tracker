@@ -1,0 +1,12 @@
+{
+    "VsCodeTaskButtons.tasks": [
+        {
+            "label": "Start Dev",
+            "task": "Start Dev"
+        },
+        {
+            "label": "Build Project",
+            "task": "Build Project"
+        },
+    ]
+}
