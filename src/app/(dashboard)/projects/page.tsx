@@ -6,9 +6,22 @@ import { Plus } from "lucide-react"
 import { ProjectList } from "@/components/projects/ProjectList"
 import { ProjectForm } from "@/components/projects/ProjectForm"
 import { getProjects } from "@/lib/actions/projects"
+import { Prisma } from "@prisma/client"
+
+type ProjectWithRelations = Prisma.ProjectGetPayload<{
+  include: {
+    client: true,
+    _count: {
+      select: {
+        timeEntries: true,
+        members: true,
+      }
+    }
+  }
+}>
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<any[]>([])
+  const [projects, setProjects] = useState<ProjectWithRelations[]>([])
   const [loading, setLoading] = useState(true)
   const [isFormOpen, setIsFormOpen] = useState(false)
 

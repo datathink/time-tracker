@@ -30,6 +30,31 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { format } from "date-fns"
+import { Prisma } from "@prisma/client"
+
+type ActiveProject = Prisma.ProjectGetPayload<{
+  select: {
+    id: true,
+    name: true,
+    color: true,
+    client: {
+      select: {
+        name: true,
+      }
+    }
+  }
+}>
+
+type ClientWithCount = Prisma.ClientGetPayload<{
+  include: {
+    _count: {
+      select: {
+        projects: true,
+        timeEntries: true,
+      }
+    }
+  }
+}>
 
 const timeEntryFormSchema = z.object({
   date: z.string().min(1, "Date is required"),
@@ -39,7 +64,7 @@ const timeEntryFormSchema = z.object({
   startTime: z.string().optional(),
   endTime: z.string().optional(),
   description: z.string().optional(),
-  billable: z.boolean().default(false),
+  billable: z.boolean(),
 })
 
 type FormData = z.infer<typeof timeEntryFormSchema>
@@ -57,7 +82,16 @@ interface TimeEntryFormProps {
     endTime: string | null
     description: string | null
     billable: boolean
-  }
+    project?: {
+      id: string
+      name: string
+      color: string
+    } | null
+    client?: {
+      id: string
+      name: string
+    } | null
+  } | null
   defaultDate?: Date | null
   onSuccess?: () => void
 }
@@ -65,8 +99,8 @@ interface TimeEntryFormProps {
 export function TimeEntryForm({ open, onOpenChange, entry, defaultDate, onSuccess }: TimeEntryFormProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [projects, setProjects] = useState<any[]>([])
-  const [clients, setClients] = useState<any[]>([])
+  const [projects, setProjects] = useState<ActiveProject[]>([])
+  const [clients, setClients] = useState<ClientWithCount[]>([])
   const [parsedDuration, setParsedDuration] = useState<number | null>(null)
 
   const {

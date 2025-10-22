@@ -6,9 +6,21 @@ import { Plus } from "lucide-react"
 import { ClientList } from "@/components/clients/ClientList"
 import { ClientForm } from "@/components/clients/ClientForm"
 import { getClients } from "@/lib/actions/clients"
+import { Prisma } from "@prisma/client"
+
+type ClientWithCount = Prisma.ClientGetPayload<{
+  include: {
+    _count: {
+      select: {
+        projects: true,
+        timeEntries: true,
+      }
+    }
+  }
+}>
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState<any[]>([])
+  const [clients, setClients] = useState<ClientWithCount[]>([])
   const [loading, setLoading] = useState(true)
   const [isFormOpen, setIsFormOpen] = useState(false)
 

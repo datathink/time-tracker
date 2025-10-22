@@ -1,25 +1,30 @@
 "use client"
 
-import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay, isToday } from "date-fns"
 import { formatDecimalHours } from "@/lib/utils"
+import { Prisma } from "@prisma/client"
 
-interface TimeEntry {
-  id: string
-  date: string
-  duration: number
-  description: string | null
-  billable: boolean
-  project?: {
-    id: string
-    name: string
-    color: string
-  } | null
-}
+type TimeEntry = Prisma.TimeEntryGetPayload<{
+  include: {
+    project: {
+      select: {
+        id: true,
+        name: true,
+        color: true,
+      }
+    },
+    client: {
+      select: {
+        id: true,
+        name: true,
+      }
+    }
+  }
+}>
 
 interface WeekViewProps {
   entries: TimeEntry[]

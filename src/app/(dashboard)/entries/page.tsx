@@ -8,14 +8,33 @@ import { TimeEntryList } from "@/components/entries/TimeEntryList"
 import { TimeEntryForm } from "@/components/entries/TimeEntryForm"
 import { getWeekTimeEntries } from "@/lib/actions/entries"
 import { startOfWeek, endOfWeek } from "date-fns"
+import { Prisma } from "@prisma/client"
+
+type TimeEntryWithRelations = Prisma.TimeEntryGetPayload<{
+  include: {
+    project: {
+      select: {
+        id: true,
+        name: true,
+        color: true,
+      }
+    },
+    client: {
+      select: {
+        id: true,
+        name: true,
+      }
+    }
+  }
+}>
 
 export default function EntriesPage() {
-  const [entries, setEntries] = useState<any[]>([])
+  const [entries, setEntries] = useState<TimeEntryWithRelations[]>([])
   const [loading, setLoading] = useState(true)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [currentWeek, setCurrentWeek] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [editingEntry, setEditingEntry] = useState<any>(null)
+  const [editingEntry, setEditingEntry] = useState<TimeEntryWithRelations | null>(null)
   const [viewMode, setViewMode] = useState<"week" | "list">("week")
 
   const loadEntries = async (weekDate: Date) => {
@@ -47,7 +66,7 @@ export default function EntriesPage() {
     setIsFormOpen(true)
   }
 
-  const handleEditEntry = (entry: any) => {
+  const handleEditEntry = (entry: TimeEntryWithRelations) => {
     setEditingEntry(entry)
     setSelectedDate(new Date(entry.date))
     setIsFormOpen(true)

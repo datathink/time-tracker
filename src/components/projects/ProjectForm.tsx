@@ -26,6 +26,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Decimal } from "@prisma/client/runtime/library"
+import { Prisma } from "@prisma/client"
+
+type ClientWithCount = Prisma.ClientGetPayload<{
+  include: {
+    _count: {
+      select: {
+        projects: true,
+        timeEntries: true,
+      }
+    }
+  }
+}>
 
 const projectFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -33,8 +46,8 @@ const projectFormSchema = z.object({
   description: z.string().optional(),
   budgetHours: z.string().optional(),
   hourlyRate: z.string().optional(),
-  status: z.enum(["active", "archived", "completed"]).default("active"),
-  color: z.string().default("#6366f1"),
+  status: z.enum(["active", "archived", "completed"]),
+  color: z.string(),
 })
 
 type FormData = z.infer<typeof projectFormSchema>
@@ -48,7 +61,7 @@ interface ProjectFormProps {
     clientId: string | null
     description: string | null
     budgetHours: number | null
-    hourlyRate: any
+    hourlyRate: Decimal | null
     status: string
     color: string
   }
@@ -58,7 +71,7 @@ interface ProjectFormProps {
 export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectFormProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [clients, setClients] = useState<any[]>([])
+  const [clients, setClients] = useState<ClientWithCount[]>([])
 
   const {
     register,
@@ -75,7 +88,7 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
       description: project?.description || "",
       budgetHours: project?.budgetHours ? String(project.budgetHours) : "",
       hourlyRate: project?.hourlyRate ? String(project.hourlyRate) : "",
-      status: (project?.status as any) || "active",
+      status: (project?.status as "active" | "archived" | "completed") || "active",
       color: project?.color || "#6366f1",
     },
   })
@@ -98,9 +111,20 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
     setLoading(true)
     setError(null)
 
+    // Transform the form data to match ProjectFormData type
+    const projectData: ProjectFormData = {
+      name: data.name,
+      clientId: data.clientId,
+      description: data.description,
+      budgetHours: data.budgetHours && data.budgetHours !== "" ? parseFloat(data.budgetHours) : null,
+      hourlyRate: data.hourlyRate && data.hourlyRate !== "" ? parseFloat(data.hourlyRate) : null,
+      status: data.status,
+      color: data.color,
+    }
+
     const result = project
-      ? await updateProject(project.id, data as ProjectFormData)
-      : await createProject(data as ProjectFormData)
+      ? await updateProject(project.id, projectData)
+      : await createProject(projectData)
 
     if (result.success) {
       reset()
@@ -168,7 +192,7 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
                 <Label htmlFor="status">Status</Label>
                 <Select
                   value={watch("status")}
-                  onValueChange={(value) => setValue("status", value as any)}
+                  onValueChange={(value) => setValue("status", value as "active" | "archived" | "completed")}
                   disabled={loading}
                 >
                   <SelectTrigger>
