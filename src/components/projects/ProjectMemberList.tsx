@@ -10,11 +10,12 @@ import {
   removeProjectMember,
 } from "@/lib/actions/project-members"
 import { UserX, Edit2, Check, X } from "lucide-react"
+import { Decimal } from "@prisma/client/runtime/library"
 
 interface ProjectMember {
   id: string
   role: string
-  hourlyRate: any
+  hourlyRate: Decimal
   isActive: boolean
   user: {
     id: string
@@ -136,7 +137,7 @@ export function ProjectMemberList({
               ) : (
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold">
-                    ${parseFloat(member.hourlyRate).toFixed(2)}/hr
+                    ${Number(member.hourlyRate).toFixed(2)}/hr
                   </span>
                   {canManage && (
                     <Button

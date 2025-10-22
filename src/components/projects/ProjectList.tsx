@@ -22,6 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { MoreHorizontal, Pencil, Trash2, Users } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { Decimal } from "@prisma/client/runtime/library"
 
 interface Project {
   id: string
@@ -29,7 +30,7 @@ interface Project {
   clientId: string | null
   description: string | null
   budgetHours: number | null
-  hourlyRate: any
+  hourlyRate: Decimal | null
   status: string
   color: string
   client?: {
