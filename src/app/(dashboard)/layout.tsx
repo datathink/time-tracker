@@ -1,17 +1,24 @@
-import { ReactNode } from "react"
-import { Sidebar } from "@/components/layout/Sidebar"
-import { Header } from "@/components/layout/Header"
+import { ReactNode } from "react";
+import { cookies } from "next/headers";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import AppSidebar from "@/components/layout/Sidebar";
+import { Header } from "@/components/layout/Header";
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
+export default async function DashboardLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
+
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-      <div className="flex flex-col flex-1 overflow-hidden">
+    <SidebarProvider defaultOpen={defaultOpen}>
+      <AppSidebar />
+      <main className="w-full">
         <Header />
-        <main className="flex-1 overflow-auto bg-gray-50 p-6">
-          {children}
-        </main>
-      </div>
-    </div>
-  )
+        <div className="flex-1 overflow-auto p-6">{children}</div>
+      </main>
+    </SidebarProvider>
+  );
 }
