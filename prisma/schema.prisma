@@ -23,11 +23,30 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   // Relations
+  profile       UserProfile?
   sessions      Session[]
   accounts      Account[]
   timeEntries   TimeEntry[]
   projects      Project[]
   projectMembers ProjectMember[]
+}
+
+model UserProfile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  firstName     String?
+  lastName      String?
+  phone         String?
+  email         String    @unique
+  address       String?
+  birthDate     DateTime?
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
 }
 
 model Session {
