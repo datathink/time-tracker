@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   description: "Simple and efficient time tracking application",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
