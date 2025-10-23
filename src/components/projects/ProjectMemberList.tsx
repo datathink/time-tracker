@@ -15,7 +15,8 @@ import { Decimal } from "@prisma/client/runtime/library"
 interface ProjectMember {
   id: string
   role: string
-  hourlyRate: Decimal
+  contractorRate: Decimal
+  chargeRate: Decimal
   isActive: boolean
   user: {
     id: string
