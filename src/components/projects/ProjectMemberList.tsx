@@ -11,10 +11,11 @@ import {
 } from "@/lib/actions/project-members"
 import { UserX, Edit2, Check, X } from "lucide-react"
 import { Decimal } from "@prisma/client/runtime/library"
+import { Role } from '@prisma/client';
 
 interface ProjectMember {
   id: string
-  role: string
+  role: Role
   contractorRate: Decimal
   chargeRate: Decimal
   isActive: boolean
@@ -57,7 +58,8 @@ export function ProjectMemberList({
 
   const startEdit = (member: ProjectMember) => {
     setEditingId(member.id)
-    setEditRate(member.hourlyRate.toString())
+    setEditRate(member.contractorRate.toString())
+    setEditRate(member.chargeRate.toString())
   }
 
   const cancelEdit = () => {
@@ -72,7 +74,7 @@ export function ProjectMemberList({
       return
     }
 
-    const result = await updateProjectMember(memberId, { hourlyRate: rate })
+    const result = await updateProjectMember(memberId, { contractorRate: rate })
     if (result.success) {
       setEditingId(null)
       setEditRate("")
@@ -138,7 +140,7 @@ export function ProjectMemberList({
               ) : (
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold">
-                    ${Number(member.hourlyRate).toFixed(2)}/hr
+                    ${Number(member.contractorRate).toFixed(2)}/hr
                   </span>
                   {canManage && (
                     <Button
