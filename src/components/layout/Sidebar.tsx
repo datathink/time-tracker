@@ -57,7 +57,7 @@ const navigation = [
 const AppSidebar = () => {
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="bg-gray-100">
+      <SidebarHeader className="bg-sidebar">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
@@ -81,16 +81,16 @@ const AppSidebar = () => {
 
       {/* <Separator className="my-4 border-2" /> */}
 
-      <SidebarContent className="bg-gray-100 ">
+      <SidebarContent className="bg-sidebar ">
         <SidebarGroup>
           {/* <SidebarGroupLabel className="text-md">Application</SidebarGroupLabel> */}
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigation.map((item) => (
-                <SidebarMenuItem key={item.title}>
+              {navigation.map((item, index) => (
+                <SidebarMenuItem key={`nav-item-${index}-${item.title}`}>
                   <SidebarMenuButton
                     asChild
-                    className="text-[16px] py-5 hover:bg-gray-200"
+                    className="text-[16px] py-5 hover:bg-sidebar-border"
                   >
                     <Link href={item.url}>
                       <item.icon className="mr-2 h-4 w-4" />
