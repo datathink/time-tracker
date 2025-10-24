@@ -80,7 +80,7 @@ export function ProjectMemberForm({
         }
 
         if (!contractorRate || parseFloat(contractorRate) <= 0) {
-            setError("Please enter a valid hourly rate");
+            setError("Please enter a valid contractor rate");
             return;
         }
 
