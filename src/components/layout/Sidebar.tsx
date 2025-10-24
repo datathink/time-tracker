@@ -1,49 +1,110 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
-import { Clock, FileText, Users, BarChart3, Settings, Building2 } from "lucide-react"
+import {
+  Settings,
+  BarChart3,
+  Building2,
+  FileText,
+  Folder,
+  LayoutDashboard,
+} from "lucide-react";
+import Link from "next/link";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
+import Image from "next/image";
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: Clock },
-  { name: "Time Entries", href: "/entries", icon: FileText },
-  { name: "Projects", href: "/projects", icon: Users },
-  { name: "Clients", href: "/clients", icon: Building2 },
-  { name: "Reports", href: "/reports", icon: BarChart3 },
-  { name: "Settings", href: "/settings", icon: Settings },
-]
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    title: "Time Entries",
+    url: "/entries",
+    icon: FileText,
+  },
+  {
+    title: "Projects",
+    url: "/projects",
+    icon: Folder,
+  },
+  {
+    title: "Clients",
+    url: "/clients",
+    icon: Building2,
+  },
+  {
+    title: "Reports",
+    url: "/reports",
+    icon: BarChart3,
+  },
+  {
+    title: "Settings",
+    url: "/settings",
+    icon: Settings,
+  },
+];
 
-export function Sidebar() {
-  const pathname = usePathname()
-
+const AppSidebar = () => {
   return (
-    <div className="flex flex-col w-64 bg-gray-900 text-white">
-      <div className="flex items-center justify-center h-16 bg-gray-800">
-        <h1 className="text-xl font-bold">Time Tracker</h1>
-      </div>
-      <nav className="flex-1 px-4 py-4 space-y-2">
-        {navigation.map((item) => {
-          const Icon = item.icon
-          const isActive = pathname === item.href || pathname?.startsWith(item.href + "/")
+    <Sidebar collapsible="icon">
+      <SidebarHeader className="bg-sidebar">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link
+                href="/dashboard"
+                className="mt-3.5 mb-4 flex items-center space-x-2"
+              >
+                <Image
+                  src="/logo.svg"
+                  alt="logo"
+                  width={24}
+                  height={24}
+                  className="shrink-0"
+                />
+                <span className="font-bold text-lg">Time Tracker Pro</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
 
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                "flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors",
-                isActive
-                  ? "bg-gray-800 text-white"
-                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
-              )}
-            >
-              <Icon className="mr-3 h-5 w-5" />
-              {item.name}
-            </Link>
-          )
-        })}
-      </nav>
-    </div>
-  )
-}
+      {/* <Separator className="my-4 border-2" /> */}
+
+      <SidebarContent className="bg-sidebar ">
+        <SidebarGroup>
+          {/* <SidebarGroupLabel className="text-md">Application</SidebarGroupLabel> */}
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navigation.map((item, index) => (
+                <SidebarMenuItem key={`nav-item-${index}-${item.title}`}>
+                  <SidebarMenuButton
+                    asChild
+                    className="text-[16px] py-5 hover:bg-sidebar-border"
+                  >
+                    <Link href={item.url}>
+                      <item.icon className="mr-2 h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
+  );
+};
+
+export default AppSidebar;

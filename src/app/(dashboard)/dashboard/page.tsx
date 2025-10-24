@@ -1,10 +1,16 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { getTimeEntryStats } from "@/lib/actions/entries"
-import { formatDecimalHours } from "@/lib/utils"
-import { Clock, TrendingUp, DollarSign, FolderOpen } from "lucide-react"
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { getTimeEntryStats } from "@/lib/actions/entries";
+import { formatDecimalHours } from "@/lib/utils";
+import { Clock, TrendingUp, DollarSign, FolderOpen } from "lucide-react";
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({
@@ -12,19 +18,19 @@ export default function DashboardPage() {
     weekMinutes: 0,
     billableMinutes: 0,
     activeProjects: 0,
-  })
-  const [loading, setLoading] = useState(true)
+  });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadStats = async () => {
-      const result = await getTimeEntryStats()
+      const result = await getTimeEntryStats();
       if (result.success) {
-        setStats(result.data)
+        setStats(result.data);
       }
-      setLoading(false)
-    }
-    loadStats()
-  }, [])
+      setLoading(false);
+    };
+    loadStats();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -50,7 +56,9 @@ export default function DashboardPage() {
                   {formatDecimalHours(stats.todayMinutes)}h
                 </CardTitle>
                 <p className="text-sm text-gray-600 mt-1">
-                  {stats.todayMinutes === 0 ? "No entries today" : `${stats.todayMinutes} minutes`}
+                  {stats.todayMinutes === 0
+                    ? "No entries today"
+                    : `${stats.todayMinutes} minutes`}
                 </p>
               </CardContent>
             </Card>
@@ -64,7 +72,9 @@ export default function DashboardPage() {
                   {formatDecimalHours(stats.weekMinutes)}h
                 </CardTitle>
                 <p className="text-sm text-gray-600 mt-1">
-                  {stats.weekMinutes === 0 ? "No entries this week" : `${stats.weekMinutes} minutes`}
+                  {stats.weekMinutes === 0
+                    ? "No entries this week"
+                    : `${stats.weekMinutes} minutes`}
                 </p>
               </CardContent>
             </Card>
@@ -86,9 +96,13 @@ export default function DashboardPage() {
                 <FolderOpen className="h-4 w-4 text-gray-600" />
               </CardHeader>
               <CardContent>
-                <CardTitle className="text-3xl">{stats.activeProjects}</CardTitle>
+                <CardTitle className="text-3xl">
+                  {stats.activeProjects}
+                </CardTitle>
                 <p className="text-sm text-gray-600 mt-1">
-                  {stats.activeProjects === 0 ? "Create your first project" : "Projects"}
+                  {stats.activeProjects === 0
+                    ? "Create your first project"
+                    : "Projects"}
                 </p>
               </CardContent>
             </Card>
@@ -102,24 +116,32 @@ export default function DashboardPage() {
             <CardContent className="space-y-4">
               <div>
                 <h3 className="font-semibold mb-2">1. Create a Client</h3>
-                <p className="text-sm text-gray-600">Start by adding clients you work for</p>
+                <p className="text-sm text-gray-600">
+                  Start by adding clients you work for
+                </p>
               </div>
               <div>
                 <h3 className="font-semibold mb-2">2. Create Projects</h3>
-                <p className="text-sm text-gray-600">Set up projects for each client and assign team members</p>
+                <p className="text-sm text-gray-600">
+                  Set up projects for each client and assign team members
+                </p>
               </div>
               <div>
                 <h3 className="font-semibold mb-2">3. Log Time Entries</h3>
-                <p className="text-sm text-gray-600">Record your work hours and associate them with projects</p>
+                <p className="text-sm text-gray-600">
+                  Record your work hours and associate them with projects
+                </p>
               </div>
               <div>
                 <h3 className="font-semibold mb-2">4. Generate Reports</h3>
-                <p className="text-sm text-gray-600">View reports and export data for invoicing</p>
+                <p className="text-sm text-gray-600">
+                  View reports and export data for invoicing
+                </p>
               </div>
             </CardContent>
           </Card>
         </>
       )}
     </div>
-  )
+  );
 }
