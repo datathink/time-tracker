@@ -38,7 +38,8 @@ export function ProjectMemberList({
   onUpdate,
 }: ProjectMemberListProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [editRate, setEditRate] = useState("")
+  const [editContractorRate, setEditContractorRate] = useState("")
+  const [editChargeRate, setEditChargeRate] = useState("")
 
   const handleRemoveMember = async (memberId: string) => {
     if (!confirm("Are you sure you want to remove this member?")) return
@@ -58,26 +59,34 @@ export function ProjectMemberList({
 
   const startEdit = (member: ProjectMember) => {
     setEditingId(member.id)
-    setEditRate(member.contractorRate.toString())
-    setEditRate(member.chargeRate.toString())
+    setEditContractorRate(member.contractorRate.toString())
+    setEditChargeRate(member.chargeRate.toString())
   }
 
   const cancelEdit = () => {
     setEditingId(null)
-    setEditRate("")
+    setEditContractorRate("")
+    setEditChargeRate("")
   }
 
   const saveEdit = async (memberId: string) => {
-    const rate = parseFloat(editRate)
+    const rate = parseFloat(editContractorRate)
+    const charge = parseFloat(editChargeRate)
     if (isNaN(rate) || rate <= 0) {
       alert("Please enter a valid rate")
       return
     }
 
-    const result = await updateProjectMember(memberId, { contractorRate: rate })
+    if (isNaN(charge) || charge <= 0) {
+      alert("Please enter a valid charge rate")
+      return
+    }
+
+    const result = await updateProjectMember(memberId, { contractorRate: rate, chargeRate: charge })
     if (result.success) {
       setEditingId(null)
-      setEditRate("")
+      setEditContractorRate("")
+      setEditChargeRate("")
       if (onUpdate) onUpdate()
     }
   }
@@ -118,8 +127,15 @@ export function ProjectMemberList({
                   <Input
                     type="number"
                     step="0.01"
-                    value={editRate}
-                    onChange={(e) => setEditRate(e.target.value)}
+                    value={editContractorRate}
+                    onChange={(e) => setEditContractorRate(e.target.value)}
+                    className="w-24"
+                  />
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={editChargeRate}
+                    onChange={(e) => setEditChargeRate(e.target.value)}
                     className="w-24"
                   />
                   <Button
@@ -141,6 +157,9 @@ export function ProjectMemberList({
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold">
                     ${Number(member.contractorRate).toFixed(2)}/hr
+                  </span>
+                  <span className="text-sm font-semibold">
+                    ${Number(member.chargeRate).toFixed(2)}/hr
                   </span>
                   {canManage && (
                     <Button

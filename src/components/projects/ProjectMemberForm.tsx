@@ -84,6 +84,11 @@ export function ProjectMemberForm({
             return;
         }
 
+        if (!chargeRate || parseFloat(chargeRate) <= 0) {
+            setError("Please enter a valid client charge rate");
+            return;
+        }
+
         setLoading(true);
 
         const result = await addProjectMember({
