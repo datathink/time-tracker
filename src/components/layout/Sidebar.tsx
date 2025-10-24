@@ -104,10 +104,7 @@ const AppSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
-                                        <Link href={item.url}>
-                                            <item.icon className="mr-2 h-4 w-4" />
-                                            <span>{item.title}</span>
-                                        </Link>
+  );
 };
 
 export default AppSidebar;
