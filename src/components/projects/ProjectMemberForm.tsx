@@ -100,6 +100,7 @@ export function ProjectMemberForm({
             onOpenChange(false);
             setSelectedUserId("");
             setContractorRate("");
+            setChargeRate("");
             setRole("member");
             if (onSuccess) onSuccess();
         } else {
