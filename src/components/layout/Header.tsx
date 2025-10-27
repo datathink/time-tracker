@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useRouter } from "next/navigation"
-import { signOut, useSession } from "@/lib/auth/client"
-import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation";
+import { signOut, useSession } from "@/lib/auth/client";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,30 +10,34 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { User, LogOut } from "lucide-react"
+} from "@/components/ui/dropdown-menu";
+import { User, LogOut } from "lucide-react";
+import { SidebarTrigger } from "../ui/sidebar";
 
 export function Header() {
-  const router = useRouter()
-  const { data: session } = useSession()
+  const router = useRouter();
+  const { data: session } = useSession();
 
   const handleSignOut = async () => {
-    await signOut()
-    router.push("/login")
-    router.refresh()
-  }
+    await signOut();
+    router.push("/login");
+    router.refresh();
+  };
 
   return (
-    <header className="h-16 border-b bg-white flex items-center justify-between px-6">
-      <div>
-        {/* Breadcrumb or page title can go here */}
+    <header className="h-16 bg-white flex items-center justify-between px-4">
+      <div className="flex items-center">
+        <SidebarTrigger className="cursor-pointer" />
       </div>
+
       <div className="flex items-center space-x-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center space-x-2">
               <User className="h-5 w-5" />
-              <span>{session?.user?.name || session?.user?.email || "User"}</span>
+              <span>
+                {session?.user?.name || session?.user?.email || "User"}
+              </span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
@@ -43,7 +47,11 @@ export function Header() {
               {session?.user?.email}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSignOut} className="text-red-600 cursor-pointer">
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={handleSignOut}
+              className="text-red-600 cursor-pointer"
+            >
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out
             </DropdownMenuItem>
@@ -51,5 +59,5 @@ export function Header() {
         </DropdownMenu>
       </div>
     </header>
-  )
+  );
 }
