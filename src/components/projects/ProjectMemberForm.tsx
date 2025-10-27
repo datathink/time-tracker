@@ -47,7 +47,8 @@ export function ProjectMemberForm({
 }: ProjectMemberFormProps) {
     const [users, setUsers] = useState<UserSelectData[]>([]);
     const [selectedUserId, setSelectedUserId] = useState("");
-    const [hourlyRate, setHourlyRate] = useState("");
+    const [contractorRate, setContractorRate] = useState("");
+    const [chargeRate, setChargeRate] = useState("");
     const [role, setRole] = useState<"owner" | "manager" | "member">("member");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -78,8 +79,13 @@ export function ProjectMemberForm({
             return;
         }
 
-        if (!hourlyRate || parseFloat(hourlyRate) <= 0) {
-            setError("Please enter a valid hourly rate");
+        if (!contractorRate || parseFloat(contractorRate) <= 0) {
+            setError("Please enter a valid contractor rate");
+            return;
+        }
+
+        if (!chargeRate || parseFloat(chargeRate) <= 0) {
+            setError("Please enter a valid client charge rate");
             return;
         }
 
@@ -88,7 +94,8 @@ export function ProjectMemberForm({
         const result = await addProjectMember({
             projectId,
             userId: selectedUserId,
-            hourlyRate: parseFloat(hourlyRate),
+            contractorRate: parseFloat(contractorRate),
+            chargeRate: parseFloat(chargeRate),
             role,
         });
 
@@ -97,7 +104,8 @@ export function ProjectMemberForm({
         if (result.success) {
             onOpenChange(false);
             setSelectedUserId("");
-            setHourlyRate("");
+            setContractorRate("");
+            setChargeRate("");
             setRole("member");
             if (onSuccess) onSuccess();
         } else {
@@ -142,15 +150,29 @@ export function ProjectMemberForm({
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="hourlyRate">Hourly Rate ($)</Label>
+                        <Label htmlFor="contractorRate">Contractor Rate ($)</Label>
                         <Input
-                            id="hourlyRate"
+                            id="contractorRate"
                             type="number"
                             step="0.01"
                             min="0"
-                            value={hourlyRate}
-                            onChange={(e) => setHourlyRate(e.target.value)}
+                            value={contractorRate}
+                            onChange={(e) => setContractorRate(e.target.value)}
                             placeholder="75.00"
+                            required
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="chargeRate">Charge Rate ($)</Label>
+                        <Input
+                            id="chargeRate"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={chargeRate}
+                            onChange={(e) => setChargeRate(e.target.value)}
+                            placeholder="150.00"
                             required
                         />
                     </div>
