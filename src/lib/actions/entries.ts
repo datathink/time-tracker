@@ -178,7 +178,7 @@ export async function getTimeEntries(filters?: {
   startDate?: string;
   endDate?: string;
   projectId?: string;
-  billable?: boolean;
+  //billable?: boolean;
 }) {
   try {
     const user = await getCurrentUser();
@@ -190,7 +190,7 @@ export async function getTimeEntries(filters?: {
         lte?: Date;
       };
       projectId?: string;
-      billable?: boolean;
+      //billable?: boolean;
     } = {
       userId: user.id,
     };
@@ -213,9 +213,9 @@ export async function getTimeEntries(filters?: {
       where.projectId = filters.projectId;
     }
 
-    if (filters?.billable !== undefined) {
-      where.billable = filters.billable;
-    }
+    // if (filters?.billable !== undefined) {
+    //   where.billable = filters.billable;
+    // }
 
     const entries = await prisma.timeEntry.findMany({
       where,
@@ -360,7 +360,7 @@ export async function getTimeEntryStats() {
         date: {
           gte: weekStart,
         },
-        billable: true,
+        //billable: true,
       },
       _sum: {
         duration: true,
