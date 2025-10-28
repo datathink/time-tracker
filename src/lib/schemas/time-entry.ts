@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod";
 
 // Validation schemas
 export const timeEntrySchema = z.object({
@@ -11,7 +11,6 @@ export const timeEntrySchema = z.object({
   startTime: z.string().optional().nullable(),
   endTime: z.string().optional().nullable(),
   description: z.string().optional(),
-  billable: z.boolean().default(false),
-})
+});
 
-export type TimeEntryFormData = z.infer<typeof timeEntrySchema>
+export type TimeEntryFormData = z.infer<typeof timeEntrySchema>;

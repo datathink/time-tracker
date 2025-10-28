@@ -18,8 +18,15 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 const navigation = [
   {
@@ -55,6 +62,18 @@ const navigation = [
 ];
 
 const AppSidebar = () => {
+  const pathname = usePathname();
+  const { state } = useSidebar();
+
+  // Check if a navigation item is active
+  const isActive = (url: string) => {
+    if (pathname === url) return true;
+    if (url !== "/dashboard" && pathname.startsWith(url + "/")) return true;
+    return false;
+  };
+
+  const isCollapsed = state === "collapsed";
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="bg-sidebar">
@@ -79,24 +98,42 @@ const AppSidebar = () => {
         </SidebarMenu>
       </SidebarHeader>
 
-      {/* <Separator className="my-4 border-2" /> */}
-
-      <SidebarContent className="bg-sidebar ">
+      <SidebarContent className="bg-sidebar">
         <SidebarGroup>
-          {/* <SidebarGroupLabel className="text-md">Application</SidebarGroupLabel> */}
           <SidebarGroupContent>
             <SidebarMenu>
               {navigation.map((item, index) => (
                 <SidebarMenuItem key={`nav-item-${index}-${item.title}`}>
-                  <SidebarMenuButton
-                    asChild
-                    className="text-[16px] py-5 hover:bg-sidebar-border"
-                  >
-                    <Link href={item.url}>
-                      <item.icon className="mr-2 h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
+                  {isCollapsed ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive(item.url)}
+                          className="text-[16px] py-5 hover:bg-sidebar-border data-[active=true]:bg-sidebar-border data-[active=true]:text-sidebar-accent-foreground"
+                        >
+                          <Link href={item.url}>
+                            <item.icon className="mr-2 h-4 w-4" />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" align="center">
+                        <p>{item.title}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive(item.url)}
+                      className="text-[16px] py-5 hover:bg-sidebar-border data-[active=true]:bg-sidebar-border data-[active=true]:text-sidebar-accent-foreground"
+                    >
+                      <Link href={item.url}>
+                        <item.icon className="mr-2 h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  )}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
