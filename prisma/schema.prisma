@@ -131,12 +131,13 @@ model Project {
 }
 
 model ProjectMember {
-  id           String    @id @default(uuid())
-  projectId    String
-  userId       String
-  role         String    @default("member") // owner, manager, member
-  hourlyRate   Decimal   @db.Decimal(10, 2) // Individual pay rate for this user on this project
-  isActive     Boolean   @default(true)
+  id               String    @id @default(uuid())
+  projectId        String
+  userId           String
+  role             Role      @default(member)
+  contractorRate   Decimal   @db.Decimal(10, 2) // Individual pay rate for this user on this project (USD/hr)
+  chargeRate       Decimal   @db.Decimal(10, 2) // Rate charged to client for this user on this project (USD/hr)
+  isActive         Boolean   @default(true)
 
   // Relations
   project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -148,6 +149,13 @@ model ProjectMember {
   @@unique([projectId, userId])
   @@index([userId, isActive])
   @@index([projectId, isActive])
+}
+
+// Enum for ProjectMember role
+enum Role {
+  owner
+  manager
+  member
 }
 
 model Client {
