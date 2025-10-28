@@ -1,46 +1,66 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
-import { ProjectList } from "@/components/projects/ProjectList"
-import { ProjectForm } from "@/components/projects/ProjectForm"
-import { getProjects } from "@/lib/actions/projects"
-import { Prisma } from "@prisma/client"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { ProjectList } from "@/components/projects/ProjectList";
+import { ProjectForm } from "@/components/projects/ProjectForm";
+import { getProjects } from "@/lib/actions/projects";
+import { Decimal } from "@prisma/client/runtime/library";
+// import { Prisma } from "@prisma/client";
 
-type ProjectWithRelations = Prisma.ProjectGetPayload<{
-  include: {
-    client: true,
-    _count: {
-      select: {
-        timeEntries: true,
-        members: true,
-      }
-    }
-  }
-}>
+interface Project {
+  id: string;
+  name: string;
+  clientId: string | null;
+  description: string | null;
+  budgetHours: number | null;
+  hourlyRate: Decimal | null;
+  billable: boolean;
+  status: string;
+  color: string;
+  client?: {
+    name: string;
+  } | null;
+  _count?: {
+    timeEntries: number;
+    members: number;
+  };
+}
+
+// type ProjectWithRelations = Prisma.ProjectGetPayload<{
+//   include: {
+//     client: true;
+//     _count: {
+//       select: {
+//         timeEntries: true;
+//         members: true;
+//       };
+//     };
+//   };
+// }>;
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<ProjectWithRelations[]>([])
-  const [loading, setLoading] = useState(true)
-  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   const loadProjects = async () => {
-    setLoading(true)
-    const result = await getProjects()
+    setLoading(true);
+    const result = await getProjects();
     if (result.success) {
-      setProjects(result.data)
+      setProjects(result.data as Project[]);
     }
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    loadProjects()
-  }, [])
+    loadProjects();
+  }, []);
 
   const handleSuccess = () => {
-    loadProjects()
-  }
+    loadProjects();
+  };
 
   return (
     <div className="space-y-6">
@@ -69,5 +89,5 @@ export default function ProjectsPage() {
         onSuccess={handleSuccess}
       />
     </div>
-  )
+  );
 }
