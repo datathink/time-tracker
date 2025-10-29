@@ -5,6 +5,7 @@ import prisma from "@/lib/db/prisma";
 import { z } from "zod";
 import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
+import { Role } from '@prisma/client';
 
 // Get current user from session
 async function getCurrentUser() {
@@ -38,7 +39,8 @@ async function canManageProject(projectId: string, userId: string) {
 const addMemberSchema = z.object({
     projectId: z.string(),
     userId: z.string(),
-    hourlyRate: z.number().positive(),
+    contractorRate: z.number().positive(),
+    chargeRate: z.number().positive(),
     role: z.enum(["owner", "manager", "member"]).default("member"),
 });
 
@@ -73,7 +75,8 @@ export async function addProjectMember(data: z.infer<typeof addMemberSchema>) {
             data: {
                 projectId: validated.projectId,
                 userId: validated.userId,
-                hourlyRate: validated.hourlyRate,
+                contractorRate: validated.contractorRate,
+                chargeRate: validated.chargeRate,
                 role: validated.role,
                 isActive: true,
             },
@@ -102,7 +105,7 @@ export async function addProjectMember(data: z.infer<typeof addMemberSchema>) {
 // Update a project member's rate or role
 export async function updateProjectMember(
     memberId: string,
-    data: { hourlyRate?: number; role?: string; isActive?: boolean }
+    data: { contractorRate?: number; chargeRate?: number; role?: string; isActive?: boolean }
 ) {
     try {
         const currentUser = await getCurrentUser();
@@ -127,8 +130,9 @@ export async function updateProjectMember(
         const updated = await prisma.projectMember.update({
             where: { id: memberId },
             data: {
-                ...(data.hourlyRate !== undefined && { hourlyRate: data.hourlyRate }),
-                ...(data.role !== undefined && { role: data.role }),
+                ...(data.contractorRate !== undefined && { contractorRate: data.contractorRate }),
+                ...(data.chargeRate !== undefined && { chargeRate: data.chargeRate }),
+                ...(data.role !== undefined && { role: data.role as Role}),
                 ...(data.isActive !== undefined && { isActive: data.isActive }),
             },
             include: {
