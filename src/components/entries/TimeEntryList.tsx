@@ -186,13 +186,6 @@ export function TimeEntryList({ entries }: TimeEntryListProps) {
                             )}
                           </div>
                         </TableCell>
-                        {/* <TableCell>
-                          {entry.billable ? (
-                            <Badge className="bg-green-100 text-green-800">Billable</Badge>
-                          ) : (
-                            <Badge variant="secondary">Non-billable</Badge>
-                          )}
-                        </TableCell> */}
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>

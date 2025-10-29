@@ -10,13 +10,12 @@ import {
 } from "@/components/ui/card";
 import { getTimeEntryStats } from "@/lib/actions/entries";
 import { formatDecimalHours } from "@/lib/utils";
-import { Clock, TrendingUp, DollarSign, FolderOpen } from "lucide-react";
+import { Clock, TrendingUp, FolderOpen } from "lucide-react";
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({
     todayMinutes: 0,
     weekMinutes: 0,
-    billableMinutes: 0,
     activeProjects: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -76,18 +75,6 @@ export default function DashboardPage() {
                     ? "No entries this week"
                     : `${stats.weekMinutes} minutes`}
                 </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardDescription>Billable Hours</CardDescription>
-                <DollarSign className="h-4 w-4 text-gray-600" />
-              </CardHeader>
-              <CardContent>
-                <CardTitle className="text-3xl">
-                  {formatDecimalHours(stats.billableMinutes)}h
-                </CardTitle>
-                <p className="text-sm text-gray-600 mt-1">This week</p>
               </CardContent>
             </Card>
             <Card>

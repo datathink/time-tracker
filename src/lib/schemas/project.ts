@@ -22,7 +22,6 @@ export const projectSchema = z.object({
       return isNaN(parsed) ? null : parsed;
     }),
   status: z.enum(["active", "archived", "completed"]).default("active"),
-  billable: z.boolean().default(true),
   color: z.string().default("#6366f1"),
 });
 

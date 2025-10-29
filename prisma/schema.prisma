@@ -114,7 +114,6 @@ model Project {
   hourlyRate   Decimal?  @db.Decimal(10, 2)
   status       String    @default("active") // active, archived, completed
   color        String    @default("#6366f1") // For UI display
-  billable     Boolean   @default(false) 
   userId       String    // Project owner
 
   // Relations

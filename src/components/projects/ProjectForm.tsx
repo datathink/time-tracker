@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -47,7 +46,6 @@ const projectFormSchema = z.object({
   description: z.string().optional(),
   budgetHours: z.string().optional(),
   hourlyRate: z.string().optional(),
-  billable: z.boolean(),
   status: z.enum(["active", "archived", "completed"]),
   color: z.string(),
 });
@@ -64,7 +62,6 @@ interface ProjectFormProps {
     description: string | null;
     budgetHours: number | null;
     hourlyRate: Decimal | null;
-    billable: boolean;
     status: string;
     color: string;
   };
@@ -96,7 +93,6 @@ export function ProjectForm({
       description: project?.description || "",
       budgetHours: project?.budgetHours ? String(project.budgetHours) : "",
       hourlyRate: project?.hourlyRate ? String(project.hourlyRate) : "",
-      billable: project?.billable || false,
       status:
         (project?.status as "active" | "archived" | "completed") || "active",
       color: project?.color || "#6366f1",
@@ -104,7 +100,6 @@ export function ProjectForm({
   });
 
   const selectedClientId = watch("clientId");
-  const billable = watch("billable");
 
   useEffect(() => {
     const loadClients = async () => {
@@ -135,7 +130,6 @@ export function ProjectForm({
         data.hourlyRate && data.hourlyRate !== ""
           ? parseFloat(data.hourlyRate)
           : null,
-      billable: data.billable,
       status: data.status,
       color: data.color,
     };
@@ -280,17 +274,6 @@ export function ProjectForm({
                     disabled={loading}
                   />
                 </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="billable"
-                  checked={billable}
-                  onCheckedChange={(checked) => setValue("billable", !!checked)}
-                  disabled={loading}
-                />
-                <Label htmlFor="billable" className="cursor-pointer">
-                  Billable
-                </Label>
               </div>
             </div>
           </div>

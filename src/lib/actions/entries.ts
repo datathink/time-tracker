@@ -58,7 +58,6 @@ export async function createTimeEntry(data: TimeEntryFormData) {
         startTime: validated.startTime || null,
         endTime: validated.endTime || null,
         description: validated.description || null,
-        // billable: validated.billable,
       },
     });
 
@@ -126,7 +125,6 @@ export async function updateTimeEntry(id: string, data: TimeEntryFormData) {
         startTime: validated.startTime || null,
         endTime: validated.endTime || null,
         description: validated.description || null,
-        // billable: validated.billable,
       },
     });
 
@@ -178,7 +176,6 @@ export async function getTimeEntries(filters?: {
   startDate?: string;
   endDate?: string;
   projectId?: string;
-  //billable?: boolean;
 }) {
   try {
     const user = await getCurrentUser();
@@ -190,7 +187,6 @@ export async function getTimeEntries(filters?: {
         lte?: Date;
       };
       projectId?: string;
-      //billable?: boolean;
     } = {
       userId: user.id,
     };
@@ -212,10 +208,6 @@ export async function getTimeEntries(filters?: {
     if (filters?.projectId) {
       where.projectId = filters.projectId;
     }
-
-    // if (filters?.billable !== undefined) {
-    //   where.billable = filters.billable;
-    // }
 
     const entries = await prisma.timeEntry.findMany({
       where,
@@ -353,20 +345,6 @@ export async function getTimeEntryStats() {
       },
     });
 
-    // This week's billable hours
-    const billableEntries = await prisma.timeEntry.aggregate({
-      where: {
-        userId: user.id,
-        date: {
-          gte: weekStart,
-        },
-        //billable: true,
-      },
-      _sum: {
-        duration: true,
-      },
-    });
-
     // Active projects count
     const activeProjectsCount = await prisma.project.count({
       where: {
@@ -380,7 +358,6 @@ export async function getTimeEntryStats() {
       data: {
         todayMinutes: todayEntries._sum.duration || 0,
         weekMinutes: weekEntries._sum.duration || 0,
-        billableMinutes: billableEntries._sum.duration || 0,
         activeProjects: activeProjectsCount,
       },
     };
@@ -392,7 +369,6 @@ export async function getTimeEntryStats() {
       data: {
         todayMinutes: 0,
         weekMinutes: 0,
-        billableMinutes: 0,
         activeProjects: 0,
       },
     };

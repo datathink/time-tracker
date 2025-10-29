@@ -31,7 +31,6 @@ interface Project {
   description: string | null;
   budgetHours: number | null;
   hourlyRate: Decimal | null;
-  billable: boolean;
   status: string;
   color: string;
   client?: {
@@ -119,7 +118,6 @@ export function ProjectList({ projects }: ProjectListProps) {
               <TableHead>Status</TableHead>
               <TableHead>Budget</TableHead>
               <TableHead>Hourly Rate</TableHead>
-              <TableHead>Billable</TableHead>
               <TableHead>Team</TableHead>
               <TableHead>Time Entries</TableHead>
               <TableHead className="w-[70px]"></TableHead>
@@ -150,15 +148,6 @@ export function ProjectList({ projects }: ProjectListProps) {
                   {project.hourlyRate
                     ? `$${Number(project.hourlyRate).toFixed(2)}`
                     : "-"}
-                </TableCell>
-                <TableCell>
-                  {project.billable ? (
-                    <Badge className="bg-green-100 text-green-800">
-                      Billable
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary">Non-billable</Badge>
-                  )}
                 </TableCell>
                 <TableCell>
                   <Badge variant="secondary">

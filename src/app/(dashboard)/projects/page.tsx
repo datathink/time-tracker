@@ -16,7 +16,6 @@ interface Project {
   description: string | null;
   budgetHours: number | null;
   hourlyRate: Decimal | null;
-  billable: boolean;
   status: string;
   color: string;
   client?: {
