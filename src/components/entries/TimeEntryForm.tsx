@@ -1,26 +1,30 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { createTimeEntry, updateTimeEntry } from "@/lib/actions/entries"
-import { type TimeEntryFormData } from "@/lib/schemas/time-entry"
-import { getActiveProjects } from "@/lib/actions/projects"
-import { getClients } from "@/lib/actions/clients"
-import { parseDuration, calculateEndTime, calculateDuration, formatDuration } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { createTimeEntry, updateTimeEntry } from "@/lib/actions/entries";
+import { type TimeEntryFormData } from "@/lib/schemas/time-entry";
+import { getActiveProjects } from "@/lib/actions/projects";
+import { getClients } from "@/lib/actions/clients";
+import {
+  parseDuration,
+  calculateEndTime,
+  calculateDuration,
+  formatDuration,
+} from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -28,33 +32,33 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { format } from "date-fns"
-import { Prisma } from "@prisma/client"
+} from "@/components/ui/dialog";
+import { format } from "date-fns";
+import { Prisma } from "@prisma/client";
 
 type ActiveProject = Prisma.ProjectGetPayload<{
   select: {
-    id: true,
-    name: true,
-    color: true,
+    id: true;
+    name: true;
+    color: true;
     client: {
       select: {
-        name: true,
-      }
-    }
-  }
-}>
+        name: true;
+      };
+    };
+  };
+}>;
 
 type ClientWithCount = Prisma.ClientGetPayload<{
   include: {
     _count: {
       select: {
-        projects: true,
-        timeEntries: true,
-      }
-    }
-  }
-}>
+        projects: true;
+        timeEntries: true;
+      };
+    };
+  };
+}>;
 
 const timeEntryFormSchema = z.object({
   date: z.string().min(1, "Date is required"),
@@ -64,44 +68,48 @@ const timeEntryFormSchema = z.object({
   startTime: z.string().optional(),
   endTime: z.string().optional(),
   description: z.string().optional(),
-  billable: z.boolean(),
-})
+});
 
-type FormData = z.infer<typeof timeEntryFormSchema>
+type FormData = z.infer<typeof timeEntryFormSchema>;
 
 interface TimeEntryFormProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   entry?: {
-    id: string
-    date: Date
-    projectId: string | null
-    clientId: string | null
-    duration: number
-    startTime: string | null
-    endTime: string | null
-    description: string | null
-    billable: boolean
+    id: string;
+    date: Date;
+    projectId: string | null;
+    clientId: string | null;
+    duration: number;
+    startTime: string | null;
+    endTime: string | null;
+    description: string | null;
     project?: {
-      id: string
-      name: string
-      color: string
-    } | null
+      id: string;
+      name: string;
+      color: string;
+    } | null;
     client?: {
-      id: string
-      name: string
-    } | null
-  } | null
-  defaultDate?: Date | null
-  onSuccess?: () => void
+      id: string;
+      name: string;
+    } | null;
+  } | null;
+  defaultDate?: Date | null;
+  onSuccess?: () => void;
 }
 
-export function TimeEntryForm({ open, onOpenChange, entry, defaultDate, onSuccess }: TimeEntryFormProps) {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [projects, setProjects] = useState<ActiveProject[]>([])
-  const [clients, setClients] = useState<ClientWithCount[]>([])
-  const [parsedDuration, setParsedDuration] = useState<number | null>(null)
+export function TimeEntryForm({
+  open,
+  onOpenChange,
+  entry,
+  defaultDate,
+  onSuccess,
+}: TimeEntryFormProps) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [projects, setProjects] = useState<ActiveProject[]>([]);
+  const [clients, setClients] = useState<ClientWithCount[]>([]);
+  const [parsedDuration, setParsedDuration] = useState<number | null>(null);
 
   const {
     register,
@@ -116,77 +124,75 @@ export function TimeEntryForm({ open, onOpenChange, entry, defaultDate, onSucces
       date: entry?.date
         ? format(new Date(entry.date), "yyyy-MM-dd")
         : defaultDate
-        ? format(defaultDate, "yyyy-MM-dd")
-        : format(new Date(), "yyyy-MM-dd"),
+          ? format(defaultDate, "yyyy-MM-dd")
+          : format(new Date(), "yyyy-MM-dd"),
       projectId: entry?.projectId || null,
       clientId: entry?.clientId || null,
       durationInput: entry?.duration ? formatDuration(entry.duration) : "",
       startTime: entry?.startTime || "",
       endTime: entry?.endTime || "",
       description: entry?.description || "",
-      billable: entry?.billable || false,
     },
-  })
+  });
 
-  const selectedProjectId = watch("projectId")
-  const durationInput = watch("durationInput")
-  const startTime = watch("startTime")
-  const endTime = watch("endTime")
-  const billable = watch("billable")
+  const selectedProjectId = watch("projectId");
+  const durationInput = watch("durationInput");
+  const startTime = watch("startTime");
+  const endTime = watch("endTime");
 
   useEffect(() => {
     const loadData = async () => {
       const [projectsResult, clientsResult] = await Promise.all([
         getActiveProjects(),
         getClients(),
-      ])
-      if (projectsResult.success) setProjects(projectsResult.data)
-      if (clientsResult.success) setClients(clientsResult.data)
-    }
+      ]);
+      if (projectsResult.success) setProjects(projectsResult.data);
+      if (clientsResult.success) setClients(clientsResult.data);
+    };
     if (open) {
-      loadData()
+      loadData();
       // Update date if defaultDate changes
       if (defaultDate && !entry) {
-        setValue("date", format(defaultDate, "yyyy-MM-dd"))
+        setValue("date", format(defaultDate, "yyyy-MM-dd"));
       }
     }
-  }, [open, defaultDate, entry, setValue])
+  }, [open, defaultDate, entry, setValue]);
 
   // Parse duration input
   useEffect(() => {
     if (durationInput) {
-      const minutes = parseDuration(durationInput)
-      setParsedDuration(minutes)
+      const minutes = parseDuration(durationInput);
+      setParsedDuration(minutes);
     } else {
-      setParsedDuration(null)
+      setParsedDuration(null);
     }
-  }, [durationInput])
+  }, [durationInput]);
 
   // Auto-calculate end time if start time and duration are provided
   useEffect(() => {
     if (startTime && parsedDuration && !endTime) {
-      const calculated = calculateEndTime(startTime, parsedDuration)
-      setValue("endTime", calculated)
+      const calculated = calculateEndTime(startTime, parsedDuration);
+      setValue("endTime", calculated);
     }
-  }, [startTime, parsedDuration, endTime, setValue])
+  }, [startTime, parsedDuration, endTime, setValue]);
 
   // Auto-calculate duration if both start and end times are provided
   useEffect(() => {
     if (startTime && endTime && !durationInput) {
-      const minutes = calculateDuration(startTime, endTime)
-      setValue("durationInput", formatDuration(minutes))
+      const minutes = calculateDuration(startTime, endTime);
+      setValue("durationInput", formatDuration(minutes));
     }
-  }, [startTime, endTime, durationInput, setValue])
+  }, [startTime, endTime, durationInput, setValue]);
 
   const onSubmit = async (data: FormData) => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
-    const duration = parseDuration(data.durationInput)
+    const duration = parseDuration(data.durationInput);
     if (!duration) {
-      setError("Invalid duration format")
-      setLoading(false)
-      return
+      setError("Invalid duration format");
+      setLoading(false);
+      return;
     }
 
     const timeEntryData: TimeEntryFormData = {
@@ -197,31 +203,34 @@ export function TimeEntryForm({ open, onOpenChange, entry, defaultDate, onSucces
       startTime: data.startTime || null,
       endTime: data.endTime || null,
       description: data.description || "",
-      billable: data.billable,
-    }
+    };
 
     const result = entry
       ? await updateTimeEntry(entry.id, timeEntryData)
-      : await createTimeEntry(timeEntryData)
+      : await createTimeEntry(timeEntryData);
 
     if (result.success) {
-      reset()
-      onOpenChange(false)
-      onSuccess?.()
+      reset();
+      onOpenChange(false);
+      onSuccess?.();
     } else {
-      setError(result.error || "An error occurred")
+      setError(result.error || "An error occurred");
     }
 
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{entry ? "Edit Time Entry" : "New Time Entry"}</DialogTitle>
+          <DialogTitle>
+            {entry ? "Edit Time Entry" : "New Time Entry"}
+          </DialogTitle>
           <DialogDescription>
-            {entry ? "Update time entry information" : "Log time for work you've completed"}
+            {entry
+              ? "Update time entry information"
+              : "Log time for work you've completed"}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -257,11 +266,14 @@ export function TimeEntryForm({ open, onOpenChange, entry, defaultDate, onSucces
                   disabled={loading}
                 />
                 {errors.durationInput && (
-                  <p className="text-sm text-red-500">{errors.durationInput.message}</p>
+                  <p className="text-sm text-red-500">
+                    {errors.durationInput.message}
+                  </p>
                 )}
                 {parsedDuration !== null && (
                   <p className="text-xs text-gray-500">
-                    = {formatDuration(parsedDuration)} ({(parsedDuration / 60).toFixed(2)} hours)
+                    = {formatDuration(parsedDuration)} (
+                    {(parsedDuration / 60).toFixed(2)} hours)
                   </p>
                 )}
               </div>
@@ -306,7 +318,9 @@ export function TimeEntryForm({ open, onOpenChange, entry, defaultDate, onSucces
                           />
                           {project.name}
                           {project.client && (
-                            <span className="text-xs text-gray-500">({project.client.name})</span>
+                            <span className="text-xs text-gray-500">
+                              ({project.client.name})
+                            </span>
                           )}
                         </div>
                       </SelectItem>
@@ -344,17 +358,6 @@ export function TimeEntryForm({ open, onOpenChange, entry, defaultDate, onSucces
                   disabled={loading}
                 />
               </div>
-              <div className="flex items-center space-x-2 col-span-2">
-                <Checkbox
-                  id="billable"
-                  checked={billable}
-                  onCheckedChange={(checked) => setValue("billable", !!checked)}
-                  disabled={loading}
-                />
-                <Label htmlFor="billable" className="cursor-pointer">
-                  Billable
-                </Label>
-              </div>
             </div>
           </div>
           <DialogFooter>
@@ -373,5 +376,5 @@ export function TimeEntryForm({ open, onOpenChange, entry, defaultDate, onSucces
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

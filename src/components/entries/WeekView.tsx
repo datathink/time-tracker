@@ -2,7 +2,6 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import {
   format,
@@ -183,19 +182,6 @@ export function WeekView({
                           </>
                         )}
                       </div>
-                      {/* <div className="flex items-center justify-between gap-1">
-                        <div className="text-xs text-gray-600">
-                          {formatDecimalHours(entry.duration)}h
-                        </div>
-                        {entry.billable && (
-                          <Badge
-                            variant="secondary"
-                            className="text-[10px] h-4 px-1"
-                          >
-                            $
-                          </Badge>
-                        )}
-                      </div> */}
                       {entry.description && (
                         <div className="text-xs text-gray-500 truncate mt-0.5">
                           {entry.description}

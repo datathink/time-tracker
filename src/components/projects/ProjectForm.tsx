@@ -1,23 +1,23 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { createProject, updateProject } from "@/lib/actions/projects"
-import { type ProjectFormData } from "@/lib/schemas/project"
-import { getClients } from "@/lib/actions/clients"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { createProject, updateProject } from "@/lib/actions/projects";
+import { type ProjectFormData } from "@/lib/schemas/project";
+import { getClients } from "@/lib/actions/clients";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -25,20 +25,20 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Decimal } from "@prisma/client/runtime/library"
-import { Prisma } from "@prisma/client"
+} from "@/components/ui/dialog";
+import { Decimal } from "@prisma/client/runtime/library";
+import { Prisma } from "@prisma/client";
 
 type ClientWithCount = Prisma.ClientGetPayload<{
   include: {
     _count: {
       select: {
-        projects: true,
-        timeEntries: true,
-      }
-    }
-  }
-}>
+        projects: true;
+        timeEntries: true;
+      };
+    };
+  };
+}>;
 
 const projectFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -48,30 +48,35 @@ const projectFormSchema = z.object({
   hourlyRate: z.string().optional(),
   status: z.enum(["active", "archived", "completed"]),
   color: z.string(),
-})
+});
 
-type FormData = z.infer<typeof projectFormSchema>
+type FormData = z.infer<typeof projectFormSchema>;
 
 interface ProjectFormProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   project?: {
-    id: string
-    name: string
-    clientId: string | null
-    description: string | null
-    budgetHours: number | null
-    hourlyRate: Decimal | null
-    status: string
-    color: string
-  }
-  onSuccess?: () => void
+    id: string;
+    name: string;
+    clientId: string | null;
+    description: string | null;
+    budgetHours: number | null;
+    hourlyRate: Decimal | null;
+    status: string;
+    color: string;
+  };
+  onSuccess?: () => void;
 }
 
-export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectFormProps) {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [clients, setClients] = useState<ClientWithCount[]>([])
+export function ProjectForm({
+  open,
+  onOpenChange,
+  project,
+  onSuccess,
+}: ProjectFormProps) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [clients, setClients] = useState<ClientWithCount[]>([]);
 
   const {
     register,
@@ -88,54 +93,61 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
       description: project?.description || "",
       budgetHours: project?.budgetHours ? String(project.budgetHours) : "",
       hourlyRate: project?.hourlyRate ? String(project.hourlyRate) : "",
-      status: (project?.status as "active" | "archived" | "completed") || "active",
+      status:
+        (project?.status as "active" | "archived" | "completed") || "active",
       color: project?.color || "#6366f1",
     },
-  })
+  });
 
-  const selectedClientId = watch("clientId")
+  const selectedClientId = watch("clientId");
 
   useEffect(() => {
     const loadClients = async () => {
-      const result = await getClients()
+      const result = await getClients();
       if (result.success) {
-        setClients(result.data)
+        setClients(result.data);
       }
-    }
+    };
     if (open) {
-      loadClients()
+      loadClients();
     }
-  }, [open])
+  }, [open]);
 
   const onSubmit = async (data: FormData) => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     // Transform the form data to match ProjectFormData type
     const projectData: ProjectFormData = {
       name: data.name,
       clientId: data.clientId,
       description: data.description,
-      budgetHours: data.budgetHours && data.budgetHours !== "" ? parseFloat(data.budgetHours) : null,
-      hourlyRate: data.hourlyRate && data.hourlyRate !== "" ? parseFloat(data.hourlyRate) : null,
+      budgetHours:
+        data.budgetHours && data.budgetHours !== ""
+          ? parseFloat(data.budgetHours)
+          : null,
+      hourlyRate:
+        data.hourlyRate && data.hourlyRate !== ""
+          ? parseFloat(data.hourlyRate)
+          : null,
       status: data.status,
       color: data.color,
-    }
+    };
 
     const result = project
       ? await updateProject(project.id, projectData)
-      : await createProject(projectData)
+      : await createProject(projectData);
 
     if (result.success) {
-      reset()
-      onOpenChange(false)
-      onSuccess?.()
+      reset();
+      onOpenChange(false);
+      onSuccess?.();
     } else {
-      setError(result.error || "An error occurred")
+      setError(result.error || "An error occurred");
     }
 
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -143,7 +155,9 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
         <DialogHeader>
           <DialogTitle>{project ? "Edit Project" : "New Project"}</DialogTitle>
           <DialogDescription>
-            {project ? "Update project information" : "Create a new project to track time"}
+            {project
+              ? "Update project information"
+              : "Create a new project to track time"}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -192,7 +206,12 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
                 <Label htmlFor="status">Status</Label>
                 <Select
                   value={watch("status")}
-                  onValueChange={(value) => setValue("status", value as "active" | "archived" | "completed")}
+                  onValueChange={(value) =>
+                    setValue(
+                      "status",
+                      value as "active" | "archived" | "completed"
+                    )
+                  }
                   disabled={loading}
                 >
                   <SelectTrigger>
@@ -274,5 +293,5 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
