@@ -30,11 +30,6 @@ import { usePathname } from "next/navigation";
 
 const navigation = [
   {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
     title: "Time Entries",
     url: "/entries",
     icon: FileText,
@@ -81,7 +76,7 @@ const AppSidebar = () => {
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <Link
-                href="/dashboard"
+                href="/entries"
                 className="mt-3.5 mb-4 flex items-center space-x-2"
               >
                 <Image
