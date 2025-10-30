@@ -7,7 +7,6 @@ import { z } from "zod";
 import { createTimeEntry, updateTimeEntry } from "@/lib/actions/entries";
 import { type TimeEntryFormData } from "@/lib/schemas/time-entry";
 import { getActiveProjects } from "@/lib/actions/projects";
-import { getClients } from "@/lib/actions/clients";
 import {
   parseDuration,
   calculateEndTime,
@@ -49,21 +48,9 @@ type ActiveProject = Prisma.ProjectGetPayload<{
   };
 }>;
 
-type ClientWithCount = Prisma.ClientGetPayload<{
-  include: {
-    _count: {
-      select: {
-        projects: true;
-        timeEntries: true;
-      };
-    };
-  };
-}>;
-
 const timeEntryFormSchema = z.object({
   date: z.string().min(1, "Date is required"),
   projectId: z.string().optional().nullable(),
-  clientId: z.string().optional().nullable(),
   durationInput: z.string().min(1, "Duration is required"),
   startTime: z.string().optional(),
   endTime: z.string().optional(),
@@ -79,7 +66,6 @@ interface TimeEntryFormProps {
     id: string;
     date: Date;
     projectId: string | null;
-    clientId: string | null;
     duration: number;
     startTime: string | null;
     endTime: string | null;
@@ -88,10 +74,6 @@ interface TimeEntryFormProps {
       id: string;
       name: string;
       color: string;
-    } | null;
-    client?: {
-      id: string;
-      name: string;
     } | null;
   } | null;
   defaultDate?: Date | null;
@@ -108,7 +90,6 @@ export function TimeEntryForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [projects, setProjects] = useState<ActiveProject[]>([]);
-  const [clients, setClients] = useState<ClientWithCount[]>([]);
   const [parsedDuration, setParsedDuration] = useState<number | null>(null);
 
   const {
@@ -127,7 +108,6 @@ export function TimeEntryForm({
           ? format(defaultDate, "yyyy-MM-dd")
           : format(new Date(), "yyyy-MM-dd"),
       projectId: entry?.projectId || null,
-      clientId: entry?.clientId || null,
       durationInput: entry?.duration ? formatDuration(entry.duration) : "",
       startTime: entry?.startTime || "",
       endTime: entry?.endTime || "",
@@ -142,12 +122,10 @@ export function TimeEntryForm({
 
   useEffect(() => {
     const loadData = async () => {
-      const [projectsResult, clientsResult] = await Promise.all([
+      const [projectsResult] = await Promise.all([
         getActiveProjects(),
-        getClients(),
       ]);
       if (projectsResult.success) setProjects(projectsResult.data);
-      if (clientsResult.success) setClients(clientsResult.data);
     };
     if (open) {
       loadData();
@@ -198,7 +176,6 @@ export function TimeEntryForm({
     const timeEntryData: TimeEntryFormData = {
       date: data.date,
       projectId: data.projectId || null,
-      clientId: data.clientId || null,
       duration,
       startTime: data.startTime || null,
       endTime: data.endTime || null,
@@ -323,26 +300,6 @@ export function TimeEntryForm({
                             </span>
                           )}
                         </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="clientId">Client (optional)</Label>
-                <Select
-                  value={watch("clientId") || undefined}
-                  onValueChange={(value) => setValue("clientId", value)}
-                  disabled={loading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a client" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No client</SelectItem>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

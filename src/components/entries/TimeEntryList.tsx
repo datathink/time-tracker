@@ -27,7 +27,6 @@ interface TimeEntry {
   id: string;
   date: Date;
   projectId: string | null;
-  clientId: string | null;
   duration: number;
   startTime: string | null;
   endTime: string | null;
@@ -36,10 +35,6 @@ interface TimeEntry {
     id: string;
     name: string;
     color: string;
-  } | null;
-  client?: {
-    id: string;
-    name: string;
   } | null;
 }
 
