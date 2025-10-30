@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { signOut, useSession } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,12 +12,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ProfileForm } from "@/components/profile/ProfileForm";
 import { User, LogOut } from "lucide-react";
 import { SidebarTrigger } from "../ui/sidebar";
 
 export function Header() {
   const router = useRouter();
   const { data: session } = useSession();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -43,8 +46,12 @@ export function Header() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-gray-600">
-              {session?.user?.email}
+            <DropdownMenuItem 
+              className="text-gray-600 cursor-pointer"
+              onClick={() => setIsProfileOpen(true)}
+            >
+              <User className="h-5 w-5" />
+              Profile
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -58,6 +65,12 @@ export function Header() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <ProfileForm
+        open={isProfileOpen}
+        onOpenChange={setIsProfileOpen}
+        onSuccess={handleSuccess}
+      />
     </header>
   );
 }
