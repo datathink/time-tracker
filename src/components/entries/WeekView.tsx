@@ -102,11 +102,24 @@ export function WeekView({
                         size="sm"
                         onClick={goToPreviousWeek}
                     >
-                        <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <div className="text-sm font-medium min-w-[200px] text-center">
-                        {format(weekStart, "MMM d")} -{" "}
-                        {format(weekEnd, "MMM d, yyyy")}
+                      <div className="flex items-center gap-1 mb-1">
+                        {entry.project && (
+                          <>
+                            <div
+                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: entry.project.color }}
+                            />
+                            <div className="text-xs font-medium truncate">
+                              {entry.project.name}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      {entry.description && (
+                        <div className="text-xs text-gray-500 truncate mt-0.5">
+                          {entry.description}
+                        </div>
+                      )}
                     </div>
                     <Button variant="outline" size="sm" onClick={goToNextWeek}>
                         <ChevronRight className="h-4 w-4" />
