@@ -7,7 +7,6 @@ import { z } from "zod";
 import { createTimeEntry, updateTimeEntry } from "@/lib/actions/entries";
 import { type TimeEntryFormData } from "@/lib/schemas/time-entry";
 import { getActiveProjects } from "@/lib/actions/projects";
-import { getClients } from "@/lib/actions/clients";
 import {
   parseDuration,
   calculateEndTime,
