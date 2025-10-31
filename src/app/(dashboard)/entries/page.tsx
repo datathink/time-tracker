@@ -99,6 +99,7 @@ export default function EntriesPage() {
             variant={viewMode === "week" ? "default" : "outline"}
             onClick={() => setViewMode("week")}
             size="sm"
+            className="cursor-pointer"
           >
             Week View
           </Button>
@@ -106,11 +107,15 @@ export default function EntriesPage() {
             variant={viewMode === "list" ? "default" : "outline"}
             onClick={() => setViewMode("list")}
             size="sm"
+            className="cursor-pointer"
           >
             <List className="mr-2 h-4 w-4" />
             List View
           </Button>
-          <Button onClick={() => handleAddEntry(new Date())}>
+          <Button
+            onClick={() => handleAddEntry(new Date())}
+            className="cursor-pointer"
+          >
             <Plus className="mr-2 h-4 w-4" />
             New Entry
           </Button>

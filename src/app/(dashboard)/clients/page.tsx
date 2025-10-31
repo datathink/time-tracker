@@ -1,45 +1,45 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
-import { ClientList } from "@/components/clients/ClientList"
-import { ClientForm } from "@/components/clients/ClientForm"
-import { getClients } from "@/lib/actions/clients"
-import { Prisma } from "@prisma/client"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { ClientList } from "@/components/clients/ClientList";
+import { ClientForm } from "@/components/clients/ClientForm";
+import { getClients } from "@/lib/actions/clients";
+import { Prisma } from "@prisma/client";
 
 type ClientWithCount = Prisma.ClientGetPayload<{
   include: {
     _count: {
       select: {
-        projects: true,
-        timeEntries: true,
-      }
-    }
-  }
-}>
+        projects: true;
+        timeEntries: true;
+      };
+    };
+  };
+}>;
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState<ClientWithCount[]>([])
-  const [loading, setLoading] = useState(true)
-  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [clients, setClients] = useState<ClientWithCount[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   const loadClients = async () => {
-    setLoading(true)
-    const result = await getClients()
+    setLoading(true);
+    const result = await getClients();
     if (result.success) {
-      setClients(result.data)
+      setClients(result.data);
     }
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    loadClients()
-  }, [])
+    loadClients();
+  }, []);
 
   const handleSuccess = () => {
-    loadClients()
-  }
+    loadClients();
+  };
 
   return (
     <div className="space-y-6">
@@ -48,7 +48,7 @@ export default function ClientsPage() {
           <h1 className="text-3xl font-bold">Clients</h1>
           <p className="text-gray-600">Manage your clients</p>
         </div>
-        <Button onClick={() => setIsFormOpen(true)}>
+        <Button onClick={() => setIsFormOpen(true)} className="cursor-pointer">
           <Plus className="mr-2 h-4 w-4" />
           New Client
         </Button>
@@ -68,5 +68,5 @@ export default function ClientsPage() {
         onSuccess={handleSuccess}
       />
     </div>
-  )
+  );
 }

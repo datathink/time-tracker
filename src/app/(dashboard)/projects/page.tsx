@@ -68,7 +68,7 @@ export default function ProjectsPage() {
           <h1 className="text-3xl font-bold">Projects</h1>
           <p className="text-gray-600">Manage your projects and team members</p>
         </div>
-        <Button onClick={() => setIsFormOpen(true)}>
+        <Button onClick={() => setIsFormOpen(true)} className="cursor-pointer">
           <Plus className="mr-2 h-4 w-4" />
           New Project
         </Button>
