@@ -6,7 +6,6 @@ export const timeEntrySchema = z.object({
     message: "Invalid date",
   }),
   projectId: z.string().optional().nullable(),
-  clientId: z.string().optional().nullable(),
   duration: z.number().min(1, "Duration must be at least 1 minute"),
   startTime: z.string().optional().nullable(),
   endTime: z.string().optional().nullable(),
