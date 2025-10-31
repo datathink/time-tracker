@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Settings,
-  BarChart3,
-  Building2,
-  FileText,
-  Folder,
-  LayoutDashboard,
-} from "lucide-react";
+import { Settings, BarChart3, Building2, FileText, Folder } from "lucide-react";
 import Link from "next/link";
 import {
   Sidebar,
@@ -60,11 +53,14 @@ const AppSidebar = () => {
   const pathname = usePathname();
   const { state } = useSidebar();
 
-  // Check if a navigation item is active
-  const isActive = (url: string) => {
-    if (pathname === url) return true;
-    if (url !== "/dashboard" && pathname.startsWith(url + "/")) return true;
-    return false;
+  //const isActive = (url: string) => pathname === url;
+
+  const isActive = (url: string): boolean => {
+    // Handle root separately if needed
+    if (url === "/") return pathname === "/";
+
+    // Exact match OR starts with url + "/"
+    return pathname === url || pathname.startsWith(`${url}/`);
   };
 
   const isCollapsed = state === "collapsed";
