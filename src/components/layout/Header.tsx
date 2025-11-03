@@ -12,14 +12,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ProfileForm } from "@/components/profile/ProfileForm";
 import { User, LogOut } from "lucide-react";
 import { SidebarTrigger } from "../ui/sidebar";
 
 export function Header() {
   const router = useRouter();
   const { data: session } = useSession();
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -48,7 +46,7 @@ export function Header() {
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="text-gray-600 cursor-pointer"
-              onClick={() => setIsProfileOpen(true)}
+              onClick={() => router.push("/profile")}
             >
               <User className="h-5 w-5" />
               Profile
@@ -66,11 +64,11 @@ export function Header() {
         </DropdownMenu>
       </div>
 
-      <ProfileForm
+      {/* <ProfileForm
         open={isProfileOpen}
         onOpenChange={setIsProfileOpen}
         onSuccess={handleSuccess}
-      />
+      />*/}
     </header>
   );
 }

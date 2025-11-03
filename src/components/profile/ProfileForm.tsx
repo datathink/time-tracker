@@ -6,40 +6,36 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns"
 import { type ProfileFormData } from "@/lib/schemas/profile";
+import { createProfile, updateProfile } from "@/lib/actions/profile";
+import
 
 
 const profileFormSchema = z.object({
-    firstName: z.string().min(1, "First name is required"),
-    lastName: z.string().min(2, "Last name is required"),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
     email: z.string().email("Invalid email"),
-    phoneNumber: z.string().min(8, "Phone number is required"),
-    address: z.string().min(10, "Address is required"),
-    birthDate: z.string().min(1, "Date is required"),
+    phoneNumber: z.string().min(8, "Phone number shoulg be 8 characters or more").optional(),
+    address: z.string().optional(),
+    birthDate: z.string().optional(),
 })
 
 type FormData = z.infer<typeof profileFormSchema>;
 
 
 interface ProfileFormProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
     profile?: {
         id: string;
-        firstName: string;
-        lastName: string;
+        firstName: string | null;
+        lastName: string | null;
         email: string;
-        phoneNumber: string;
-        address: string;
-        birthDate: Date;
+        phoneNumber: string | null;
+        address: string | null;
+        birthDate: Date | null;
     };
-    onSuccess?: () => void;
 }
 
 export function ProfileForm({
-    open,
-    onOpenChange,
     profile,
-    onSuccess,
 }: ProfileFormProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -83,10 +79,6 @@ export function ProfileForm({
 
         if (result.success) {
             reset();
-            onOpenChange(false);
-            if (onSuccess) {
-                onSuccess();
-            }
         } else {
             setError(result.error || "An unexpected error occurred");
         }
@@ -95,6 +87,8 @@ export function ProfileForm({
     };
 
     return (
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    );
 
 
             }
