@@ -163,8 +163,6 @@ model Client {
 
   // Relations
   projects     Project[]
-
-
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }
