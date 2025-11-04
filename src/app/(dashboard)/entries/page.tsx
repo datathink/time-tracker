@@ -40,7 +40,7 @@ export default function EntriesPage() {
 
   const loadEntries = async (weekDate: Date) => {
     setLoading(true);
-    const weekStart = startOfWeek(weekDate, { weekStartsOn: 0 }); // Sunday
+    const weekStart = startOfWeek(weekDate, { weekStartsOn: 0 });
     const weekEnd = endOfWeek(weekDate, { weekStartsOn: 0 });
 
     const result = await getWeekTimeEntries(
