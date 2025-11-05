@@ -1,13 +1,13 @@
-import { redirect } from "next/navigation"
-import { auth } from "@/lib/auth/auth"
-import { headers } from "next/headers"
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth/auth";
+import { headers } from "next/headers";
 
 export default async function HomePage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await auth.api.getSession({ headers: await headers() });
 
   if (session) {
-    redirect("/dashboard")
+    redirect("/entries");
   } else {
-    redirect("/login")
+    redirect("/login");
   }
 }
