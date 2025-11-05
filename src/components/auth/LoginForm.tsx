@@ -52,7 +52,7 @@ export function LoginForm() {
       if (result.error) {
         setError(result.error.message || "Invalid email or password");
       } else {
-        router.push("/dashboard");
+        router.push("/entries");
         router.refresh();
       }
     } catch (error) {

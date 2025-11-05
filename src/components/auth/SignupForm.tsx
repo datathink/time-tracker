@@ -59,7 +59,7 @@ export function SignupForm() {
       if (result.error) {
         setError(result.error.message || "Failed to create account");
       } else {
-        router.push("/dashboard");
+        router.push("/entries");
         router.refresh();
       }
     } catch (error) {
