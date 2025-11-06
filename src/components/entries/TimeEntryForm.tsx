@@ -33,6 +33,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Prisma } from "@prisma/client";
 
@@ -67,7 +74,7 @@ const timeEntryFormSchema = z.object({
   durationInput: z.string().min(1, "Duration is required"),
   startTime: z.string().optional(),
   endTime: z.string().optional(),
-  description: z.string().min(10, "Description is required"),
+  description: z.string().min(1, "Description is required"),
 });
 
 type FormData = z.infer<typeof timeEntryFormSchema>;
@@ -98,6 +105,26 @@ interface TimeEntryFormProps {
   onSuccess?: () => void;
 }
 
+function formatDate(date: Date | undefined) {
+  if (!date) {
+    return "";
+  }
+
+  return date.toLocaleDateString("en-US", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    weekday: "short",
+  });
+}
+
+function isValidDate(date: Date | undefined) {
+  if (!date) {
+    return false;
+  }
+  return !isNaN(date.getTime());
+}
+
 export function TimeEntryForm({
   open,
   onOpenChange,
@@ -110,6 +137,16 @@ export function TimeEntryForm({
   const [projects, setProjects] = useState<ActiveProject[]>([]);
   const [clients, setClients] = useState<ClientWithCount[]>([]);
   const [parsedDuration, setParsedDuration] = useState<number | null>(null);
+  const [dateOpen, setDateOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    entry?.date
+      ? new Date(entry.date)
+      : defaultDate
+        ? new Date(defaultDate)
+        : new Date()
+  );
+  const [month, setMonth] = useState<Date | undefined>(selectedDate);
+  const [dateValue, setDateValue] = useState(formatDate(selectedDate));
 
   const {
     register,
@@ -153,7 +190,11 @@ export function TimeEntryForm({
       loadData();
       // Update date if defaultDate changes
       if (defaultDate && !entry) {
-        setValue("date", format(defaultDate, "yyyy-MM-dd"));
+        const newDate = new Date(defaultDate);
+        setSelectedDate(newDate);
+        setMonth(newDate);
+        setDateValue(formatDate(newDate));
+        setValue("date", format(newDate, "yyyy-MM-dd"));
       }
     }
   }, [open, defaultDate, entry, setValue]);
@@ -274,44 +315,78 @@ export function TimeEntryForm({
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* <div className="flex-1 space-y-2">
-                <Label htmlFor="clientId">Client (optional)</Label>
-                <Select
-                  value={watch("clientId") || undefined}
-                  onValueChange={(value) => setValue("clientId", value)}
-                  disabled={loading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a client" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No client</SelectItem>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div> */}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="date">
+              <div className="flex flex-col gap-3">
+                <Label htmlFor="date" className="px-1">
                   Date <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="date"
-                  type="date"
-                  {...register("date")}
-                  disabled={loading}
-                />
+                <div className="relative flex gap-2">
+                  <Input
+                    id="date"
+                    value={dateValue}
+                    //placeholder="November 06, 2025 (Thu)"
+                    className="bg-background pr-10"
+                    onChange={(e) => {
+                      const date = new Date(e.target.value);
+                      setDateValue(e.target.value);
+                      if (isValidDate(date)) {
+                        setSelectedDate(date);
+                        setMonth(date);
+                        setValue("date", format(date, "yyyy-MM-dd"));
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        setDateOpen(true);
+                      }
+                    }}
+                    disabled={loading}
+                  />
+                  <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        id="date-picker"
+                        variant="ghost"
+                        className="absolute top-1/2 right-2 size-6 -translate-y-1/2"
+                        type="button"
+                        disabled={loading}
+                      >
+                        <CalendarIcon className="size-3.5" />
+                        <span className="sr-only">Select date</span>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-auto overflow-hidden p-0"
+                      align="end"
+                      alignOffset={-8}
+                      sideOffset={10}
+                    >
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        captionLayout="dropdown"
+                        month={month}
+                        onMonthChange={setMonth}
+                        onSelect={(date) => {
+                          setSelectedDate(date);
+                          if (date) {
+                            setDateValue(formatDate(date));
+                            setValue("date", format(date, "yyyy-MM-dd"));
+                          }
+                          setDateOpen(false);
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
                 {errors.date && (
                   <p className="text-sm text-red-500">{errors.date.message}</p>
                 )}
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="durationInput">
                   Duration <span className="text-red-500">*</span>
