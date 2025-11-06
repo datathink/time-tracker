@@ -62,12 +62,12 @@ type ClientWithCount = Prisma.ClientGetPayload<{
 
 const timeEntryFormSchema = z.object({
   date: z.string().min(1, "Date is required"),
-  projectId: z.string().optional().nullable(),
+  projectId: z.string().min(1, "Project is required"),
   clientId: z.string().optional().nullable(),
   durationInput: z.string().min(1, "Duration is required"),
   startTime: z.string().optional(),
   endTime: z.string().optional(),
-  description: z.string().optional(),
+  description: z.string().min(10, "Description is required"),
 });
 
 type FormData = z.infer<typeof timeEntryFormSchema>;
@@ -126,7 +126,7 @@ export function TimeEntryForm({
         : defaultDate
           ? format(defaultDate, "yyyy-MM-dd")
           : format(new Date(), "yyyy-MM-dd"),
-      projectId: entry?.projectId || null,
+      projectId: entry?.projectId || "",
       clientId: entry?.clientId || null,
       durationInput: entry?.duration ? formatDuration(entry.duration) : "",
       startTime: entry?.startTime || "",
@@ -240,6 +240,63 @@ export function TimeEntryForm({
                 {error}
               </div>
             )}
+            <div className="flex items-start gap-4">
+              <div className="flex-1 space-y-2">
+                <Label htmlFor="projectId">
+                  Project <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={selectedProjectId || undefined}
+                  onValueChange={(value) => setValue("projectId", value)}
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a project" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Select a project</SelectItem>
+                    {projects.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-2 h-2 rounded-full"
+                            style={{ backgroundColor: project.color }}
+                          />
+                          {project.name}
+                          {project.client && (
+                            <span className="text-xs text-gray-500">
+                              ({project.client.name})
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* <div className="flex-1 space-y-2">
+                <Label htmlFor="clientId">Client (optional)</Label>
+                <Select
+                  value={watch("clientId") || undefined}
+                  onValueChange={(value) => setValue("clientId", value)}
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a client" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No client</SelectItem>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div> */}
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="date">
@@ -297,59 +354,10 @@ export function TimeEntryForm({
                   disabled={loading}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="projectId">Project</Label>
-                <Select
-                  value={selectedProjectId || undefined}
-                  onValueChange={(value) => setValue("projectId", value)}
-                  disabled={loading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a project" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No project</SelectItem>
-                    {projects.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: project.color }}
-                          />
-                          {project.name}
-                          {project.client && (
-                            <span className="text-xs text-gray-500">
-                              ({project.client.name})
-                            </span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="clientId">Client (optional)</Label>
-                <Select
-                  value={watch("clientId") || undefined}
-                  onValueChange={(value) => setValue("clientId", value)}
-                  disabled={loading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a client" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No client</SelectItem>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
               <div className="space-y-2 col-span-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">
+                  Description <span className="text-red-500">*</span>
+                </Label>
                 <Textarea
                   id="description"
                   placeholder="What did you work on?"
