@@ -1,3 +1,12 @@
+/*
+  Warnings:
+
+  - You are about to drop the column `name` on the `User` table. All the data in the column will be lost.
+
+*/
+-- AlterTable
+ALTER TABLE "User" DROP COLUMN "name";
+
 -- CreateTable
 CREATE TABLE "UserProfile" (
     "id" TEXT NOT NULL,
@@ -5,7 +14,6 @@ CREATE TABLE "UserProfile" (
     "firstName" TEXT,
     "lastName" TEXT,
     "phone" TEXT,
-    "email" TEXT NOT NULL,
     "address" TEXT,
     "birthDate" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -16,9 +24,6 @@ CREATE TABLE "UserProfile" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "UserProfile_userId_key" ON "UserProfile"("userId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "UserProfile_email_key" ON "UserProfile"("email");
 
 -- CreateIndex
 CREATE INDEX "UserProfile_userId_idx" ON "UserProfile"("userId");
