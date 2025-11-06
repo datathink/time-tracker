@@ -18,11 +18,19 @@ interface Project {
   color: string;
   client?: {
     name: string;
-  } | null;
-  _count?: {
-    timeEntries: number;
-    members: number;
-  };
+    clientId: string | null;
+    description: string | null;
+    budgetHours: number | null;
+    hourlyRate: Decimal | null;
+    status: string;
+    color: string;
+    client?: {
+        name: string;
+    } | null;
+    _count?: {
+        timeEntries: number;
+        members: number;
+    };
 }
 
 // type ProjectWithRelations = Prisma.ProjectGetPayload<{
@@ -38,53 +46,55 @@ interface Project {
 // }>;
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isFormOpen, setIsFormOpen] = useState(false);
 
-  const loadProjects = async () => {
-    setLoading(true);
-    const result = await getProjects();
-    if (result.success) {
-      setProjects(result.data as Project[]);
-    }
-    setLoading(false);
-  };
+    const loadProjects = async () => {
+        setLoading(true);
+        const result = await getProjects();
+        if (result.success) {
+            setProjects(result.data as Project[]);
+        }
+        setLoading(false);
+    };
 
-  useEffect(() => {
-    loadProjects();
-  }, []);
+    useEffect(() => {
+        loadProjects();
+    }, []);
 
-  const handleSuccess = () => {
-    loadProjects();
-  };
+    const handleSuccess = () => {
+        loadProjects();
+    };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Projects</h1>
-          <p className="text-gray-600">Manage your projects and team members</p>
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold">Projects</h1>
+                    <p className="text-gray-600">
+                        Manage your projects and team members
+                    </p>
+                </div>
+                <Button onClick={() => setIsFormOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Project
+                </Button>
+            </div>
+
+            {loading ? (
+                <div className="text-center py-12">
+                    <p className="text-gray-500">Loading projects...</p>
+                </div>
+            ) : (
+                <ProjectList projects={projects} />
+            )}
+
+            <ProjectForm
+                open={isFormOpen}
+                onOpenChange={setIsFormOpen}
+                onSuccess={handleSuccess}
+            />
         </div>
-        <Button onClick={() => setIsFormOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Project
-        </Button>
-      </div>
-
-      {loading ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500">Loading projects...</p>
-        </div>
-      ) : (
-        <ProjectList projects={projects} />
-      )}
-
-      <ProjectForm
-        open={isFormOpen}
-        onOpenChange={setIsFormOpen}
-        onSuccess={handleSuccess}
-      />
-    </div>
-  );
+    );
 }
