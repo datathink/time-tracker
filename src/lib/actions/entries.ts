@@ -61,7 +61,6 @@ export async function createTimeEntry(data: TimeEntryFormData) {
     });
 
     revalidatePath("/entries");
-    revalidatePath("/dashboard");
     return { success: true, data: timeEntry };
   } catch (error) {
     console.error("Error creating time entry:", error);
@@ -127,7 +126,6 @@ export async function updateTimeEntry(id: string, data: TimeEntryFormData) {
     });
 
     revalidatePath("/entries");
-    revalidatePath("/dashboard");
     return { success: true, data: timeEntry };
   } catch (error) {
     console.error("Error updating time entry:", error);
@@ -161,7 +159,6 @@ export async function deleteTimeEntry(id: string) {
     });
 
     revalidatePath("/entries");
-    revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {
     console.error("Error deleting time entry:", error);
@@ -295,7 +292,7 @@ export async function getWeekTimeEntries(weekStart: string, weekEnd: string) {
   }
 }
 
-// Get time entry stats for dashboard
+// Get time entry stats
 export async function getTimeEntryStats() {
   try {
     const user = await getCurrentUser();
