@@ -18,11 +18,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Link from "next/link";
-
 const signupSchema = z
   .object({
     name: z.string().min(2, "Name must be at least 2 characters"),
-    email: z.string().email("Invalid email address"),
+    email: z.email("Invalid email address"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string(),
   })
@@ -60,7 +59,7 @@ export function SignupForm() {
       if (result.error) {
         setError(result.error.message || "Failed to create account");
       } else {
-        router.push("/dashboard");
+        router.push("/entries");
         router.refresh();
       }
     } catch (error) {
@@ -140,11 +139,7 @@ export function SignupForm() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Button
-            type="submit"
-            className="w-full mt-6 cursor-pointer"
-            disabled={loading}
-          >
+          <Button type="submit" className="w-full mt-6" disabled={loading}>
             {loading ? "Creating account..." : "Create Account"}
           </Button>
           <p className="text-sm text-center text-gray-600">
