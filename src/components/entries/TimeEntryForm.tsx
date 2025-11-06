@@ -39,6 +39,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { TimeInput } from "../ui/time-input";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Prisma } from "@prisma/client";
@@ -386,7 +387,6 @@ export function TimeEntryForm({
                   <p className="text-sm text-red-500">{errors.date.message}</p>
                 )}
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="durationInput">
                   Duration <span className="text-red-500">*</span>
@@ -409,26 +409,29 @@ export function TimeEntryForm({
                   </p>
                 )}
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="startTime">Start Time (optional)</Label>
-                <Input
+                <TimeInput
                   id="startTime"
-                  type="time"
                   placeholder="09:00"
-                  {...register("startTime")}
+                  value={startTime ?? ""}
+                  onChange={(v) => setValue("startTime", v || "")}
                   disabled={loading}
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="endTime">End Time (optional)</Label>
-                <Input
+                <TimeInput
                   id="endTime"
-                  type="time"
                   placeholder="17:30"
-                  {...register("endTime")}
+                  value={endTime ?? ""}
+                  onChange={(v) => setValue("endTime", v || "")}
                   disabled={loading}
                 />
               </div>
+
               <div className="space-y-2 col-span-2">
                 <Label htmlFor="description">
                   Description <span className="text-red-500">*</span>
