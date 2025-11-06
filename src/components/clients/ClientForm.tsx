@@ -21,7 +21,7 @@ import { Decimal } from "@prisma/client/runtime/library";
 
 const clientFormSchema = z.object({
     name: z.string().min(1, "Name is required"),
-    email: z.string().email("Invalid email").optional().or(z.literal("")),
+    email: z.email("Invalid email").or(z.literal("")),
     company: z.string().optional(),
     hourlyRate: z.string().optional(),
 });
