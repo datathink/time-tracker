@@ -202,7 +202,7 @@ export function TimeEntryForm({
       duration,
       startTime: data.startTime || null,
       endTime: data.endTime || null,
-      description: data.description || "",
+      description: data.description || undefined,
     };
 
     const result = entry
