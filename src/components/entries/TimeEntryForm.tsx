@@ -274,27 +274,6 @@ export function TimeEntryForm({
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* <div className="flex-1 space-y-2">
-                <Label htmlFor="clientId">Client (optional)</Label>
-                <Select
-                  value={watch("clientId") || undefined}
-                  onValueChange={(value) => setValue("clientId", value)}
-                  disabled={loading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a client" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No client</SelectItem>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div> */}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
