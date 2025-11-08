@@ -8,5 +8,21 @@
             "label": "Build Project",
             "task": "Build Project"
         },
+        {
+            "label": "Prisma Dev",
+            "task": "Prisma Dev"
+        },
+        {
+            "label": "Prisma Generate",
+            "task": "Prisma Generate"
+        },
+        {
+            "label": "Prisma Studio",
+            "task": "Prisma Studio"
+        },
+        {
+            "label": "Prisma Reset",
+            "task": "Prisma Reset"
+        }
     ]
 }

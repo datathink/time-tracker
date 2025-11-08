@@ -11,5 +11,25 @@
       "type": "shell",
       "command": "npm install; npm run build",
     },
+    {
+      "label": "Prisma Dev",
+      "type": "shell",
+      "command": "npx prisma migrate dev",
+    },
+    {
+      "label": "Prisma Generate",
+      "type": "shell",
+      "command": "npx prisma generate",
+    },
+    {
+      "label": "Prisma Studio",
+      "type": "shell",
+      "command": "npx prisma studio",
+    },
+    {
+      "label": "Prisma Reset",
+      "type": "shell",
+      "command": "npx prisma migrate reset",
+    }
   ],
 }
