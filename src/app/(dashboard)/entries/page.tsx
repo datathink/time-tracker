@@ -40,7 +40,7 @@ export default function EntriesPage() {
 
   const loadEntries = async (weekDate: Date) => {
     setLoading(true);
-    const weekStart = startOfWeek(weekDate, { weekStartsOn: 0 });
+    const weekStart = startOfWeek(weekDate, { weekStartsOn: 0 }); // Sunday
     const weekEnd = endOfWeek(weekDate, { weekStartsOn: 0 });
 
     const result = await getWeekTimeEntries(
@@ -53,7 +53,6 @@ export default function EntriesPage() {
     setLoading(false);
   };
 
-  // EFFECT 1: Load/Reload entries when the week changes
   useEffect(() => {
     loadEntries(currentWeek);
   }, [currentWeek]);
@@ -74,7 +73,6 @@ export default function EntriesPage() {
     setIsFormOpen(true);
   };
 
-  //Reload both entries for the current week AND the global stats
   const handleSuccess = () => {
     loadEntries(currentWeek);
     setEditingEntry(null);
@@ -94,7 +92,7 @@ export default function EntriesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Time Entries</h1>
-          <p className="text-gray-600">Track and manage your time entries</p>
+          <p className="text-gray-600">Track your time by week</p>
         </div>
         <div className="flex gap-2">
           <Button
