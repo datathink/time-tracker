@@ -16,20 +16,13 @@ interface Project {
   budgetHours: number | null;
   status: string;
   color: string;
-  client?: {
+    client?: {
     name: string;
     clientId: string | null;
-    description: string | null;
-    budgetHours: number | null;
-    hourlyRate: Decimal | null;
-    status: string;
-    color: string;
-    client?: {
-        name: string;
-    } | null;
+  } | null;
     _count?: {
-        timeEntries: number;
-        members: number;
+      timeEntries: number;
+      members: number;
     };
 }
 
