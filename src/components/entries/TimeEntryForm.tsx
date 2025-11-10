@@ -203,7 +203,7 @@ export function TimeEntryForm({
       startTime: data.startTime || null,
       endTime: data.endTime || null,
       description: data.description || undefined,
-    };
+            description: data.description,
 
     const result = entry
       ? await updateTimeEntry(entry.id, timeEntryData)
