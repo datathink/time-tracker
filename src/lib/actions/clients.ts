@@ -80,7 +80,6 @@ export async function getClients() {
                 _count: {
                     select: {
                         projects: true,
-                        timeEntries: true,
                     },
                 },
             },
