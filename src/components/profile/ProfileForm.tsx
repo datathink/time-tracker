@@ -128,11 +128,11 @@ export function ProfileForm() {
                     </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-6">
                     <FormField
                         name="firstName"
                         render={({ field }) => (
-                            <FormItem>
+                            <FormItem className="space-y-2">
                                 <FormLabel>First name</FormLabel>
                                 <FormControl>
                                     <Input
@@ -150,7 +150,7 @@ export function ProfileForm() {
                     <FormField
                         name="lastName"
                         render={({ field }) => (
-                            <FormItem>
+                            <FormItem className="space-y-2">
                                 <FormLabel>Last name</FormLabel>
                                 <FormControl>
                                     <Input
@@ -168,7 +168,7 @@ export function ProfileForm() {
                     <FormField
                         name="phoneNumber"
                         render={({ field }) => (
-                            <FormItem>
+                            <FormItem className="space-y-2">
                                 <FormLabel>Phone</FormLabel>
                                 <FormControl>
                                     <Input
@@ -204,12 +204,12 @@ export function ProfileForm() {
                     <FormField
                         name="address"
                         render={({ field }) => (
-                            <FormItem className="col-span-2">
+                            <FormItem className="space-y-2">
                                 <FormLabel>Address</FormLabel>
                                 <FormControl>
                                     <Textarea
                                         id="address"
-                                        rows={3}
+                                        rows={5}
                                         {...field}
                                         disabled={loading}
                                     />

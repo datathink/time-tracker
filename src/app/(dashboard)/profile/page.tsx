@@ -1,10 +1,12 @@
 "use client";
 
 import { ProfileForm } from "@/components/profile/ProfileForm";
-import { Prisma } from "@prisma/client";
-import { useState, useEffect } from "react";
-import { getUserProfile } from "@/lib/actions/profile";
 
 export default function ProfilePage() {
-    return <ProfileForm />;
+    return (
+            <div className="max-w-2xl mx-auto bg-white rounded-lg shadow p-10">
+                <h2 className="text-3xl font-semibold mb-6 text-center">Profile</h2>
+                <ProfileForm />
+            </div>
+    );
 }
