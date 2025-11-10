@@ -267,7 +267,7 @@ export function TimeEntryForm({
                             <span className="text-xs text-gray-500">
                               ({project.client.name})
                             </span>
-                          )}
+                    <SelectItem value="none">Select a project</SelectItem>
                         </div>
                       </SelectItem>
                     ))}
