@@ -9,15 +9,14 @@ import { getClients } from "@/lib/actions/clients";
 import { Prisma } from "@prisma/client";
 
 type ClientWithCount = Prisma.ClientGetPayload<{
-    include: {
-        _count: {
-            select: {
-                projects: true;
-                timeEntries: true;
-            };
-        };
-    };
-}>;
+  include: {
+    _count: {
+      select: {
+        projects: true,
+      }
+    }
+  }
+}>
 
 export default function ClientsPage() {
     const [clients, setClients] = useState<ClientWithCount[]>([]);
