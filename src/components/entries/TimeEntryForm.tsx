@@ -197,13 +197,13 @@ export function TimeEntryForm({
 
     const timeEntryData: TimeEntryFormData = {
       date: data.date,
-      projectId: data.projectId || null,
+      projectId: data.projectId,
       clientId: data.clientId || null,
       duration,
       startTime: data.startTime || null,
       endTime: data.endTime || null,
-      description: data.description || undefined,
-            description: data.description,
+      description: data.description,
+    };
 
     const result = entry
       ? await updateTimeEntry(entry.id, timeEntryData)
@@ -254,7 +254,6 @@ export function TimeEntryForm({
                     <SelectValue placeholder="Select a project" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Select a project</SelectItem>
                     {projects.map((project) => (
                       <SelectItem key={project.id} value={project.id}>
                         <div className="flex items-center gap-2">
@@ -267,7 +266,7 @@ export function TimeEntryForm({
                             <span className="text-xs text-gray-500">
                               ({project.client.name})
                             </span>
-                    <SelectItem value="none">Select a project</SelectItem>
+                          )}
                         </div>
                       </SelectItem>
                     ))}
