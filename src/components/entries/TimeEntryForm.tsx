@@ -296,7 +296,6 @@ export function TimeEntryForm({
                     <SelectValue placeholder="Select a project" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Select a project</SelectItem>
                     {projects.map((project) => (
                       <SelectItem key={project.id} value={project.id}>
                         <div className="flex items-center gap-2">
@@ -327,7 +326,6 @@ export function TimeEntryForm({
                   <Input
                     id="date"
                     value={dateValue}
-                    //placeholder="November 06, 2025 (Thu)"
                     className="bg-background pr-10"
                     onChange={(e) => {
                       const date = new Date(e.target.value);
