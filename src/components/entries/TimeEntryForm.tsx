@@ -7,31 +7,30 @@ import { z } from "zod";
 import { createTimeEntry, updateTimeEntry } from "@/lib/actions/entries";
 import { type TimeEntryFormData } from "@/lib/schemas/time-entry";
 import { getActiveProjects } from "@/lib/actions/projects";
-import { getClients } from "@/lib/actions/clients";
 import {
-  parseDuration,
-  calculateEndTime,
-  calculateDuration,
-  formatDuration,
+    parseDuration,
+    calculateEndTime,
+    calculateDuration,
+    formatDuration,
 } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -45,27 +44,16 @@ import { format } from "date-fns";
 import { Prisma } from "@prisma/client";
 
 type ActiveProject = Prisma.ProjectGetPayload<{
-  select: {
-    id: true;
-    name: true;
-    color: true;
-    client: {
-      select: {
+    select: {
+        id: true;
         name: true;
-      };
+        color: true;
+        client: {
+            select: {
+                name: true;
+            };
+        };
     };
-  };
-}>;
-
-type ClientWithCount = Prisma.ClientGetPayload<{
-  include: {
-    _count: {
-      select: {
-        projects: true;
-        timeEntries: true;
-      };
-    };
-  };
 }>;
 
 const timeEntryFormSchema = z.object({
@@ -81,29 +69,24 @@ const timeEntryFormSchema = z.object({
 type FormData = z.infer<typeof timeEntryFormSchema>;
 
 interface TimeEntryFormProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  entry?: {
-    id: string;
-    date: Date;
-    projectId: string | null;
-    clientId: string | null;
-    duration: number;
-    startTime: string | null;
-    endTime: string | null;
-    description: string | null;
-    project?: {
-      id: string;
-      name: string;
-      color: string;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    entry?: {
+        id: string;
+        date: Date;
+        projectId: string | null;
+        duration: number;
+        startTime: string | null;
+        endTime: string | null;
+        description: string | null;
+        project?: {
+            id: string;
+            name: string;
+            color: string;
+        } | null;
     } | null;
-    client?: {
-      id: string;
-      name: string;
-    } | null;
-  } | null;
-  defaultDate?: Date | null;
-  onSuccess?: () => void;
+    defaultDate?: Date | null;
+    onSuccess?: () => void;
 }
 
 function formatDate(date: Date | undefined) {
@@ -127,11 +110,11 @@ function isValidDate(date: Date | undefined) {
 }
 
 export function TimeEntryForm({
-  open,
-  onOpenChange,
-  entry,
-  defaultDate,
-  onSuccess,
+    open,
+    onOpenChange,
+    entry,
+    defaultDate,
+    onSuccess,
 }: TimeEntryFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -173,10 +156,10 @@ export function TimeEntryForm({
     },
   });
 
-  const selectedProjectId = watch("projectId");
-  const durationInput = watch("durationInput");
-  const startTime = watch("startTime");
-  const endTime = watch("endTime");
+    const selectedProjectId = watch("projectId");
+    const durationInput = watch("durationInput");
+    const startTime = watch("startTime");
+    const endTime = watch("endTime");
 
   useEffect(() => {
     const loadData = async () => {
@@ -200,67 +183,66 @@ export function TimeEntryForm({
     }
   }, [open, defaultDate, entry, setValue]);
 
-  // Parse duration input
-  useEffect(() => {
-    if (durationInput) {
-      const minutes = parseDuration(durationInput);
-      setParsedDuration(minutes);
-    } else {
-      setParsedDuration(null);
-    }
-  }, [durationInput]);
+    // Parse duration input
+    useEffect(() => {
+        if (durationInput) {
+            const minutes = parseDuration(durationInput);
+            setParsedDuration(minutes);
+        } else {
+            setParsedDuration(null);
+        }
+    }, [durationInput]);
 
-  // Auto-calculate end time if start time and duration are provided
-  useEffect(() => {
-    if (startTime && parsedDuration && !endTime) {
-      const calculated = calculateEndTime(startTime, parsedDuration);
-      setValue("endTime", calculated);
-    }
-  }, [startTime, parsedDuration, endTime, setValue]);
+    // Auto-calculate end time if start time and duration are provided
+    useEffect(() => {
+        if (startTime && parsedDuration && !endTime) {
+            const calculated = calculateEndTime(startTime, parsedDuration);
+            setValue("endTime", calculated);
+        }
+    }, [startTime, parsedDuration, endTime, setValue]);
 
-  // Auto-calculate duration if both start and end times are provided
-  useEffect(() => {
-    if (startTime && endTime && !durationInput) {
-      const minutes = calculateDuration(startTime, endTime);
-      setValue("durationInput", formatDuration(minutes));
-    }
-  }, [startTime, endTime, durationInput, setValue]);
+    // Auto-calculate duration if both start and end times are provided
+    useEffect(() => {
+        if (startTime && endTime && !durationInput) {
+            const minutes = calculateDuration(startTime, endTime);
+            setValue("durationInput", formatDuration(minutes));
+        }
+    }, [startTime, endTime, durationInput, setValue]);
 
-  const onSubmit = async (data: FormData) => {
-    setLoading(true);
-    setError(null);
+    const onSubmit = async (data: FormData) => {
+        setLoading(true);
+        setError(null);
 
-    const duration = parseDuration(data.durationInput);
-    if (!duration) {
-      setError("Invalid duration format");
-      setLoading(false);
-      return;
-    }
+        const duration = parseDuration(data.durationInput);
+        if (!duration) {
+            setError("Invalid duration format");
+            setLoading(false);
+            return;
+        }
 
-    const timeEntryData: TimeEntryFormData = {
-      date: data.date,
-      projectId: data.projectId || null,
-      clientId: data.clientId || null,
-      duration,
-      startTime: data.startTime || null,
-      endTime: data.endTime || null,
-      description: data.description || "",
+        const timeEntryData: TimeEntryFormData = {
+            date: data.date,
+            projectId: data.projectId || null,
+            duration,
+            startTime: data.startTime || null,
+            endTime: data.endTime || null,
+            description: data.description || "",
+        };
+
+        const result = entry
+            ? await updateTimeEntry(entry.id, timeEntryData)
+            : await createTimeEntry(timeEntryData);
+
+        if (result.success) {
+            reset();
+            onOpenChange(false);
+            onSuccess?.();
+        } else {
+            setError(result.error || "An error occurred");
+        }
+
+        setLoading(false);
     };
-
-    const result = entry
-      ? await updateTimeEntry(entry.id, timeEntryData)
-      : await createTimeEntry(timeEntryData);
-
-    if (result.success) {
-      reset();
-      onOpenChange(false);
-      onSuccess?.();
-    } else {
-      setError(result.error || "An error occurred");
-    }
-
-    setLoading(false);
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
