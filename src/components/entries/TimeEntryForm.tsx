@@ -33,8 +33,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { format } from "date-fns";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { cn } from "@/lib/utils";
 import { Prisma } from "@prisma/client";
+import { TimeInput } from "../ui/time-input";
 
 type ActiveProject = Prisma.ProjectGetPayload<{
   select: {
@@ -110,6 +119,7 @@ export function TimeEntryForm({
   const [projects, setProjects] = useState<ActiveProject[]>([]);
   const [clients, setClients] = useState<ClientWithCount[]>([]);
   const [parsedDuration, setParsedDuration] = useState<number | null>(null);
+  const [dateOpen, setDateOpen] = useState(false);
 
   const {
     register,
@@ -151,7 +161,6 @@ export function TimeEntryForm({
     };
     if (open) {
       loadData();
-      // Update date if defaultDate changes
       if (defaultDate && !entry) {
         setValue("date", format(defaultDate, "yyyy-MM-dd"));
       }
@@ -277,19 +286,67 @@ export function TimeEntryForm({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="date">
+                <Label htmlFor="date" className="px-1">
                   Date <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="date"
-                  type="date"
-                  {...register("date")}
-                  disabled={loading}
-                />
+
+                <div className="relative">
+                  <Input
+                    id="date"
+                    value={
+                      watch("date")
+                        ? format(parseISO(watch("date")), "EEE, MMMM do, yyyy")
+                        : ""
+                    }
+                    placeholder="Select a date"
+                    className="bg-background pr-10"
+                    readOnly
+                    disabled={loading}
+                  />
+
+                  <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="absolute top-1/2 right-2 size-6 -translate-y-1/2"
+                        type="button"
+                        disabled={loading}
+                      >
+                        <CalendarIcon className="size-3.5" />
+                        <span className="sr-only">Open calendar</span>
+                      </Button>
+                    </PopoverTrigger>
+
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar
+                        mode="single"
+                        selected={
+                          watch("date") ? parseISO(watch("date")) : undefined
+                        }
+                        onSelect={(date) => {
+                          if (date) {
+                            const iso = format(date, "yyyy-MM-dd");
+                            setValue("date", iso, { shouldValidate: true });
+                          }
+                          setDateOpen(false);
+                        }}
+                        disabled={loading}
+                        captionLayout="dropdown"
+                        defaultMonth={
+                          watch("date") ? parseISO(watch("date")) : new Date()
+                        }
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
                 {errors.date && (
-                  <p className="text-sm text-red-500">{errors.date.message}</p>
+                  <p className="text-sm text-red-500 px-1">
+                    {errors.date.message}
+                  </p>
                 )}
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="durationInput">
                   Duration <span className="text-red-500">*</span>
@@ -312,26 +369,29 @@ export function TimeEntryForm({
                   </p>
                 )}
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="startTime">Start Time (optional)</Label>
-                <Input
+                <TimeInput
                   id="startTime"
-                  type="time"
                   placeholder="09:00"
-                  {...register("startTime")}
+                  value={startTime ?? ""}
+                  onChange={(v) => setValue("startTime", v || "")}
                   disabled={loading}
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="endTime">End Time (optional)</Label>
-                <Input
+                <TimeInput
                   id="endTime"
-                  type="time"
                   placeholder="17:30"
-                  {...register("endTime")}
+                  value={endTime ?? ""}
+                  onChange={(v) => setValue("endTime", v || "")}
                   disabled={loading}
                 />
               </div>
+
               <div className="space-y-2 col-span-2">
                 <Label htmlFor="description">
                   Description <span className="text-red-500">*</span>
@@ -346,6 +406,7 @@ export function TimeEntryForm({
               </div>
             </div>
           </div>
+
           <DialogFooter>
             <Button
               type="button"
