@@ -52,7 +52,8 @@ export async function createTimeEntry(data: TimeEntryFormData) {
       data: {
         userId: user.id,
         date: localDate,
-        projectId: validated.projectId || null,
+        projectId: validated.projectId,
+        clientId: validated.clientId || null,
         duration: validated.duration,
         startTime: validated.startTime || null,
         endTime: validated.endTime || null,
@@ -117,7 +118,8 @@ export async function updateTimeEntry(id: string, data: TimeEntryFormData) {
       where: { id },
       data: {
         date: localDate,
-        projectId: validated.projectId || null,
+        projectId: validated.projectId,
+        clientId: validated.clientId || null,
         duration: validated.duration,
         startTime: validated.startTime || null,
         endTime: validated.endTime || null,
@@ -215,6 +217,12 @@ export async function getTimeEntries(filters?: {
             color: true,
           },
         },
+        client: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
@@ -238,6 +246,7 @@ export async function getTimeEntry(id: string) {
       where: { id },
       include: {
         project: true,
+        client: true,
       },
     });
 
@@ -276,6 +285,12 @@ export async function getWeekTimeEntries(weekStart: string, weekEnd: string) {
             id: true,
             name: true,
             color: true,
+          },
+        },
+        client: {
+          select: {
+            id: true,
+            name: true,
           },
         },
       },

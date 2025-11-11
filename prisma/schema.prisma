@@ -95,13 +95,13 @@ model TimeEntry {
   project      Project  @relation(fields: [projectId], references: [id])
   client       Client?   @relation(fields: [clientId], references: [id])
 
-
   // Audit fields
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
   @@index([userId, date])
   @@index([projectId, date])
+  @@index([clientId, date])
   @@index([projectId, userId])
 }
 
@@ -166,6 +166,8 @@ model Client {
 
   // Relations
   projects     Project[]
+  timeEntries  TimeEntry[]
+
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }

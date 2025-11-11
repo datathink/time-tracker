@@ -34,6 +34,7 @@ type ClientWithCount = Prisma.ClientGetPayload<{
     _count: {
       select: {
         projects: true;
+        timeEntries: true;
       };
     };
   };
