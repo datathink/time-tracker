@@ -52,12 +52,12 @@ export async function createTimeEntry(data: TimeEntryFormData) {
       data: {
         userId: user.id,
         date: localDate,
-        projectId: validated.projectId || null,
+        projectId: validated.projectId,
         clientId: validated.clientId || null,
         duration: validated.duration,
         startTime: validated.startTime || null,
         endTime: validated.endTime || null,
-        description: validated.description || null,
+        description: validated.description,
       },
     });
 
@@ -118,12 +118,12 @@ export async function updateTimeEntry(id: string, data: TimeEntryFormData) {
       where: { id },
       data: {
         date: localDate,
-        projectId: validated.projectId || null,
+        projectId: validated.projectId,
         clientId: validated.clientId || null,
         duration: validated.duration,
         startTime: validated.startTime || null,
         endTime: validated.endTime || null,
-        description: validated.description || null,
+        description: validated.description,
       },
     });
 

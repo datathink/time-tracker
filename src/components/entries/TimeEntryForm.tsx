@@ -33,8 +33,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { format } from "date-fns";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { cn } from "@/lib/utils";
 import { Prisma } from "@prisma/client";
+import { TimeInput } from "../ui/time-input";
 
 type ActiveProject = Prisma.ProjectGetPayload<{
   select: {
@@ -62,12 +71,12 @@ type ClientWithCount = Prisma.ClientGetPayload<{
 
 const timeEntryFormSchema = z.object({
   date: z.string().min(1, "Date is required"),
-  projectId: z.string().optional().nullable(),
+  projectId: z.string().min(1, "Project is required"),
   clientId: z.string().optional().nullable(),
   durationInput: z.string().min(1, "Duration is required"),
   startTime: z.string().optional(),
   endTime: z.string().optional(),
-  description: z.string().optional(),
+  description: z.string().min(10, "Description is required"),
 });
 
 type FormData = z.infer<typeof timeEntryFormSchema>;
@@ -110,6 +119,7 @@ export function TimeEntryForm({
   const [projects, setProjects] = useState<ActiveProject[]>([]);
   const [clients, setClients] = useState<ClientWithCount[]>([]);
   const [parsedDuration, setParsedDuration] = useState<number | null>(null);
+  const [dateOpen, setDateOpen] = useState(false);
 
   const {
     register,
@@ -126,7 +136,7 @@ export function TimeEntryForm({
         : defaultDate
           ? format(defaultDate, "yyyy-MM-dd")
           : format(new Date(), "yyyy-MM-dd"),
-      projectId: entry?.projectId || null,
+      projectId: entry?.projectId || "",
       clientId: entry?.clientId || null,
       durationInput: entry?.duration ? formatDuration(entry.duration) : "",
       startTime: entry?.startTime || "",
@@ -151,7 +161,6 @@ export function TimeEntryForm({
     };
     if (open) {
       loadData();
-      // Update date if defaultDate changes
       if (defaultDate && !entry) {
         setValue("date", format(defaultDate, "yyyy-MM-dd"));
       }
@@ -197,12 +206,12 @@ export function TimeEntryForm({
 
     const timeEntryData: TimeEntryFormData = {
       date: data.date,
-      projectId: data.projectId || null,
+      projectId: data.projectId,
       clientId: data.clientId || null,
       duration,
       startTime: data.startTime || null,
       endTime: data.endTime || null,
-      description: data.description || "",
+      description: data.description,
     };
 
     const result = entry
@@ -240,21 +249,104 @@ export function TimeEntryForm({
                 {error}
               </div>
             )}
+            <div className="flex items-start gap-4">
+              <div className="flex-1 space-y-2">
+                <Label htmlFor="projectId">
+                  Project <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={selectedProjectId || undefined}
+                  onValueChange={(value) => setValue("projectId", value)}
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a project" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projects.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-2 h-2 rounded-full"
+                            style={{ backgroundColor: project.color }}
+                          />
+                          {project.name}
+                          {project.client && (
+                            <span className="text-xs text-gray-500">
+                              ({project.client.name})
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="date">
+                <Label htmlFor="date" className="px-1">
                   Date <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="date"
-                  type="date"
-                  {...register("date")}
-                  disabled={loading}
-                />
+
+                <div className="relative">
+                  <Input
+                    id="date"
+                    value={
+                      watch("date")
+                        ? format(parseISO(watch("date")), "EEE, MMMM do, yyyy")
+                        : ""
+                    }
+                    placeholder="Select a date"
+                    className="bg-background pr-10"
+                    readOnly
+                    disabled={loading}
+                  />
+
+                  <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="absolute top-1/2 right-2 size-6 -translate-y-1/2"
+                        type="button"
+                        disabled={loading}
+                      >
+                        <CalendarIcon className="size-3.5" />
+                        <span className="sr-only">Open calendar</span>
+                      </Button>
+                    </PopoverTrigger>
+
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar
+                        mode="single"
+                        selected={
+                          watch("date") ? parseISO(watch("date")) : undefined
+                        }
+                        onSelect={(date) => {
+                          if (date) {
+                            const iso = format(date, "yyyy-MM-dd");
+                            setValue("date", iso, { shouldValidate: true });
+                          }
+                          setDateOpen(false);
+                        }}
+                        disabled={loading}
+                        captionLayout="dropdown"
+                        defaultMonth={
+                          watch("date") ? parseISO(watch("date")) : new Date()
+                        }
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
                 {errors.date && (
-                  <p className="text-sm text-red-500">{errors.date.message}</p>
+                  <p className="text-sm text-red-500 px-1">
+                    {errors.date.message}
+                  </p>
                 )}
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="durationInput">
                   Duration <span className="text-red-500">*</span>
@@ -277,79 +369,33 @@ export function TimeEntryForm({
                   </p>
                 )}
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="startTime">Start Time (optional)</Label>
-                <Input
+                <TimeInput
                   id="startTime"
-                  type="time"
                   placeholder="09:00"
-                  {...register("startTime")}
+                  value={startTime ?? ""}
+                  onChange={(v) => setValue("startTime", v || "")}
                   disabled={loading}
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="endTime">End Time (optional)</Label>
-                <Input
+                <TimeInput
                   id="endTime"
-                  type="time"
                   placeholder="17:30"
-                  {...register("endTime")}
+                  value={endTime ?? ""}
+                  onChange={(v) => setValue("endTime", v || "")}
                   disabled={loading}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="projectId">Project</Label>
-                <Select
-                  value={selectedProjectId || undefined}
-                  onValueChange={(value) => setValue("projectId", value)}
-                  disabled={loading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a project" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No project</SelectItem>
-                    {projects.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: project.color }}
-                          />
-                          {project.name}
-                          {project.client && (
-                            <span className="text-xs text-gray-500">
-                              ({project.client.name})
-                            </span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="clientId">Client (optional)</Label>
-                <Select
-                  value={watch("clientId") || undefined}
-                  onValueChange={(value) => setValue("clientId", value)}
-                  disabled={loading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a client" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No client</SelectItem>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+
               <div className="space-y-2 col-span-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">
+                  Description <span className="text-red-500">*</span>
+                </Label>
                 <Textarea
                   id="description"
                   placeholder="What did you work on?"
@@ -360,6 +406,7 @@ export function TimeEntryForm({
               </div>
             </div>
           </div>
+
           <DialogFooter>
             <Button
               type="button"
