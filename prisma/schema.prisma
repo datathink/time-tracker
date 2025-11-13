@@ -34,8 +34,6 @@ model User {
 model UserProfile {
   id            String    @id @default(uuid())
   userId        String    @unique
-  firstName     String?
-  lastName      String?
   phone         String?
   address       String?
   birthDate     DateTime?

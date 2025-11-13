@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect} from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
 import { type ProfileFormData } from "@/lib/schemas/profile";
+import { type UsernameUpdateData } from "@/lib/schemas/user";
 import { createProfile, updateProfile, getUserProfile } from "@/lib/actions/profile";
+import { updateUserName } from "@/lib/actions/user";
+import { useSession } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,8 +23,7 @@ import {
 } from "@/components/ui/form";
 
 const profileFormSchema = z.object({
-    firstName: z.string().min(1, "First name is required"),
-    lastName: z.string().min(1, "Last name is required"),
+    fullName: z.string().min(1, "Full name is required"),
     phoneNumber: z
         .string()
         .min(8, "Phone number should be 8 characters or more"),
@@ -40,18 +42,12 @@ export function ProfileForm() {
     const [existingProfile, setExistingProfile] = useState<{
         id: string;
         userId: string;
-        firstName: string | null;
-        lastName: string | null;
-        phone: string | null;
-        address: string | null;
-        birthDate: Date | null;
     } | null>(null);
 
     const methods = useForm<FormData>({
         resolver: zodResolver(profileFormSchema),
         defaultValues: {
-            firstName: "",
-            lastName: "",
+            fullName: "",
             phoneNumber: "",
             address: "",
             birthDate: "",
@@ -59,6 +55,7 @@ export function ProfileForm() {
     });
 
     const { handleSubmit, reset } = methods;
+    const { data: session, refetch } = useSession();
 
     // Load existing profile data on mount
     useEffect(() => {
@@ -68,8 +65,7 @@ export function ProfileForm() {
                 setExistingProfile(result.data);
                 // Pre-populate form fields
                 reset({
-                    firstName: result.data.firstName || "",
-                    lastName: result.data.lastName || "",
+                    fullName: session?.user?.name || "",
                     phoneNumber: result.data.phone || "",
                     address: result.data.address || "",
                     birthDate: result.data.birthDate
@@ -79,7 +75,7 @@ export function ProfileForm() {
             }
         };
         loadProfile();
-    }, [reset]);
+    }, [reset, session?.user?.name]);
 
     const onSubmit = async (data: FormData) => {
         setLoading(true);
@@ -88,20 +84,27 @@ export function ProfileForm() {
 
         // Transform the form data to match ProfileFormData type
         const profileData: ProfileFormData = {
-            firstName: data.firstName,
-            lastName: data.lastName,
             phoneNumber: data.phoneNumber,
             address: data.address,
             birthDate: data.birthDate,
         };
+
+        // Prepare the full name from form data to match UsernameUpdateData type
+        const userNameData: UsernameUpdateData = { fullName: data.fullName };
 
         // Decide whether to create or update
         const result = existingProfile
             ? await updateProfile(existingProfile.id, profileData)
             : await createProfile(profileData);
 
-        if (result.success) {
+        // Update user name regardless of profile creation or update
+        const nameResult = (session?.user?.id)
+        ? await updateUserName(session.user.id, userNameData) : { success: true };
+
+
+        if (result.success && nameResult.success) {
             setSuccess("Profile saved successfully!");
+            refetch();
             // If we just created a profile, update the existingProfile state
             if (!existingProfile && result.data) {
                 setExistingProfile(result.data);
@@ -130,13 +133,13 @@ export function ProfileForm() {
 
                 <div className="space-y-6">
                     <FormField
-                        name="firstName"
+                        name="fullName"
                         render={({ field }) => (
                             <FormItem className="space-y-2">
-                                <FormLabel>First name</FormLabel>
+                                <FormLabel>Full Name</FormLabel>
                                 <FormControl>
                                     <Input
-                                        id="firstName"
+                                        id="fullName"
                                         type="text"
                                         {...field}
                                         disabled={loading}
@@ -147,23 +150,6 @@ export function ProfileForm() {
                         )}
                     />
 
-                    <FormField
-                        name="lastName"
-                        render={({ field }) => (
-                            <FormItem className="space-y-2">
-                                <FormLabel>Last name</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        id="lastName"
-                                        type="text"
-                                        {...field}
-                                        disabled={loading}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
 
                     <FormField
                         name="phoneNumber"

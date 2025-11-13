@@ -33,8 +33,6 @@ export async function createProfile(data: ProfileFormData) {
         const profile = await prisma.userProfile.create({
             data: {
                 userId: user.id,
-                firstName: validated.firstName,
-                lastName: validated.lastName,
                 phone: validated.phoneNumber,
                 address: validated.address,
                 birthDate: new Date(validated.birthDate),
@@ -72,8 +70,6 @@ export async function updateProfile(
         const profile = await prisma.userProfile.update({
             where: { id: userProfileId },
             data: {
-                firstName: validated.firstName,
-                lastName: validated.lastName,
                 phone: validated.phoneNumber,
                 address: validated.address,
                 birthDate: new Date(validated.birthDate),
