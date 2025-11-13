@@ -63,12 +63,6 @@ export function Header() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-
-      {/* <ProfileForm
-        open={isProfileOpen}
-        onOpenChange={setIsProfileOpen}
-        onSuccess={handleSuccess}
-      />*/}
     </header>
   );
 }
