@@ -1,13 +1,17 @@
 "use client";
 
-import { useState, useEffect} from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
 import { type ProfileFormData } from "@/lib/schemas/profile";
 import { type UsernameUpdateData } from "@/lib/schemas/user";
-import { createProfile, updateProfile, getUserProfile } from "@/lib/actions/profile";
+import {
+    createProfile,
+    updateProfile,
+    getUserProfile,
+} from "@/lib/actions/profile";
 import { updateUserName } from "@/lib/actions/user";
 import { useSession } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
@@ -98,9 +102,15 @@ export function ProfileForm() {
             : await createProfile(profileData);
 
         // Update user name regardless of profile creation or update
-        const nameResult = (session?.user?.id)
-        ? await updateUserName(session.user.id, userNameData) : { success: true };
+        const nameResult = session?.user?.id
+            ? await updateUserName(session.user.id, userNameData)
+            : { success: true };
 
+        if (result.success && !nameResult.success) {
+            setSuccess(
+                "Profile saved, but name update failed. Please try again."
+            );
+        }
 
         if (result.success && nameResult.success) {
             setSuccess("Profile saved successfully!");
@@ -149,7 +159,6 @@ export function ProfileForm() {
                             </FormItem>
                         )}
                     />
-
 
                     <FormField
                         name="phoneNumber"
@@ -208,7 +217,11 @@ export function ProfileForm() {
 
                 <div className="flex justify-end gap-2">
                     <Button type="submit" disabled={loading}>
-                        {loading ? "Saving..." : existingProfile ? "Update" : "Create"}
+                        {loading
+                            ? "Saving..."
+                            : existingProfile
+                              ? "Update"
+                              : "Create"}
                     </Button>
                 </div>
             </form>

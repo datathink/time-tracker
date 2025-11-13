@@ -2,8 +2,6 @@
 CREATE TABLE "UserProfile" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "firstName" TEXT,
-    "lastName" TEXT,
     "phone" TEXT,
     "address" TEXT,
     "birthDate" TIMESTAMP(3),
