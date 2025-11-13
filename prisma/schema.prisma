@@ -98,7 +98,6 @@ model TimeEntry {
   id           String    @id @default(uuid())
   userId       String
   projectId    String?
-  clientId     String?
   date         DateTime  @db.Date // The day this entry is for
   duration     Int       // Required: duration in minutes
   startTime    String?   // Optional: "09:00" format
@@ -109,7 +108,6 @@ model TimeEntry {
   // Relations
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   project      Project?  @relation(fields: [projectId], references: [id])
-  client       Client?   @relation(fields: [clientId], references: [id])
 
   // Audit fields
   createdAt    DateTime  @default(now())
@@ -117,7 +115,6 @@ model TimeEntry {
 
   @@index([userId, date])
   @@index([projectId, date])
-  @@index([clientId, date])
   @@index([projectId, userId])
 }
 
@@ -182,8 +179,6 @@ model Client {
 
   // Relations
   projects     Project[]
-  timeEntries  TimeEntry[]
-
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }
