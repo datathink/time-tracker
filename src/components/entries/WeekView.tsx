@@ -25,6 +25,12 @@ type TimeEntry = Prisma.TimeEntryGetPayload<{
         color: true;
       };
     };
+    client: {
+      select: {
+        id: true;
+        name: true;
+      };
+    };
   };
 }>;
 

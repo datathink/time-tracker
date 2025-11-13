@@ -31,6 +31,7 @@ interface Client {
   hourlyRate: Decimal | null
   _count?: {
     projects: number
+    timeEntries: number
   }
 }
 
@@ -88,6 +89,7 @@ export function ClientList({ clients }: ClientListProps) {
               <TableHead>Company</TableHead>
               <TableHead>Hourly Rate</TableHead>
               <TableHead>Projects</TableHead>
+              <TableHead>Time Entries</TableHead>
               <TableHead className="w-[70px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -102,6 +104,9 @@ export function ClientList({ clients }: ClientListProps) {
                 </TableCell>
                 <TableCell>
                   <Badge variant="secondary">{client._count?.projects || 0}</Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="secondary">{client._count?.timeEntries || 0}</Badge>
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
