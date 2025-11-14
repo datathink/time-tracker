@@ -5,7 +5,7 @@
 
 */
 -- AlterTable
-ALTER TABLE "Project" DROP COLUMN "billable";
+ALTER TABLE "Project" DROP COLUMN IF EXISTS "billable";
 
 -- AlterTable
-ALTER TABLE "TimeEntry" ADD COLUMN     "billable" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "TimeEntry" ADD COLUMN IF NOT EXISTS "billable" BOOLEAN NOT NULL DEFAULT false;

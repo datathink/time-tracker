@@ -7,7 +7,7 @@ export const projectSchema = z.object({
   description: z.string().optional(),
   budgetHours: z
     .string()
-    .optional()
+    .nullish()
     .transform((val) => {
       if (!val || val === "") return null;
       const parsed = parseFloat(val);
@@ -15,7 +15,7 @@ export const projectSchema = z.object({
     }),
   hourlyRate: z
     .string()
-    .optional()
+    .nullish()
     .transform((val) => {
       if (!val || val === "") return null;
       const parsed = parseFloat(val);

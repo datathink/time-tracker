@@ -147,7 +147,7 @@ model ProjectMember {
   projectId        String
   userId           String
   role             Role      @default(member)
-  contractorRate   Decimal   @db.Decimal(10, 2) // Individual pay rate for this user on this project (USD/hr)
+  payoutRate       Decimal   @db.Decimal(10, 2) // Individual pay rate for this user on this project (USD/hr)
   chargeRate       Decimal   @db.Decimal(10, 2) // Rate charged to client for this user on this project (USD/hr)
   isActive         Boolean   @default(true)
 
@@ -175,7 +175,6 @@ model Client {
   name         String
   email        String?
   company      String?
-  hourlyRate   Decimal?  @db.Decimal(10, 2) // Default rate for this client
 
   // Relations
   projects     Project[]
