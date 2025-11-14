@@ -5,4 +5,4 @@
 
 */
 -- AlterTable
-ALTER TABLE "TimeEntry" DROP COLUMN "billable";
+ALTER TABLE "TimeEntry" DROP COLUMN IF EXISTS "billable";

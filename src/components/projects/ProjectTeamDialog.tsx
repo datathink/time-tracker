@@ -15,17 +15,23 @@ import { getProjectMembers } from "@/lib/actions/project-members";
 import { Plus } from "lucide-react";
 import { Prisma } from "@prisma/client";
 
-type ProjectMemberWithUser = Prisma.ProjectMemberGetPayload<{
-    include: {
-        user: {
-            select: {
-                id: true;
-                name: true;
-                email: true;
+type ProjectMemberWithUser = Omit<
+    Prisma.ProjectMemberGetPayload<{
+        include: {
+            user: {
+                select: {
+                    id: true;
+                    name: true;
+                    email: true;
+                };
             };
         };
-    };
-}>;
+    }>,
+    "payoutRate" | "chargeRate"
+> & {
+    payoutRate: number;
+    chargeRate: number;
+};
 
 interface Project {
     id: string;
@@ -52,7 +58,7 @@ export function ProjectTeamDialog({
     const loadMembers = useCallback(async () => {
         setLoading(true);
         const result = await getProjectMembers(project.id);
-        if (result.success && result.data) {
+        if (result.success && Array.isArray(result.data)) {
             setMembers(result.data);
         }
         setLoading(false);
