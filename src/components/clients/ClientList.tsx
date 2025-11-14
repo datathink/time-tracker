@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { ClientForm } from "./ClientForm"
-import { deleteClient } from "@/lib/actions/clients"
+import { getClients, deleteClient } from "@/lib/actions/clients"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -21,14 +21,13 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { Decimal } from "@prisma/client/runtime/library"
+
 
 interface Client {
   id: string
   name: string
   email: string | null
   company: string | null
-  hourlyRate: Decimal | null
   _count?: {
     projects: number
   }
@@ -39,10 +38,17 @@ interface ClientListProps {
 }
 
 export function ClientList({ clients }: ClientListProps) {
-  const router = useRouter()
+  const [allClients, setAllClients] = useState(clients)
   const [editingClient, setEditingClient] = useState<Client | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  const loadClients = async () => {
+          const result = await getClients();
+          if (result.success) {
+              setAllClients(result.data);
+          }
+  };
 
   const handleEdit = (client: Client) => {
     setEditingClient(client)
@@ -56,7 +62,7 @@ export function ClientList({ clients }: ClientListProps) {
     const result = await deleteClient(id)
 
     if (result.success) {
-      router.refresh()
+      loadClients();
     } else {
       alert(result.error || "Failed to delete client")
     }
@@ -66,10 +72,10 @@ export function ClientList({ clients }: ClientListProps) {
 
   const handleSuccess = () => {
     setEditingClient(null)
-    router.refresh()
+    loadClients();
   }
 
-  if (clients.length === 0) {
+  if (allClients.length === 0) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">No clients yet. Create your first client to get started.</p>
@@ -86,20 +92,16 @@ export function ClientList({ clients }: ClientListProps) {
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Company</TableHead>
-              <TableHead>Hourly Rate</TableHead>
               <TableHead>Projects</TableHead>
               <TableHead className="w-[70px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {clients.map((client) => (
+            {allClients.map((client) => (
               <TableRow key={client.id}>
                 <TableCell className="font-medium">{client.name}</TableCell>
                 <TableCell>{client.email || "-"}</TableCell>
                 <TableCell>{client.company || "-"}</TableCell>
-                <TableCell>
-                  {client.hourlyRate ? `$${Number(client.hourlyRate).toFixed(2)}` : "-"}
-                </TableCell>
                 <TableCell>
                   <Badge variant="secondary">{client._count?.projects || 0}</Badge>
                 </TableCell>

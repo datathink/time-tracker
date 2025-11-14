@@ -159,7 +159,6 @@ model Client {
   name         String
   email        String?
   company      String?
-  hourlyRate   Decimal?  @db.Decimal(10, 2) // Default rate for this client
 
   // Relations
   projects     Project[]

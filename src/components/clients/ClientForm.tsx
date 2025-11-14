@@ -17,13 +17,11 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Decimal } from "@prisma/client/runtime/library";
 
 const clientFormSchema = z.object({
     name: z.string().min(1, "Name is required"),
     email: z.email("Invalid email").or(z.literal("")),
     company: z.string().optional(),
-    hourlyRate: z.string().optional(),
 });
 
 type FormData = z.infer<typeof clientFormSchema>;
@@ -36,7 +34,6 @@ interface ClientFormProps {
         name: string;
         email: string | null;
         company: string | null;
-        hourlyRate: Decimal | null;
     };
     onSuccess?: () => void;
 }
@@ -61,7 +58,6 @@ export function ClientForm({
             name: client?.name || "",
             email: client?.email || "",
             company: client?.company || "",
-            hourlyRate: client?.hourlyRate ? String(client.hourlyRate) : "",
         },
     });
 
@@ -74,10 +70,6 @@ export function ClientForm({
             name: data.name,
             email: data.email,
             company: data.company,
-            hourlyRate:
-                data.hourlyRate && data.hourlyRate !== ""
-                    ? parseFloat(data.hourlyRate)
-                    : null,
         };
 
         const result = client
@@ -154,24 +146,6 @@ export function ClientForm({
                                 {...register("company")}
                                 disabled={loading}
                             />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="hourlyRate">
-                                Default Hourly Rate ($)
-                            </Label>
-                            <Input
-                                id="hourlyRate"
-                                type="number"
-                                step="0.01"
-                                placeholder="75.00"
-                                {...register("hourlyRate")}
-                                disabled={loading}
-                            />
-                            {errors.hourlyRate && (
-                                <p className="text-sm text-red-500">
-                                    {errors.hourlyRate.message}
-                                </p>
-                            )}
                         </div>
                     </div>
                     <DialogFooter>
