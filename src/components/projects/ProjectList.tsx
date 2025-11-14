@@ -22,7 +22,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Pencil, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Decimal } from "@prisma/client/runtime/library";
 
 interface Project {
   id: string;
@@ -30,7 +29,6 @@ interface Project {
   clientId: string | null;
   description: string | null;
   budgetHours: number | null;
-  hourlyRate: Decimal | null;
   status: string;
   color: string;
   client?: {
@@ -117,7 +115,6 @@ export function ProjectList({ projects }: ProjectListProps) {
               <TableHead>Client</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Budget</TableHead>
-              <TableHead>Hourly Rate</TableHead>
               <TableHead>Team</TableHead>
               <TableHead>Time Entries</TableHead>
               <TableHead className="w-[70px]"></TableHead>
@@ -143,11 +140,6 @@ export function ProjectList({ projects }: ProjectListProps) {
                 </TableCell>
                 <TableCell>
                   {project.budgetHours ? `${project.budgetHours}h` : "-"}
-                </TableCell>
-                <TableCell>
-                  {project.hourlyRate
-                    ? `$${Number(project.hourlyRate).toFixed(2)}`
-                    : "-"}
                 </TableCell>
                 <TableCell>
                   <Badge variant="secondary">

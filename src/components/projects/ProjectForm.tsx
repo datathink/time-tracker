@@ -26,7 +26,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Decimal } from "@prisma/client/runtime/library";
 import { Prisma } from "@prisma/client";
 
 type ClientWithCount = Prisma.ClientGetPayload<{
@@ -44,7 +43,6 @@ const projectFormSchema = z.object({
   clientId: z.string().optional().nullable(),
   description: z.string().optional(),
   budgetHours: z.string().optional(),
-  hourlyRate: z.string().optional(),
   status: z.enum(["active", "archived", "completed"]),
   color: z.string(),
 });
@@ -60,7 +58,6 @@ interface ProjectFormProps {
     clientId: string | null;
     description: string | null;
     budgetHours: number | null;
-    hourlyRate: Decimal | null;
     status: string;
     color: string;
   };
@@ -91,7 +88,6 @@ export function ProjectForm({
       clientId: project?.clientId || null,
       description: project?.description || "",
       budgetHours: project?.budgetHours ? String(project.budgetHours) : "",
-      hourlyRate: project?.hourlyRate ? String(project.hourlyRate) : "",
       status:
         (project?.status as "active" | "archived" | "completed") || "active",
       color: project?.color || "#6366f1",
@@ -124,10 +120,6 @@ export function ProjectForm({
       budgetHours:
         data.budgetHours && data.budgetHours !== ""
           ? parseFloat(data.budgetHours)
-          : null,
-      hourlyRate:
-        data.hourlyRate && data.hourlyRate !== ""
-          ? parseFloat(data.hourlyRate)
           : null,
       status: data.status,
       color: data.color,
@@ -231,17 +223,6 @@ export function ProjectForm({
                   step="0.5"
                   placeholder="40"
                   {...register("budgetHours")}
-                  disabled={loading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="hourlyRate">Hourly Rate ($)</Label>
-                <Input
-                  id="hourlyRate"
-                  type="number"
-                  step="0.01"
-                  placeholder="75.00"
-                  {...register("hourlyRate")}
                   disabled={loading}
                 />
               </div>
