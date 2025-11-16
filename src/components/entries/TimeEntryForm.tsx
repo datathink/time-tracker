@@ -34,6 +34,14 @@ import {
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { Prisma } from "@prisma/client";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { TimeInput } from "../ui/time-input";
 
 type ActiveProject = Prisma.ProjectGetPayload<{
   select: {
@@ -254,12 +262,41 @@ export function TimeEntryForm({
                 <Label htmlFor="date">
                   Date <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="date"
-                  type="date"
-                  {...register("date")}
-                  disabled={loading}
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between text-left font-normal"
+                      disabled={loading}
+                    >
+                      <span>
+                        {watch("date") ? (
+                          format(new Date(watch("date")), "EEE, MMMM do, yyyy")
+                        ) : (
+                          <span className="text-muted-foreground">
+                            Pick a date
+                          </span>
+                        )}
+                      </span>
+                      <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={
+                        watch("date") ? new Date(watch("date")) : undefined
+                      }
+                      onSelect={(date) => {
+                        if (date) {
+                          setValue("date", format(date, "yyyy-MM-dd"));
+                        }
+                      }}
+                      captionLayout="dropdown"
+                      className="rounded-md border"
+                    />
+                  </PopoverContent>
+                </Popover>
                 {errors.date && (
                   <p className="text-sm text-red-500">{errors.date.message}</p>
                 )}
@@ -288,21 +325,23 @@ export function TimeEntryForm({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="startTime">Start Time (optional)</Label>
-                <Input
+                <TimeInput
                   id="startTime"
-                  type="time"
                   placeholder="09:00"
                   {...register("startTime")}
+                  value={startTime ?? ""}
+                  onChange={(v) => setValue("startTime", v || "")}
                   disabled={loading}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="endTime">End Time (optional)</Label>
-                <Input
+                <Label htmlFor="startTime">End Time (optional)</Label>
+                <TimeInput
                   id="endTime"
-                  type="time"
-                  placeholder="17:30"
+                  placeholder="09:00"
                   {...register("endTime")}
+                  value={endTime ?? ""}
+                  onChange={(v) => setValue("endTime", v || "")}
                   disabled={loading}
                 />
               </div>
