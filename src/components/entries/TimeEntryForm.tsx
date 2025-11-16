@@ -270,13 +270,8 @@ export function TimeEntryForm({
                       disabled={loading}
                     >
                       <span>
-                        {watch("date") ? (
-                          format(new Date(watch("date")), "EEE, MMMM do, yyyy")
-                        ) : (
-                          <span className="text-muted-foreground">
-                            Pick a date
-                          </span>
-                        )}
+                        {watch("date") &&
+                          format(new Date(watch("date")), "EEE, MMMM do, yyyy")}
                       </span>
                       <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                     </Button>
