@@ -57,32 +57,31 @@ type ActiveProject = Prisma.ProjectGetPayload<{
 }>;
 
 const timeEntryFormSchema = z.object({
-    date: z.string().min(1, "Date is required"),
-    projectId: z.string().min(1, "Project is required"),
-    durationInput: z.string().min(1, "Duration is required"),
-    startTime: z.string().optional(),
-    endTime: z.string().optional(),
-    description: z.string().min(10, "Description is required"),
+  date: z.string().min(1, "Date is required"),
+  projectId: z.string().min(1, "Project is required"),
+  durationInput: z.string().min(1, "Duration is required"),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
+  description: z.string().min(10, "Description is required"),
 });
 
 type FormData = z.infer<typeof timeEntryFormSchema>;
 
 interface TimeEntryFormProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    entry?: {
-        id: string;
-        date: Date;
-        projectId: string;
-        duration: number;
-        startTime: string | null;
-        endTime: string | null;
-        description: string;
-        project?: {
-            id: string;
-            name: string;
-            color: string;
-        } | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  entry?: {
+    id: string;
+    date: Date;
+    projectId: string;
+    duration: number;
+    startTime: string | null;
+    endTime: string | null;
+    description: string;
+    project?: {
+      id: string;
+      name: string;
+      color: string;
     } | null;
   } | null;
   defaultDate?: Date | null;
@@ -101,30 +100,28 @@ export function TimeEntryForm({
   const [projects, setProjects] = useState<ActiveProject[]>([]);
   const [parsedDuration, setParsedDuration] = useState<number | null>(null);
 
-    const {
-        register,
-        handleSubmit,
-        formState: { errors },
-        reset,
-        setValue,
-        watch,
-    } = useForm<FormData>({
-        resolver: zodResolver(timeEntryFormSchema),
-        defaultValues: {
-            date: entry?.date
-                ? format(new Date(entry.date), "yyyy-MM-dd")
-                : defaultDate
-                  ? format(defaultDate, "yyyy-MM-dd")
-                  : format(new Date(), "yyyy-MM-dd"),
-            projectId: entry?.projectId || "",
-            durationInput: entry?.duration
-                ? formatDuration(entry.duration)
-                : "",
-            startTime: entry?.startTime || "",
-            endTime: entry?.endTime || "",
-            description: entry?.description || "",
-        },
-    });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    setValue,
+    watch,
+  } = useForm<FormData>({
+    resolver: zodResolver(timeEntryFormSchema),
+    defaultValues: {
+      date: entry?.date
+        ? format(new Date(entry.date), "yyyy-MM-dd")
+        : defaultDate
+          ? format(defaultDate, "yyyy-MM-dd")
+          : format(new Date(), "yyyy-MM-dd"),
+      projectId: entry?.projectId || "",
+      durationInput: entry?.duration ? formatDuration(entry.duration) : "",
+      startTime: entry?.startTime || "",
+      endTime: entry?.endTime || "",
+      description: entry?.description || "",
+    },
+  });
 
   const selectedProjectId = watch("projectId");
   const durationInput = watch("durationInput");
@@ -182,14 +179,14 @@ export function TimeEntryForm({
       return;
     }
 
-        const timeEntryData: TimeEntryFormData = {
-            date: data.date,
-            projectId: data.projectId,
-            duration,
-            startTime: data.startTime || null,
-            endTime: data.endTime || null,
-            description: data.description,
-        };
+    const timeEntryData: TimeEntryFormData = {
+      date: data.date,
+      projectId: data.projectId,
+      duration,
+      startTime: data.startTime || null,
+      endTime: data.endTime || null,
+      description: data.description,
+    };
 
     const result = entry
       ? await updateTimeEntry(entry.id, timeEntryData)
@@ -254,148 +251,124 @@ export function TimeEntryForm({
                             ({project.client.name})
                           </span>
                         )}
-                        <div className="space-y-2">
-                            <Label htmlFor="projectId">
-                                Project <span className="text-red-500">*</span>
-                            </Label>
-                            <Select
-                                value={selectedProjectId || undefined}
-                                onValueChange={(value) =>
-                                    setValue("projectId", value)
-                                }
-                                disabled={loading}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a project" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {projects.map((project) => (
-                                        <SelectItem
-                                            key={project.id}
-                                            value={project.id}
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <div
-                                                    className="w-2 h-2 rounded-full"
-                                                    style={{
-                                                        backgroundColor:
-                                                            project.color,
-                                                    }}
-                                                />
-                                                {project.name}
-                                                {project.client && (
-                                                    <span className="text-xs text-gray-500">
-                                                        ({project.client.name})
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="date">
-                                    Date <span className="text-red-500">*</span>
-                                </Label>
-                                <Input
-                                    id="date"
-                                    type="date"
-                                    {...register("date")}
-                                    disabled={loading}
-                                />
-                                {errors.date && (
-                                    <p className="text-sm text-red-500">
-                                        {errors.date.message}
-                                    </p>
-                                )}
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="durationInput">
-                                    Duration{" "}
-                                    <span className="text-red-500">*</span>
-                                </Label>
-                                <Input
-                                    id="durationInput"
-                                    placeholder="2.5h, 2h 30m, 150m"
-                                    {...register("durationInput")}
-                                    disabled={loading}
-                                />
-                                {errors.durationInput && (
-                                    <p className="text-sm text-red-500">
-                                        {errors.durationInput.message}
-                                    </p>
-                                )}
-                                {parsedDuration !== null && (
-                                    <p className="text-xs text-gray-500">
-                                        = {formatDuration(parsedDuration)} (
-                                        {(parsedDuration / 60).toFixed(2)}{" "}
-                                        hours)
-                                    </p>
-                                )}
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="startTime">
-                                    Start Time (optional)
-                                </Label>
-                                <Input
-                                    id="startTime"
-                                    type="time"
-                                    placeholder="09:00"
-                                    {...register("startTime")}
-                                    disabled={loading}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="endTime">
-                                    End Time (optional)
-                                </Label>
-                                <Input
-                                    id="endTime"
-                                    type="time"
-                                    placeholder="17:30"
-                                    {...register("endTime")}
-                                    disabled={loading}
-                                />
-                            </div>
-                            <div className="space-y-2 col-span-2">
-                                <Label htmlFor="description">
-                                    Description{" "}
-                                    <span className="text-red-500">*</span>
-                                </Label>
-                                <Textarea
-                                    id="description"
-                                    placeholder="What did you work on?"
-                                    rows={3}
-                                    {...register("description")}
-                                    disabled={loading}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => onOpenChange(false)}
-                            disabled={loading}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="submit"
-                            disabled={loading || parsedDuration === null}
-                        >
-                            {loading
-                                ? "Saving..."
-                                : entry
-                                  ? "Update"
-                                  : "Create"}
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
-    );
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="date">
+                  Date <span className="text-red-500">*</span>
+                </Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between text-left font-normal"
+                      disabled={loading}
+                    >
+                      <span>
+                        {watch("date") &&
+                          format(new Date(watch("date")), "EEE, MMMM do, yyyy")}
+                      </span>
+                      <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={
+                        watch("date") ? new Date(watch("date")) : undefined
+                      }
+                      onSelect={(date) => {
+                        if (date) {
+                          setValue("date", format(date, "yyyy-MM-dd"));
+                        }
+                      }}
+                      captionLayout="dropdown"
+                      className="rounded-md border"
+                    />
+                  </PopoverContent>
+                </Popover>
+                {errors.date && (
+                  <p className="text-sm text-red-500">{errors.date.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="durationInput">
+                  Duration <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="durationInput"
+                  placeholder="2.5h, 2h 30m, 150m"
+                  {...register("durationInput")}
+                  disabled={loading}
+                />
+                {errors.durationInput && (
+                  <p className="text-sm text-red-500">
+                    {errors.durationInput.message}
+                  </p>
+                )}
+                {parsedDuration !== null && (
+                  <p className="text-xs text-gray-500">
+                    = {formatDuration(parsedDuration)} (
+                    {(parsedDuration / 60).toFixed(2)} hours)
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="startTime">Start Time (optional)</Label>
+                <TimeInput
+                  id="startTime"
+                  placeholder="08:00 AM"
+                  {...register("startTime")}
+                  value={startTime ?? ""}
+                  onChange={(v) => setValue("startTime", v || "")}
+                  disabled={loading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="endTime">End Time (optional)</Label>
+                <TimeInput
+                  id="endTime"
+                  placeholder="04:00 PM"
+                  {...register("endTime")}
+                  value={endTime ?? ""}
+                  onChange={(v) => setValue("endTime", v || "")}
+                  disabled={loading}
+                />
+              </div>
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="description">
+                  Description <span className="text-red-500">*</span>
+                </Label>
+                <Textarea
+                  id="description"
+                  placeholder="What did you work on?"
+                  rows={3}
+                  {...register("description")}
+                  disabled={loading}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading || parsedDuration === null}>
+              {loading ? "Saving..." : entry ? "Update" : "Create"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
 }

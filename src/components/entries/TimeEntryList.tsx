@@ -33,17 +33,9 @@ interface TimeEntry {
   description: string;
   project?: {
     id: string;
-    date: Date;
-    projectId: string;
-    duration: number;
-    startTime: string | null;
-    endTime: string | null;
-    description: string;
-    project?: {
-        id: string;
-        name: string;
-        color: string;
-    } | null;
+    name: string;
+    color: string;
+  } | null;
 }
 
 interface TimeEntryListProps {
