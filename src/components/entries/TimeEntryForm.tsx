@@ -370,5 +370,7 @@ export function TimeEntryForm({
         </form>
       </DialogContent>
     </Dialog>
-  );
+                                <Label htmlFor="endTime">
+                                    End Time (optional)
+                                </Label>
 }
