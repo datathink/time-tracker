@@ -38,18 +38,11 @@ function parseTime(input: string): string | null {
   return null;
 }
 
-function generateOptions(): string[] {
-  const opts: string[] = [];
-  for (let h = 0; h < 24; h++) {
-    for (let m = 0; m < 60; m += 15) {
-      opts.push(
-        `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`
-      );
-    }
-  }
-  return opts;
-}
-const TIME_OPTIONS = generateOptions();
+const TIME_OPTIONS = Array.from({ length: 96 }, (_, i) => {
+    const h = Math.floor(i / 4);
+    const m = (i % 4) * 15;
+    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+});
 
 export const TimeInput = React.forwardRef<HTMLInputElement, TimeInputProps>(
   (
