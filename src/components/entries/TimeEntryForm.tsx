@@ -322,7 +322,7 @@ export function TimeEntryForm({
                 <Label htmlFor="startTime">Start Time (optional)</Label>
                 <TimeInput
                   id="startTime"
-                  placeholder="09:00"
+                  placeholder="08:00 AM"
                   {...register("startTime")}
                   value={startTime ?? ""}
                   onChange={(v) => setValue("startTime", v || "")}
@@ -333,7 +333,7 @@ export function TimeEntryForm({
                 <Label htmlFor="endTime">End Time (optional)</Label>
                 <TimeInput
                   id="endTime"
-                  placeholder="09:00"
+                  placeholder="04:00 PM"
                   {...register("endTime")}
                   value={endTime ?? ""}
                   onChange={(v) => setValue("endTime", v || "")}

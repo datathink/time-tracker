@@ -13,9 +13,51 @@ type TimeInputProps = {
   className?: string;
 };
 
-function parseTime(input: string): string | null {
-  const cleaned = input.replace(/\s/g, "");
+// Convert 24h time to 12h AM/PM format
+function to12Hour(time24: string): string {
+  if (!time24) return "";
 
+  const [hours, minutes] = time24.split(":").map(Number);
+  const period = hours >= 12 ? "PM" : "AM";
+  const hours12 = hours % 12 || 12;
+
+  return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
+}
+
+// Convert 12h AM/PM format to 24h time
+function to24Hour(time12: string): string | null {
+  const cleaned = time12.replace(/\s/g, "").toUpperCase();
+
+  // Match formats like: 9:30AM, 9:30 AM, 930AM, 0930AM, 9AM, 09AM
+  const match = cleaned.match(/^(\d{1,2}):?(\d{2})?\s*([AP]M)?$/);
+  if (!match) return null;
+
+  let hours = parseInt(match[1], 10);
+  const minutes = match[2] ? parseInt(match[2], 10) : 0;
+  const period = match[3] || "AM";
+
+  if (hours < 1 || hours > 12 || minutes < 0 || minutes > 59) {
+    return null;
+  }
+
+  // Convert to 24-hour format
+  if (period === "PM" && hours !== 12) {
+    hours += 12;
+  } else if (period === "AM" && hours === 12) {
+    hours = 0;
+  }
+
+  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+}
+
+function parseTime(input: string): string | null {
+  const cleaned = input.replace(/\s/g, "").toUpperCase();
+
+  // Try parsing as 12-hour format first
+  const time24 = to24Hour(input);
+  if (time24) return time24;
+
+  // Fallback to original 24-hour parsing for backward compatibility
   const m1 = cleaned.match(/^(\d{1,2}):?(\d{2})$/);
   if (m1) {
     const h = parseInt(m1[1], 10);
@@ -38,39 +80,53 @@ function parseTime(input: string): string | null {
   return null;
 }
 
-const TIME_OPTIONS = Array.from({ length: 96 }, (_, i) => {
-    const h = Math.floor(i / 4);
-    const m = (i % 4) * 15;
-    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
-});
+const TIME_OPTIONS = (() => {
+  const options = Array.from({ length: 96 }, (_, i) => {
+    const totalMinutes = i * 15;
+    const hours24 = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
+    const period = hours24 >= 12 ? "PM" : "AM";
+
+    const time24 = `${hours24.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+    const time12 = `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
+
+    return { time24, time12 };
+  });
+
+  const eightAMIndex = options.findIndex((t) => t.time24 === "08:00");
+  return [...options.slice(eightAMIndex), ...options.slice(0, eightAMIndex)];
+})();
 
 export const TimeInput = React.forwardRef<HTMLInputElement, TimeInputProps>(
   (
     {
       value = "",
       onChange,
-      placeholder = "09:00",
+      placeholder = "09:00 AM",
       disabled = false,
       id,
       className,
     },
     forwardedRef
   ) => {
-    const [inputVal, setInputVal] = React.useState(value);
+    const [inputVal, setInputVal] = React.useState(to12Hour(value));
     const [isOpen, setIsOpen] = React.useState(false);
     const [focusedIdx, setFocusedIdx] = React.useState(-1);
     const dropdownRef = React.useRef<HTMLDivElement>(null);
     const inputRef = React.useRef<HTMLInputElement>(null);
 
-    React.useEffect(() => setInputVal(value), [value]);
+    React.useEffect(() => {
+      setInputVal(to12Hour(value));
+    }, [value]);
 
     const commit = (raw: string) => {
       const parsed = parseTime(raw);
       if (parsed) {
-        setInputVal(parsed);
+        setInputVal(to12Hour(parsed));
         onChange?.(parsed);
       } else {
-        setInputVal(value);
+        setInputVal(to12Hour(value));
       }
     };
 
@@ -81,7 +137,10 @@ export const TimeInput = React.forwardRef<HTMLInputElement, TimeInputProps>(
       } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
         e.preventDefault();
         setIsOpen(true);
-        const cur = TIME_OPTIONS.indexOf(value);
+        const currentTime24 = parseTime(inputVal) || value;
+        const cur = TIME_OPTIONS.findIndex(
+          (opt) => opt.time24 === currentTime24
+        );
         setFocusedIdx(cur >= 0 ? cur : 0);
       }
     };
@@ -97,8 +156,8 @@ export const TimeInput = React.forwardRef<HTMLInputElement, TimeInputProps>(
       } else if (e.key === "Enter" && focusedIdx >= 0) {
         e.preventDefault();
         const t = TIME_OPTIONS[focusedIdx];
-        setInputVal(t);
-        onChange?.(t);
+        setInputVal(t.time12);
+        onChange?.(t.time24);
         setIsOpen(false);
         setFocusedIdx(-1);
       } else if (e.key === "Escape") {
@@ -188,26 +247,26 @@ export const TimeInput = React.forwardRef<HTMLInputElement, TimeInputProps>(
           >
             {TIME_OPTIONS.map((t, idx) => (
               <button
-                key={t}
+                key={t.time24}
                 type="button"
                 role="option"
-                aria-selected={t === value}
+                aria-selected={t.time24 === value}
                 onClick={() => {
-                  setInputVal(t);
-                  onChange?.(t);
+                  setInputVal(t.time12);
+                  onChange?.(t.time24);
                   setIsOpen(false);
                   setFocusedIdx(-1);
                 }}
                 onMouseEnter={() => setFocusedIdx(idx)}
                 className={cn(
                   "flex w-full items-center justify-between px-3 py-2 text-sm transition-colors",
-                  t === value
+                  t.time24 === value
                     ? "bg-accent text-accent-foreground font-bold"
                     : "hover:bg-accent/50",
                   focusedIdx === idx && "bg-accent/50"
                 )}
               >
-                <span>{t}</span>
+                <span>{t.time12}</span>
               </button>
             ))}
           </div>
