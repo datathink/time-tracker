@@ -1,27 +1,33 @@
 "use client";
 
 import { useState } from "react";
-import { TimeEntryForm } from "./TimeEntryForm";
-import { deleteTimeEntry } from "@/lib/actions/entries";
-import { formatDuration, formatDecimalHours } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Pencil, Trash2, Clock } from "lucide-react";
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  ArrowUpDown,
+  Copy,
+  Trash2,
+} from "lucide-react";
+import {
+  format,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+  addWeeks,
+  subWeeks,
+  isSameDay,
+} from "date-fns";
+import { TimeEntryForm } from "./TimeEntryForm";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
 
 interface TimeEntry {
   id: string;
@@ -40,193 +46,312 @@ interface TimeEntry {
 
 interface TimeEntryListProps {
   entries: TimeEntry[];
+  projects: Array<{
+    id: string;
+    name: string;
+    color: string;
+  }>;
 }
 
-export function TimeEntryList({ entries }: TimeEntryListProps) {
+export function TimeEntryList({ entries, projects }: TimeEntryListProps) {
   const router = useRouter();
-  const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
+  const [currentWeek, setCurrentWeek] = useState(new Date());
+  const [rows, setRows] = useState<Array<{ projectId: string | null }>>([
+    { projectId: null },
+  ]);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  const handleEdit = (entry: TimeEntry) => {
-    setEditingEntry(entry);
-    setIsFormOpen(true);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this time entry?")) return;
-
-    setDeletingId(id);
-    const result = await deleteTimeEntry(id);
-
-    if (result.success) {
-      router.refresh();
-    } else {
-      alert(result.error || "Failed to delete time entry");
-    }
-
-    setDeletingId(null);
-  };
-
-  const handleSuccess = () => {
-    setEditingEntry(null);
-    router.refresh();
-  };
-
-  // Group entries by date
-  const groupedEntries = entries.reduce(
-    (acc, entry) => {
-      const dateKey = format(new Date(entry.date), "yyyy-MM-dd");
-      if (!acc[dateKey]) {
-        acc[dateKey] = [];
-      }
-      acc[dateKey].push(entry);
-      return acc;
-    },
-    {} as Record<string, TimeEntry[]>
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
+    null
   );
+  const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
 
-  // Calculate total duration for a date
-  const getTotalForDate = (entries: TimeEntry[]) => {
+  const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
+  const daysOfWeek = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+  const formatDurationHHMM = (minutes: number): string => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}:${mins.toString().padStart(2, "0")}`;
+  };
+
+  const getEntriesForProjectAndDay = (projectId: string | null, day: Date) => {
+    if (!projectId) return [];
+    return entries.filter((entry) => {
+      const dateStr =
+        typeof entry.date === "string" ? entry.date : entry.date.toISOString();
+      const [year, month, dayNum] = dateStr
+        .split("T")[0]
+        .split("-")
+        .map(Number);
+      const entryDate = new Date(year, month - 1, dayNum);
+      return entry.projectId === projectId && isSameDay(entryDate, day);
+    });
+  };
+
+  const getTotalForProjectAndDay = (projectId: string | null, day: Date) => {
+    const dayEntries = getEntriesForProjectAndDay(projectId, day);
+    return dayEntries.reduce((sum, entry) => sum + entry.duration, 0);
+  };
+
+  const getTotalForDay = (day: Date) => {
+    return entries
+      .filter((entry) => {
+        const dateStr =
+          typeof entry.date === "string"
+            ? entry.date
+            : entry.date.toISOString();
+        const [year, month, dayNum] = dateStr
+          .split("T")[0]
+          .split("-")
+          .map(Number);
+        const entryDate = new Date(year, month - 1, dayNum);
+        return isSameDay(entryDate, day);
+      })
+      .reduce((sum, entry) => sum + entry.duration, 0);
+  };
+
+  const getTotalForProject = (projectId: string | null) => {
+    if (!projectId) return 0;
+    return entries
+      .filter((entry) => entry.projectId === projectId)
+      .reduce((sum, entry) => sum + entry.duration, 0);
+  };
+
+  const getGrandTotal = () => {
     return entries.reduce((sum, entry) => sum + entry.duration, 0);
   };
 
-  if (entries.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <Clock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-        <p className="text-gray-500 mb-2">No time entries yet.</p>
-        <p className="text-sm text-gray-400">
-          Create your first time entry to get started.
-        </p>
-      </div>
-    );
-  }
+  const addRow = () => {
+    setRows([...rows, { projectId: null }]);
+  };
+
+  const deleteRow = (index: number) => {
+    setRows(rows.filter((_, i) => i !== index));
+  };
+
+  const updateRowProject = (index: number, projectId: string) => {
+    const newRows = [...rows];
+    newRows[index] = { projectId };
+    setRows(newRows);
+  };
+
+  const handleCellClick = (projectId: string | null, day: Date) => {
+    setSelectedDate(day);
+    setSelectedProjectId(projectId);
+
+    // Get the entries for the selected project and day
+    const cellEntries = projectId
+      ? getEntriesForProjectAndDay(projectId, day)
+      : entries.filter((entry) => {
+          const dateStr =
+            typeof entry.date === "string"
+              ? entry.date
+              : entry.date.toISOString();
+          const [year, month, dayNum] = dateStr
+            .split("T")[0]
+            .split("-")
+            .map(Number);
+          const entryDate = new Date(year, month - 1, dayNum);
+          return isSameDay(entryDate, day);
+        });
+
+    // If exactly one existing entry found, open editor for that entry
+    if (cellEntries.length === 1) {
+      setEditingEntry(cellEntries[0]);
+    } else {
+      setEditingEntry(null);
+    }
+    setIsFormOpen(true);
+  };
+
+  const goToPreviousWeek = () => setCurrentWeek(subWeeks(currentWeek, 1));
+  const goToNextWeek = () => setCurrentWeek(addWeeks(currentWeek, 1));
+  const goToCurrentWeek = () => setCurrentWeek(new Date());
 
   return (
-    <>
-      <div className="space-y-6">
-        {Object.entries(groupedEntries).map(([dateKey, dateEntries]) => {
-          const totalMinutes = getTotalForDate(dateEntries);
-          return (
-            <div key={dateKey} className="space-y-2">
-              <div className="flex items-center justify-between px-1">
-                <h3 className="font-semibold text-lg">
-                  {format(new Date(dateKey), "EEEE, MMMM d, yyyy")}
-                </h3>
-                <div className="text-sm text-gray-600">
-                  Total: {formatDuration(totalMinutes)} (
-                  {formatDecimalHours(totalMinutes)}h)
-                </div>
-              </div>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Project</TableHead>
-                      <TableHead>Time</TableHead>
-                      <TableHead>Duration</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="w-[70px]"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {dateEntries.map((entry) => (
-                      <TableRow key={entry.id}>
-                        <TableCell>
-                          {entry.project ? (
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-3 h-3 rounded-full"
-                                style={{
-                                  backgroundColor: entry.project.color,
-                                }}
-                              />
-                              <span className="font-medium">
-                                {entry.project.name}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {entry.startTime && entry.endTime
-                            ? `${entry.startTime} - ${entry.endTime}`
-                            : entry.startTime
-                              ? `From ${entry.startTime}`
-                              : "-"}
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-0.5">
-                            <div className="font-medium">
-                              {formatDuration(entry.duration)}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {formatDecimalHours(entry.duration)}h
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="max-w-xs">
-                          <div className="truncate">
-                            {entry.description || (
-                              <span className="text-gray-400 italic">
-                                No description
-                              </span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                              >
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => handleEdit(entry)}
-                              >
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleDelete(entry.id)}
-                                disabled={deletingId === entry.id}
-                                className="text-red-600"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                {deletingId === entry.id
-                                  ? "Deleting..."
-                                  : "Delete"}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          );
-        })}
+    <div className="space-y-4">
+      {/* Header with Navigation */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={goToPreviousWeek}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div className="text-sm font-medium min-w-[220px] text-center">
+            {format(weekStart, "d MMM")} → {format(weekEnd, "d MMM yyyy")}
+          </div>
+          <Button variant="outline" size="sm" onClick={goToNextWeek}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="sm" onClick={goToCurrentWeek}>
+            Home
+          </Button>
+        </div>
       </div>
 
+      {/* Timesheet Table */}
+      <div className="border rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            {/* Header Row */}
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="text-left p-3 font-medium text-sm min-w-[400px] border-r">
+                  PROJECT <span className="text-red-500">*</span>
+                </th>
+                {daysOfWeek.map((day) => (
+                  <th
+                    key={day.toISOString()}
+                    className="text-center p-3 font-normal text-xs min-w-[80px]"
+                  >
+                    <div>{format(day, "EEE")}</div>
+                    <div className="text-xs font-bold">
+                      {format(day, "d MMM")}
+                    </div>
+                  </th>
+                ))}
+                <th className="text-center p-3 font-medium text-sm min-w-[90px]">
+                  Week Total
+                </th>
+              </tr>
+            </thead>
+
+            {/* Body Rows */}
+            <tbody>
+              {rows.map((row, rowIndex) => {
+                const totalForRow = getTotalForProject(row.projectId);
+
+                return (
+                  <tr key={rowIndex} className="border-b hover:bg-gray-50">
+                    <td className="p-2 border-r">
+                      <div className="flex items-center gap-1">
+                        <Select
+                          value={row.projectId || undefined}
+                          onValueChange={(value) =>
+                            updateRowProject(rowIndex, value)
+                          }
+                        >
+                          <SelectTrigger className="h-10 flex-1">
+                            <SelectValue placeholder="Select a project..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {projects.map((project) => (
+                              <SelectItem key={project.id} value={project.id}>
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className="w-2 h-2 rounded-full"
+                                    style={{ backgroundColor: project.color }}
+                                  />
+                                  {project.name}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {rows.length > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => deleteRow(rowIndex)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                    {daysOfWeek.map((day) => {
+                      const totalMinutes = getTotalForProjectAndDay(
+                        row.projectId,
+                        day
+                      );
+                      return (
+                        <td key={day.toISOString()} className="p-2">
+                          <div
+                            onClick={() => handleCellClick(row.projectId, day)}
+                            className="bg-gray-100 border border-gray-200 rounded-md h-10 flex items-center justify-center hover:border-gray-300 cursor-pointer transition"
+                          >
+                            <span className="text-sm text-gray-700">
+                              {totalMinutes > 0
+                                ? formatDurationHHMM(totalMinutes)
+                                : "0:00"}
+                            </span>
+                          </div>
+                        </td>
+                      );
+                    })}
+                    <td className="text-center p-2 font-medium text-sm">
+                      {totalForRow > 0
+                        ? formatDurationHHMM(totalForRow)
+                        : "0:00"}
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {/* Footer Total Row */}
+              <tr className="bg-gray-50 font-semibold">
+                <td className="p-3 border-r"></td>
+                {daysOfWeek.map((day) => (
+                  <td key={day.toISOString()} className="text-center p-3">
+                    {formatDurationHHMM(getTotalForDay(day))}
+                  </td>
+                ))}
+                <td className="text-center p-3">
+                  {formatDurationHHMM(getGrandTotal())}
+                </td>
+              </tr>
+
+              {/* Actions Row */}
+              <tr>
+                <td colSpan={9} className="p-2">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={addRow}
+                      className="text-sm"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add timesheet row
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-sm">
+                      <ArrowUpDown className="h-4 w-4 mr-1" />
+                      Sort
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-sm">
+                      <Copy className="h-4 w-4 mr-1" />
+                      Copy previous week
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Time Entry Form */}
       <TimeEntryForm
         open={isFormOpen}
         onOpenChange={(open) => {
           setIsFormOpen(open);
-          if (!open) setEditingEntry(null);
+          if (!open) {
+            setEditingEntry(null);
+            setSelectedDate(null);
+            setSelectedProjectId(null);
+          }
         }}
-        entry={editingEntry || undefined}
-        onSuccess={handleSuccess}
+        entry={editingEntry}
+        defaultDate={selectedDate}
+        onSuccess={() => {
+          setEditingEntry(null);
+          setSelectedDate(null);
+          setSelectedProjectId(null);
+          router.refresh();
+        }}
       />
-    </>
+    </div>
   );
 }
