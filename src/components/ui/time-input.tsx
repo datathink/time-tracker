@@ -115,6 +115,7 @@ export const TimeInput = React.forwardRef<HTMLInputElement, TimeInputProps>(
     const [focusedIdx, setFocusedIdx] = React.useState(-1);
     const dropdownRef = React.useRef<HTMLDivElement>(null);
     const inputRef = React.useRef<HTMLInputElement>(null);
+    const [error, setError] = React.useState<string | null>(null);
 
     React.useEffect(() => {
       setInputVal(to12Hour(value));
@@ -125,8 +126,11 @@ export const TimeInput = React.forwardRef<HTMLInputElement, TimeInputProps>(
       if (parsed) {
         setInputVal(to12Hour(parsed));
         onChange?.(parsed);
+        setError(null);
       } else {
-        setInputVal(to12Hour(value));
+        setError(
+          "Invalid time format. Use formats like: 9:30 AM, 2:45 PM, 16:00"
+        );
       }
     };
 
@@ -207,18 +211,27 @@ export const TimeInput = React.forwardRef<HTMLInputElement, TimeInputProps>(
             }}
             type="text"
             value={inputVal}
-            onChange={(e) => setInputVal(e.target.value)}
+            onChange={(e) => {
+              setInputVal(e.target.value);
+              setError(null);
+            }}
             onBlur={() => commit(inputVal)}
             onKeyDown={handleKeyDown}
-            onFocus={() => setIsOpen(true)}
+            onFocus={() => {
+              setIsOpen(true);
+              setError(null);
+            }}
             disabled={disabled}
             placeholder={placeholder}
             className={cn(
-              "flex h-10 w-full rounded-md border border-input bg-background pl-10 pr-10 py-2 text-sm ring-offset-background",
+              "flex h-10 w-full rounded-md border bg-background pl-10 pr-10 py-2 text-sm ring-offset-background",
               "file:border-0 file:bg-transparent file:text-sm file:font-medium",
               "placeholder:text-muted-foreground",
-              "focus-visible:outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] ",
+              "focus-visible:outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]",
               "disabled:cursor-not-allowed disabled:opacity-50",
+              error
+                ? "border-red-500 focus-visible:ring-red-200"
+                : "border-input",
               className
             )}
           />
@@ -239,6 +252,8 @@ export const TimeInput = React.forwardRef<HTMLInputElement, TimeInputProps>(
           </button>
         </div>
 
+        {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+
         {isOpen && (
           <div
             className="absolute z-20 mt-1 w-full overflow-auto rounded-md border bg-popover text-popover-foreground shadow-md max-h-60"
@@ -256,6 +271,7 @@ export const TimeInput = React.forwardRef<HTMLInputElement, TimeInputProps>(
                   onChange?.(t.time24);
                   setIsOpen(false);
                   setFocusedIdx(-1);
+                  setError(null);
                 }}
                 onMouseEnter={() => setFocusedIdx(idx)}
                 className={cn(
