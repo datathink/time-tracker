@@ -50,11 +50,11 @@ type ActiveProject = Prisma.ProjectGetPayload<{
 
 const timeEntryFormSchema = z.object({
     date: z.string().min(1, "Date is required"),
-    projectId: z.string().optional().nullable(),
+    projectId: z.string().min(1, "Project is required"),
     durationInput: z.string().min(1, "Duration is required"),
     startTime: z.string().optional(),
     endTime: z.string().optional(),
-    description: z.string().optional(),
+    description: z.string().min(10, "Description is required"),
 });
 
 type FormData = z.infer<typeof timeEntryFormSchema>;
@@ -65,11 +65,11 @@ interface TimeEntryFormProps {
     entry?: {
         id: string;
         date: Date;
-        projectId: string | null;
+        projectId: string;
         duration: number;
         startTime: string | null;
         endTime: string | null;
-        description: string | null;
+        description: string;
         project?: {
             id: string;
             name: string;
@@ -107,7 +107,7 @@ export function TimeEntryForm({
                 : defaultDate
                   ? format(defaultDate, "yyyy-MM-dd")
                   : format(new Date(), "yyyy-MM-dd"),
-            projectId: entry?.projectId || null,
+            projectId: entry?.projectId || "",
             durationInput: entry?.duration
                 ? formatDuration(entry.duration)
                 : "",
@@ -175,11 +175,11 @@ export function TimeEntryForm({
 
         const timeEntryData: TimeEntryFormData = {
             date: data.date,
-            projectId: data.projectId || null,
+            projectId: data.projectId,
             duration,
             startTime: data.startTime || null,
             endTime: data.endTime || null,
-            description: data.description || "",
+            description: data.description,
         };
 
         const result = entry
@@ -217,6 +217,46 @@ export function TimeEntryForm({
                                 {error}
                             </div>
                         )}
+                        <div className="space-y-2">
+                            <Label htmlFor="projectId">
+                                Project <span className="text-red-500">*</span>
+                            </Label>
+                            <Select
+                                value={selectedProjectId || undefined}
+                                onValueChange={(value) =>
+                                    setValue("projectId", value)
+                                }
+                                disabled={loading}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a project" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {projects.map((project) => (
+                                        <SelectItem
+                                            key={project.id}
+                                            value={project.id}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <div
+                                                    className="w-2 h-2 rounded-full"
+                                                    style={{
+                                                        backgroundColor:
+                                                            project.color,
+                                                    }}
+                                                />
+                                                {project.name}
+                                                {project.client && (
+                                                    <span className="text-xs text-gray-500">
+                                                        ({project.client.name})
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="date">
@@ -282,54 +322,11 @@ export function TimeEntryForm({
                                     disabled={loading}
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="projectId">Project</Label>
-                                <Select
-                                    value={selectedProjectId || undefined}
-                                    onValueChange={(value) =>
-                                        setValue("projectId", value)
-                                    }
-                                    disabled={loading}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a project" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="none">
-                                            No project
-                                        </SelectItem>
-                                        {projects.map((project) => (
-                                            <SelectItem
-                                                key={project.id}
-                                                value={project.id}
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    <div
-                                                        className="w-2 h-2 rounded-full"
-                                                        style={{
-                                                            backgroundColor:
-                                                                project.color,
-                                                        }}
-                                                    />
-                                                    {project.name}
-                                                    {project.client && (
-                                                        <span className="text-xs text-gray-500">
-                                                            (
-                                                            {
-                                                                project.client
-                                                                    .name
-                                                            }
-                                                            )
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
                             <div className="space-y-2 col-span-2">
-                                <Label htmlFor="description">Description</Label>
+                                <Label htmlFor="description">
+                                    Description{" "}
+                                    <span className="text-red-500">*</span>
+                                </Label>
                                 <Textarea
                                     id="description"
                                     placeholder="What did you work on?"

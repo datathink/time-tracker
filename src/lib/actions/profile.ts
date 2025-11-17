@@ -27,7 +27,10 @@ export async function createProfile(data: ProfileFormData) {
         });
 
         if (existingProfile) {
-            return { success: false, error: "Profile already exists for this user" };
+            return {
+                success: false,
+                error: "Profile already exists for this user",
+            };
         }
 
         const profile = await prisma.userProfile.create({
@@ -64,7 +67,10 @@ export async function updateProfile(
         });
 
         if (!existingProfile || existingProfile.userId !== user.id) {
-            return { success: false, error: "Unauthorized to update this profile" };
+            return {
+                success: false,
+                error: "Unauthorized to update this profile",
+            };
         }
 
         const profile = await prisma.userProfile.update({

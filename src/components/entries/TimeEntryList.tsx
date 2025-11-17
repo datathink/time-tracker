@@ -26,11 +26,11 @@ import { format } from "date-fns";
 interface TimeEntry {
     id: string;
     date: Date;
-    projectId: string | null;
+    projectId: string;
     duration: number;
     startTime: string | null;
     endTime: string | null;
-    description: string | null;
+    description: string;
     project?: {
         id: string;
         name: string;
