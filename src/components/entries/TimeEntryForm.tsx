@@ -330,7 +330,7 @@ export function TimeEntryForm({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="startTime">End Time (optional)</Label>
+                <Label htmlFor="endTime">End Time (optional)</Label>
                 <TimeInput
                   id="endTime"
                   placeholder="09:00"
