@@ -6,8 +6,6 @@ import { Plus } from "lucide-react";
 import { ProjectList } from "@/components/projects/ProjectList";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { getProjects } from "@/lib/actions/projects";
-import { Decimal } from "@prisma/client/runtime/library";
-// import { Prisma } from "@prisma/client";
 
 interface Project {
     id: string;
@@ -15,29 +13,17 @@ interface Project {
     clientId: string | null;
     description: string | null;
     budgetHours: number | null;
-    hourlyRate: Decimal | null;
     status: string;
     color: string;
     client?: {
         name: string;
+        clientId: string | null;
     } | null;
     _count?: {
         timeEntries: number;
         members: number;
     };
 }
-
-// type ProjectWithRelations = Prisma.ProjectGetPayload<{
-//   include: {
-//     client: true;
-//     _count: {
-//       select: {
-//         timeEntries: true;
-//         members: true;
-//       };
-//     };
-//   };
-// }>;
 
 export default function ProjectsPage() {
     const [projects, setProjects] = useState<Project[]>([]);
