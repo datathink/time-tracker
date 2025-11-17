@@ -28,6 +28,7 @@ import {
 } from "date-fns";
 import { TimeEntryForm } from "./TimeEntryForm";
 import { useRouter } from "next/navigation";
+import { parseEntryDate } from "@/lib/utils";
 
 interface TimeEntry {
     id: string;
@@ -82,15 +83,7 @@ export function TimeEntryList({ entries, projects }: TimeEntryListProps) {
     ) => {
         if (!projectId) return [];
         return entries.filter((entry) => {
-            const dateStr =
-                typeof entry.date === "string"
-                    ? entry.date
-                    : entry.date.toISOString();
-            const [year, month, dayNum] = dateStr
-                .split("T")[0]
-                .split("-")
-                .map(Number);
-            const entryDate = new Date(year, month - 1, dayNum);
+            const entryDate = parseEntryDate(entry.date);
             return entry.projectId === projectId && isSameDay(entryDate, day);
         });
     };
@@ -103,15 +96,7 @@ export function TimeEntryList({ entries, projects }: TimeEntryListProps) {
     const getTotalForDay = (day: Date) => {
         return entries
             .filter((entry) => {
-                const dateStr =
-                    typeof entry.date === "string"
-                        ? entry.date
-                        : entry.date.toISOString();
-                const [year, month, dayNum] = dateStr
-                    .split("T")[0]
-                    .split("-")
-                    .map(Number);
-                const entryDate = new Date(year, month - 1, dayNum);
+                const entryDate = parseEntryDate(entry.date);
                 return isSameDay(entryDate, day);
             })
             .reduce((sum, entry) => sum + entry.duration, 0);
@@ -150,15 +135,7 @@ export function TimeEntryList({ entries, projects }: TimeEntryListProps) {
         const cellEntries = projectId
             ? getEntriesForProjectAndDay(projectId, day)
             : entries.filter((entry) => {
-                  const dateStr =
-                      typeof entry.date === "string"
-                          ? entry.date
-                          : entry.date.toISOString();
-                  const [year, month, dayNum] = dateStr
-                      .split("T")[0]
-                      .split("-")
-                      .map(Number);
-                  const entryDate = new Date(year, month - 1, dayNum);
+                  const entryDate = parseEntryDate(entry.date);
                   return isSameDay(entryDate, day);
               });
 

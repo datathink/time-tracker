@@ -116,3 +116,14 @@ export function calculateDuration(startTime: string, endTime: string): number {
 
   return endTotalMinutes - startTotalMinutes
 }
+
+/**
+ * Parse a date from a time entry (handles both Date objects and ISO strings)
+ * @param date - Date object or ISO string from database
+ * @returns normalized Date object for comparison
+ */
+export function parseEntryDate(date: Date | string): Date {
+  const dateStr = typeof date === "string" ? date : date.toISOString()
+  const [year, month, dayNum] = dateStr.split("T")[0].split("-").map(Number)
+  return new Date(year, month - 1, dayNum)
+}
