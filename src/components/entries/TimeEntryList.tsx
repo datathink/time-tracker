@@ -353,22 +353,6 @@ export function TimeEntryList({ entries, projects }: TimeEntryListProps) {
                                             <Plus className="h-4 w-4 mr-1" />
                                             Add timesheet row
                                         </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="text-sm"
-                                        >
-                                            <ArrowUpDown className="h-4 w-4 mr-1" />
-                                            Sort
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="text-sm"
-                                        >
-                                            <Copy className="h-4 w-4 mr-1" />
-                                            Copy previous week
-                                        </Button>
                                     </div>
                                 </td>
                             </tr>
