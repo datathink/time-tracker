@@ -7,6 +7,7 @@ import { WeekView } from "@/components/entries/WeekView";
 import { TimeEntryList } from "@/components/entries/TimeEntryList";
 import { TimeEntryForm } from "@/components/entries/TimeEntryForm";
 import { getWeekTimeEntries } from "@/lib/actions/entries";
+import { getActiveProjects } from "@/lib/actions/projects";
 import { startOfWeek, endOfWeek } from "date-fns";
 import { Prisma } from "@prisma/client";
 
@@ -22,8 +23,22 @@ type TimeEntryWithRelations = Prisma.TimeEntryGetPayload<{
     };
 }>;
 
+type ActiveProject = Prisma.ProjectGetPayload<{
+    select: {
+        id: true;
+        name: true;
+        color: true;
+        client: {
+            select: {
+                name: true;
+            };
+        };
+    };
+}>;
+
 export default function EntriesPage() {
     const [entries, setEntries] = useState<TimeEntryWithRelations[]>([]);
+    const [projects, setProjects] = useState<ActiveProject[]>([]);
     const [loading, setLoading] = useState(true);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [currentWeek, setCurrentWeek] = useState(new Date());
@@ -32,23 +47,27 @@ export default function EntriesPage() {
         useState<TimeEntryWithRelations | null>(null);
     const [viewMode, setViewMode] = useState<"week" | "list">("week");
 
-    const loadEntries = async (weekDate: Date) => {
+    const loadData = async (weekDate: Date) => {
         setLoading(true);
         const weekStart = startOfWeek(weekDate, { weekStartsOn: 0 }); // Sunday
         const weekEnd = endOfWeek(weekDate, { weekStartsOn: 0 });
 
-        const result = await getWeekTimeEntries(
-            weekStart.toISOString(),
-            weekEnd.toISOString()
-        );
-        if (result.success) {
-            setEntries(result.data);
+        const [entriesResult, projectsResult] = await Promise.all([
+            getWeekTimeEntries(weekStart.toISOString(), weekEnd.toISOString()),
+            getActiveProjects(),
+        ]);
+
+        if (entriesResult.success) {
+            setEntries(entriesResult.data);
+        }
+        if (projectsResult.success) {
+            setProjects(projectsResult.data);
         }
         setLoading(false);
     };
 
     useEffect(() => {
-        loadEntries(currentWeek);
+        loadData(currentWeek);
     }, [currentWeek]);
 
     const handleWeekChange = (newWeek: Date) => {
@@ -68,7 +87,7 @@ export default function EntriesPage() {
     };
 
     const handleSuccess = () => {
-        loadEntries(currentWeek);
+        loadData(currentWeek);
         setEditingEntry(null);
         setSelectedDate(null);
     };
@@ -102,7 +121,7 @@ export default function EntriesPage() {
                         size="sm"
                     >
                         <List className="mr-2 h-4 w-4" />
-                        List View
+                        Timesheet
                     </Button>
                     <Button onClick={() => handleAddEntry(new Date())}>
                         <Plus className="mr-2 h-4 w-4" />
@@ -124,7 +143,7 @@ export default function EntriesPage() {
                     onEditEntry={handleEditEntry}
                 />
             ) : (
-                <TimeEntryList entries={entries} />
+                <TimeEntryList entries={entries} projects={projects} />
             )}
 
             <TimeEntryForm
