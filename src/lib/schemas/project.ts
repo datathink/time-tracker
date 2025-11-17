@@ -6,13 +6,13 @@ export const projectSchema = z.object({
     clientId: z.string().optional().nullable(),
     description: z.string().optional(),
     budgetHours: z
-    .string()
-    .optional()
-    .transform((val) => {
-      if (!val || val === "") return null;
-      const parsed = parseFloat(val);
-      return isNaN(parsed) ? null : parsed;
-    }),
+        .string()
+        .optional()
+        .transform((val) => {
+            if (!val || val === "") return null;
+            const parsed = parseFloat(val);
+            return isNaN(parsed) ? null : parsed;
+        }),
     status: z.enum(["active", "archived", "completed"]).default("active"),
     color: z.string().default("#6366f1"),
 });
