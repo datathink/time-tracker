@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { ClientForm } from "./ClientForm"
-import { deleteClient } from "@/lib/actions/clients"
-import { Button } from "@/components/ui/button"
+import { useState } from "react";
+import { ClientForm } from "./ClientForm";
+import { getClients, deleteClient } from "@/lib/actions/clients";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -11,70 +11,76 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Badge } from "@/components/ui/badge"
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { Decimal } from "@prisma/client/runtime/library"
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 interface Client {
-  id: string
-  name: string
-  email: string | null
-  company: string | null
-  hourlyRate: Decimal | null
+  id: string;
+  name: string;
+  email: string | null;
+  company: string | null;
   _count?: {
-    projects: number
-  }
+    projects: number;
+  };
 }
 
 interface ClientListProps {
-  clients: Client[]
+  clients: Client[];
 }
 
 export function ClientList({ clients }: ClientListProps) {
-  const router = useRouter()
-  const [editingClient, setEditingClient] = useState<Client | null>(null)
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [allClients, setAllClients] = useState<Client[]>(clients);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const loadClients = async () => {
+    const result = await getClients();
+    if (result.success) {
+      setAllClients(result.data);
+    }
+  };
 
   const handleEdit = (client: Client) => {
-    setEditingClient(client)
-    setIsFormOpen(true)
-  }
+    setEditingClient(client);
+    setIsFormOpen(true);
+  };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this client?")) return
+    if (!confirm("Are you sure you want to delete this client?")) return;
 
-    setDeletingId(id)
-    const result = await deleteClient(id)
+    setDeletingId(id);
+    const result = await deleteClient(id);
 
     if (result.success) {
-      router.refresh()
+      loadClients();
     } else {
-      alert(result.error || "Failed to delete client")
+      alert(result.error || "Failed to delete client");
     }
 
-    setDeletingId(null)
-  }
+    setDeletingId(null);
+  };
 
   const handleSuccess = () => {
-    setEditingClient(null)
-    router.refresh()
-  }
+    setEditingClient(null);
+    loadClients();
+  };
 
-  if (clients.length === 0) {
+  if (allClients.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">No clients yet. Create your first client to get started.</p>
+        <p className="text-gray-500">
+          No clients yet. Create your first client to get started.
+        </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -86,22 +92,20 @@ export function ClientList({ clients }: ClientListProps) {
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Company</TableHead>
-              <TableHead>Hourly Rate</TableHead>
               <TableHead>Projects</TableHead>
               <TableHead className="w-[70px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {clients.map((client) => (
+            {allClients.map((client) => (
               <TableRow key={client.id}>
                 <TableCell className="font-medium">{client.name}</TableCell>
                 <TableCell>{client.email || "-"}</TableCell>
                 <TableCell>{client.company || "-"}</TableCell>
                 <TableCell>
-                  {client.hourlyRate ? `$${Number(client.hourlyRate).toFixed(2)}` : "-"}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="secondary">{client._count?.projects || 0}</Badge>
+                  <Badge variant="secondary">
+                    {client._count?.projects || 0}
+                  </Badge>
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
@@ -135,12 +139,12 @@ export function ClientList({ clients }: ClientListProps) {
       <ClientForm
         open={isFormOpen}
         onOpenChange={(open) => {
-          setIsFormOpen(open)
-          if (!open) setEditingClient(null)
+          setIsFormOpen(open);
+          if (!open) setEditingClient(null);
         }}
         client={editingClient || undefined}
         onSuccess={handleSuccess}
       />
     </>
-  )
+  );
 }

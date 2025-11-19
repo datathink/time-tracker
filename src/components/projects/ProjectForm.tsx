@@ -27,6 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Prisma } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
 
 type ClientWithCount = Prisma.ClientGetPayload<{
   include: {
@@ -40,9 +41,13 @@ type ClientWithCount = Prisma.ClientGetPayload<{
 
 const projectFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  clientId: z.string().optional().nullable(),
+  clientId: z.string().min(5, "Client is required"),
   description: z.string().optional(),
-  budgetHours: z.string().optional(),
+  budgetAmount: z
+    .number()
+    .min(1000, "Add a reasonable amount")
+    .optional()
+    .nullable(),
   status: z.enum(["active", "archived", "completed"]),
   color: z.string(),
 });
@@ -55,9 +60,9 @@ interface ProjectFormProps {
   project?: {
     id: string;
     name: string;
-    clientId: string | null;
+    clientId: string;
     description: string | null;
-    budgetHours: number | null;
+    budgetAmount: number | null;
     status: string;
     color: string;
   };
@@ -85,9 +90,9 @@ export function ProjectForm({
     resolver: zodResolver(projectFormSchema),
     defaultValues: {
       name: project?.name || "",
-      clientId: project?.clientId || null,
+      clientId: project?.clientId || "",
       description: project?.description || "",
-      budgetHours: project?.budgetHours ? String(project.budgetHours) : "",
+      budgetAmount: project?.budgetAmount || undefined,
       status:
         (project?.status as "active" | "archived" | "completed") || "active",
       color: project?.color || "#6366f1",
@@ -117,10 +122,7 @@ export function ProjectForm({
       name: data.name,
       clientId: data.clientId,
       description: data.description,
-      budgetHours:
-        data.budgetHours && data.budgetHours !== ""
-          ? parseFloat(data.budgetHours)
-          : null,
+      budgetAmount: data.budgetAmount != null ? data.budgetAmount : null,
       status: data.status,
       color: data.color,
     };
@@ -216,13 +218,13 @@ export function ProjectForm({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="budgetHours">Budget (hours)</Label>
+                <Label htmlFor="budgetAmount">Budget ($)</Label>
                 <Input
-                  id="budgetHours"
+                  id="budgetAmount"
                   type="number"
-                  step="0.5"
-                  placeholder="40"
-                  {...register("budgetHours")}
+                  step="100"
+                  placeholder="5000.00"
+                  {...register("budgetAmount", { valueAsNumber: true })}
                   disabled={loading}
                 />
               </div>

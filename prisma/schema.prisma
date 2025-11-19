@@ -119,14 +119,14 @@ model TimeEntry {
 }
 
 model Project {
-  id           String    @id @default(uuid())
-  name         String
-  clientId     String?
-  description  String?
-  budgetHours  Float?    // Optional budget in hours
-  status       String    @default("active") // active, archived, completed
-  color        String    @default("#6366f1") // For UI display
-  userId       String    // Project owner
+  id            String      @id @default(uuid())
+  name          String
+  clientId      String
+  description   String?
+  budgetAmount  Float?      // Optional budget amount (USD)
+  status        String      @default("active") // active, archived, completed
+  color         String      @default("#6366f1") // For UI display
+  userId        String      // Project owner
 
   // Relations
   client       Client?   @relation(fields: [clientId], references: [id])
@@ -174,7 +174,6 @@ model Client {
   name         String
   email        String?
   company      String?
-  hourlyRate   Decimal?  @db.Decimal(10, 2) // Default rate for this client
 
   // Relations
   projects     Project[]

@@ -15,7 +15,6 @@ export async function createClient(data: ClientFormData) {
                 name: validated.name,
                 email: validated.email || null,
                 company: validated.company || null,
-                hourlyRate: validated.hourlyRate,
             },
         });
 
@@ -41,7 +40,6 @@ export async function updateClient(id: string, data: ClientFormData) {
                 name: validated.name,
                 email: validated.email || null,
                 company: validated.company || null,
-                hourlyRate: validated.hourlyRate,
             },
         });
 
