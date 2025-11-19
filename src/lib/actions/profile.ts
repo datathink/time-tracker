@@ -8,23 +8,23 @@ import { profileSchema, type ProfileFormData } from "@/lib/schemas/profile";
 
 // Get current user from session
 async function getCurrentUser() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
-  }
-  return session.user;
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user?.id) {
+        throw new Error("Unauthorized");
+    }
+    return session.user;
 }
 
 // Create user profile
 export async function createProfile(data: ProfileFormData) {
-  try {
-    const user = await getCurrentUser();
-    const validated = profileSchema.parse(data);
+    try {
+        const user = await getCurrentUser();
+        const validated = profileSchema.parse(data);
 
-    // Check if profile already exists
-    const existingProfile = await prisma.userProfile.findUnique({
-      where: { userId: user.id },
-    });
+        // Check if profile already exists
+        const existingProfile = await prisma.userProfile.findUnique({
+            where: { userId: user.id },
+        });
 
         if (existingProfile) {
             return {
@@ -33,38 +33,38 @@ export async function createProfile(data: ProfileFormData) {
             };
         }
 
-    const profile = await prisma.userProfile.create({
-      data: {
-        userId: user.id,
-        phone: validated.phoneNumber,
-        address: validated.address,
-        birthDate: new Date(validated.birthDate),
-      },
-    });
+        const profile = await prisma.userProfile.create({
+            data: {
+                userId: user.id,
+                phone: validated.phoneNumber,
+                address: validated.address,
+                birthDate: new Date(validated.birthDate),
+            },
+        });
 
-    return { success: true, data: profile };
-  } catch (error: unknown) {
-    console.error("Error creating profile:", error);
-    if (error instanceof z.ZodError) {
-      return { success: false, error: error.issues[0].message };
+        return { success: true, data: profile };
+    } catch (error: unknown) {
+        console.error("Error creating profile:", error);
+        if (error instanceof z.ZodError) {
+            return { success: false, error: error.issues[0].message };
+        }
+        return { success: false, error: "Failed to create profile" };
     }
-    return { success: false, error: "Failed to create profile" };
-  }
 }
 
 // Update user's profile
 export async function updateProfile(
-  userProfileId: string,
-  data: ProfileFormData
+    userProfileId: string,
+    data: ProfileFormData
 ) {
-  try {
-    const user = await getCurrentUser();
-    const validated = profileSchema.parse(data);
+    try {
+        const user = await getCurrentUser();
+        const validated = profileSchema.parse(data);
 
-    // Verify the profile belongs to the current user
-    const existingProfile = await prisma.userProfile.findUnique({
-      where: { id: userProfileId },
-    });
+        // Verify the profile belongs to the current user
+        const existingProfile = await prisma.userProfile.findUnique({
+            where: { id: userProfileId },
+        });
 
         if (!existingProfile || existingProfile.userId !== user.id) {
             return {
@@ -73,36 +73,36 @@ export async function updateProfile(
             };
         }
 
-    const profile = await prisma.userProfile.update({
-      where: { id: userProfileId },
-      data: {
-        phone: validated.phoneNumber,
-        address: validated.address,
-        birthDate: new Date(validated.birthDate),
-      },
-    });
+        const profile = await prisma.userProfile.update({
+            where: { id: userProfileId },
+            data: {
+                phone: validated.phoneNumber,
+                address: validated.address,
+                birthDate: new Date(validated.birthDate),
+            },
+        });
 
-    return { success: true, data: profile };
-  } catch (error: unknown) {
-    console.error("Error updating profile:", error);
-    if (error instanceof z.ZodError) {
-      return { success: false, error: error.issues[0].message };
+        return { success: true, data: profile };
+    } catch (error: unknown) {
+        console.error("Error updating profile:", error);
+        if (error instanceof z.ZodError) {
+            return { success: false, error: error.issues[0].message };
+        }
+        return { success: false, error: "Failed to update profile" };
     }
-    return { success: false, error: "Failed to update profile" };
-  }
 }
 
 // Fetch the current user's profile
 export async function getUserProfile() {
-  try {
-    const user = await getCurrentUser();
-    const profile = await prisma.userProfile.findUnique({
-      where: { userId: user.id },
-    });
+    try {
+        const user = await getCurrentUser();
+        const profile = await prisma.userProfile.findUnique({
+            where: { userId: user.id },
+        });
 
-    return { success: true, data: profile };
-  } catch (error: unknown) {
-    console.error("Error fetching user profile:", error);
-    return { success: false, error: "Failed to fetch user profile" };
-  }
+        return { success: true, data: profile };
+    } catch (error: unknown) {
+        console.error("Error fetching user profile:", error);
+        return { success: false, error: "Failed to fetch user profile" };
+    }
 }
