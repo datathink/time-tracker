@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ProjectForm } from "./ProjectForm";
 import { ProjectTeamDialog } from "./ProjectTeamDialog";
 import { getProjects, deleteProject } from "@/lib/actions/projects";
@@ -88,6 +88,10 @@ export function ProjectList({ projects }: ProjectListProps) {
     setEditingProject(null);
     loadProjects();
   };
+
+  useEffect(() => {
+    setAllProjects(projects);
+  }, [projects]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -193,15 +197,17 @@ export function ProjectList({ projects }: ProjectListProps) {
         </Table>
       </div>
 
-      <ProjectForm
-        open={isFormOpen}
-        onOpenChange={(open) => {
-          setIsFormOpen(open);
-          if (!open) setEditingProject(null);
-        }}
-        project={editingProject || undefined}
-        onSuccess={handleSuccess}
-      />
+      {editingProject && (
+        <ProjectForm
+          open={isFormOpen}
+          onOpenChange={(open) => {
+            setIsFormOpen(open);
+            if (!open) setEditingProject(null);
+          }}
+          project={editingProject || undefined}
+          onSuccess={handleSuccess}
+        />
+      )}
 
       {teamProject && (
         <ProjectTeamDialog

@@ -186,7 +186,6 @@ export function ProjectForm({
                     <SelectValue placeholder="Select a client" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">No client</SelectItem>
                     {clients.map((client) => (
                       <SelectItem key={client.id} value={client.id}>
                         {client.name}
@@ -194,6 +193,11 @@ export function ProjectForm({
                     ))}
                   </SelectContent>
                 </Select>
+                {errors.clientId && (
+                  <p className="text-sm text-red-500">
+                    {errors.clientId.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
@@ -223,10 +227,16 @@ export function ProjectForm({
                   id="budgetAmount"
                   type="number"
                   step="100"
+                  min="0"
                   placeholder="5000.00"
                   {...register("budgetAmount", { valueAsNumber: true })}
                   disabled={loading}
                 />
+                {errors.budgetAmount && (
+                  <p className="text-sm text-red-500">
+                    {errors.budgetAmount.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-2 col-span-2">
                 <Label htmlFor="description">Description</Label>

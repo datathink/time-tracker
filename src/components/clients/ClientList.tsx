@@ -136,15 +136,17 @@ export function ClientList({ clients }: ClientListProps) {
         </Table>
       </div>
 
-      <ClientForm
-        open={isFormOpen}
-        onOpenChange={(open) => {
-          setIsFormOpen(open);
-          if (!open) setEditingClient(null);
-        }}
-        client={editingClient || undefined}
-        onSuccess={handleSuccess}
-      />
+      {editingClient && (
+        <ClientForm
+          open={isFormOpen}
+          onOpenChange={(open) => {
+            setIsFormOpen(open);
+            if (!open) setEditingClient(null);
+          }}
+          client={editingClient || undefined}
+          onSuccess={handleSuccess}
+        />
+      )}
     </>
   );
 }
