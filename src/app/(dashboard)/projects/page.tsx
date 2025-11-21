@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Decimal } from "@prisma/client/runtime/library";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ProjectList } from "@/components/projects/ProjectList";
@@ -10,9 +11,9 @@ import { getProjects } from "@/lib/actions/projects";
 interface Project {
     id: string;
     name: string;
-    clientId: string | null;
+    clientId: string;
     description: string | null;
-    budgetHours: number | null;
+    budgetAmount: Decimal | null;
     status: string;
     color: string;
     client?: {

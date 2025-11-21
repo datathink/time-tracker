@@ -3,16 +3,9 @@ import { z } from "zod";
 // Validation schemas
 export const projectSchema = z.object({
     name: z.string().min(1, "Name is required"),
-    clientId: z.string().optional().nullable(),
+    clientId: z.string().min(5, "Client is required"),
     description: z.string().optional(),
-    budgetHours: z
-        .string()
-        .optional()
-        .transform((val) => {
-            if (!val || val === "") return null;
-            const parsed = parseFloat(val);
-            return isNaN(parsed) ? null : parsed;
-        }),
+    budgetAmount: z.number().min(100).optional().nullable(),
     status: z.enum(["active", "archived", "completed"]).default("active"),
     color: z.string().default("#6366f1"),
 });

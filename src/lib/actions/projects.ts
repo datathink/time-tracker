@@ -6,6 +6,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
 import { projectSchema, type ProjectFormData } from "@/lib/schemas/project";
+import { Decimal } from "@prisma/client/runtime/library";
 
 // Get current user from session
 async function getCurrentUser() {
@@ -25,9 +26,9 @@ export async function createProject(data: ProjectFormData) {
     const project = await prisma.project.create({
       data: {
         name: validated.name,
-        clientId: validated.clientId || null,
+        clientId: validated.clientId,
         description: validated.description || null,
-        budgetHours: validated.budgetHours,
+        budgetAmount: validated.budgetAmount || null,
         status: validated.status,
         color: validated.color,
         userId: user.id,
@@ -68,9 +69,9 @@ export async function updateProject(id: string, data: ProjectFormData) {
       where: { id },
       data: {
         name: validated.name,
-        clientId: validated.clientId || null,
+        clientId: validated.clientId,
         description: validated.description || null,
-        budgetHours: validated.budgetHours,
+        budgetAmount: validated.budgetAmount || null,
         status: validated.status,
         color: validated.color,
       },
