@@ -5,11 +5,7 @@ export const projectSchema = z.object({
     name: z.string().min(1, "Name is required"),
     clientId: z.string().min(5, "Client is required"),
     description: z.string().optional(),
-    budgetAmount: z
-        .number()
-        .min(1000, "Add a reasonable amount")
-        .optional()
-        .nullable(),
+    budgetAmount: z.number().min(100).optional().nullable(),
     status: z.enum(["active", "archived", "completed"]).default("active"),
     color: z.string().default("#6366f1"),
 });

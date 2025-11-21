@@ -43,11 +43,7 @@ const projectFormSchema = z.object({
     name: z.string().min(1, "Name is required"),
     clientId: z.string().min(5, "Client is required"),
     description: z.string().optional(),
-    budgetAmount: z
-        .number()
-        .min(1000, "Add a reasonable amount")
-        .optional()
-        .nullable(),
+    budgetAmount: z.number().min(100).optional().nullable(),
     status: z.enum(["active", "archived", "completed"]),
     color: z.string(),
 });
@@ -92,7 +88,9 @@ export function ProjectForm({
             name: project?.name || "",
             clientId: project?.clientId || "",
             description: project?.description || "",
-            budgetAmount: project?.budgetAmount ? Number(project.budgetAmount) : undefined,
+            budgetAmount: project?.budgetAmount
+                ? Number(project.budgetAmount)
+                : undefined,
             status:
                 (project?.status as "active" | "archived" | "completed") ||
                 "active",
