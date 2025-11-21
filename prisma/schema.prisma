@@ -123,7 +123,7 @@ model Project {
   name          String
   clientId      String
   description   String?
-  budgetAmount  Float?      // Optional budget amount (USD)
+  budgetAmount  Decimal?    @db.Decimal(10, 2) // Optional budget amount (USD)
   status        String      @default("active") // active, archived, completed
   color         String      @default("#6366f1") // For UI display
   userId        String      // Project owner
