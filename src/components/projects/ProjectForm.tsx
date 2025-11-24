@@ -57,7 +57,7 @@ interface ProjectFormProps {
     name: string;
     clientId: string;
     description: string | null;
-    budgetAmount: Decimal | null;
+    budgetAmount: number | null;
     status: string;
     color: string;
   };
