@@ -1,12 +1,13 @@
 {
-    "VsCodeTaskButtons.tasks": [
-        {
-            "label": "Start Dev",
-            "task": "Start Dev"
-        },
-        {
-            "label": "Build Project",
-            "task": "Build Project"
-        },
-    ]
+  "VsCodeTaskButtons.tasks": [
+    {
+      "label": "Start Dev",
+      "task": "Start Dev"
+    },
+    {
+      "label": "Build Project",
+      "task": "Build Project"
+    }
+  ],
+  "prisma.pinToPrisma6": true
 }
