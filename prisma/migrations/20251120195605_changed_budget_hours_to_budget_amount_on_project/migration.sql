@@ -10,7 +10,7 @@ ALTER TABLE "public"."Project" DROP CONSTRAINT "Project_clientId_fkey";
 
 -- AlterTable
 ALTER TABLE "Project" DROP COLUMN "budgetHours",
-ADD COLUMN     "budgetAmount" DOUBLE PRECISION,
+ADD COLUMN     "budgetAmount" DECIMAL(65,30),
 ALTER COLUMN "clientId" SET NOT NULL;
 
 -- AddForeignKey

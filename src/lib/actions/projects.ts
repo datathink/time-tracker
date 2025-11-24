@@ -28,7 +28,9 @@ export async function createProject(data: ProjectFormData) {
         name: validated.name,
         clientId: validated.clientId,
         description: validated.description || null,
-        budgetAmount: validated.budgetAmount || null,
+        budgetAmount: validated.budgetAmount
+          ? new Decimal(validated.budgetAmount)
+          : null,
         status: validated.status,
         color: validated.color,
         userId: user.id,
@@ -71,14 +73,24 @@ export async function updateProject(id: string, data: ProjectFormData) {
         name: validated.name,
         clientId: validated.clientId,
         description: validated.description || null,
-        budgetAmount: validated.budgetAmount || null,
+        budgetAmount: validated.budgetAmount
+          ? new Decimal(validated.budgetAmount)
+          : null,
         status: validated.status,
         color: validated.color,
       },
     });
 
     revalidatePath("/projects");
-    return { success: true, data: project };
+    return {
+      success: true,
+      data: {
+        ...project,
+        budgetAmount: project.budgetAmount
+          ? project.budgetAmount.toNumber()
+          : null,
+      },
+    };
   } catch (error) {
     console.error("Error updating project:", error);
     if (error instanceof z.ZodError) {
@@ -150,7 +162,15 @@ export async function getProjects() {
       },
     });
 
-    return { success: true, data: projects };
+    return {
+      success: true,
+      data: projects.map((project) => ({
+        ...project,
+        budgetAmount: project.budgetAmount
+          ? project.budgetAmount.toNumber()
+          : null,
+      })),
+    };
   } catch (error) {
     console.error("Error fetching projects:", error);
     return { success: false, error: "Failed to fetch projects", data: [] };
@@ -218,7 +238,15 @@ export async function getProject(id: string) {
       return { success: false, error: "Unauthorized" };
     }
 
-    return { success: true, data: project };
+    return {
+      success: true,
+      data: {
+        ...project,
+        budgetAmount: project.budgetAmount
+          ? project.budgetAmount.toNumber()
+          : null,
+      },
+    };
   } catch (error) {
     console.error("Error fetching project:", error);
     return { success: false, error: "Failed to fetch project" };
