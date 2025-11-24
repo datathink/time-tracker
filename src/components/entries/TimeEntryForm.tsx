@@ -325,6 +325,9 @@ export function TimeEntryForm({
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
+                      defaultMonth={
+                        watch("date") ? new Date(watch("date")) : new Date()
+                      }
                       selected={
                         watch("date") ? new Date(watch("date")) : undefined
                       }
@@ -333,8 +336,7 @@ export function TimeEntryForm({
                           setValue("date", format(date, "yyyy-MM-dd"));
                         }
                       }}
-                      captionLayout="dropdown"
-                      className="rounded-md border"
+                      className="rounded-md border "
                     />
                   </PopoverContent>
                 </Popover>
@@ -342,6 +344,7 @@ export function TimeEntryForm({
                   <p className="text-sm text-red-500">{errors.date.message}</p>
                 )}
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="durationInput">
                   Duration <span className="text-red-500">*</span>
