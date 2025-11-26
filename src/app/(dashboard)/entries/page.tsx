@@ -97,13 +97,6 @@ export default function EntriesPage() {
             Week View
           </Button>
           <Button
-            variant={viewMode === "table" ? "default" : "outline"}
-            onClick={() => setViewMode("table")}
-            size="sm"
-          >
-            Table View
-          </Button>
-          <Button
             variant={viewMode === "list" ? "default" : "outline"}
             onClick={() => setViewMode("list")}
             size="sm"
