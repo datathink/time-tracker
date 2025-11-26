@@ -16,7 +16,7 @@ import { Role } from '@prisma/client';
 interface ProjectMember {
   id: string
   role: Role
-  contractorRate: Decimal
+  payoutRate: Decimal
   chargeRate: Decimal
   isActive: boolean
   user: {
@@ -38,7 +38,7 @@ export function ProjectMemberList({
   onUpdate,
 }: ProjectMemberListProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [editContractorRate, setEditContractorRate] = useState("")
+  const [editpayoutRate, setEditpayoutRate] = useState("")
   const [editChargeRate, setEditChargeRate] = useState("")
 
   const handleRemoveMember = async (memberId: string) => {
@@ -59,18 +59,18 @@ export function ProjectMemberList({
 
   const startEdit = (member: ProjectMember) => {
     setEditingId(member.id)
-    setEditContractorRate(member.contractorRate.toString())
+    setEditpayoutRate(member.payoutRate.toString())
     setEditChargeRate(member.chargeRate.toString())
   }
 
   const cancelEdit = () => {
     setEditingId(null)
-    setEditContractorRate("")
+    setEditpayoutRate("")
     setEditChargeRate("")
   }
 
   const saveEdit = async (memberId: string) => {
-    const rate = parseFloat(editContractorRate)
+    const rate = parseFloat(editpayoutRate)
     const charge = parseFloat(editChargeRate)
     if (isNaN(rate) || rate <= 0) {
       alert("Please enter a valid rate")
@@ -82,10 +82,10 @@ export function ProjectMemberList({
       return
     }
 
-    const result = await updateProjectMember(memberId, { contractorRate: rate, chargeRate: charge })
+    const result = await updateProjectMember(memberId, { payoutRate: rate, chargeRate: charge })
     if (result.success) {
       setEditingId(null)
-      setEditContractorRate("")
+      setEditpayoutRate("")
       setEditChargeRate("")
       if (onUpdate) onUpdate()
     }
@@ -127,8 +127,8 @@ export function ProjectMemberList({
                   <Input
                     type="number"
                     step="0.01"
-                    value={editContractorRate}
-                    onChange={(e) => setEditContractorRate(e.target.value)}
+                    value={editpayoutRate}
+                    onChange={(e) => setEditpayoutRate(e.target.value)}
                     className="w-24"
                   />
                   <Input
@@ -156,7 +156,7 @@ export function ProjectMemberList({
               ) : (
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold">
-                    ${Number(member.contractorRate).toFixed(2)}/hr
+                    ${Number(member.payoutRate).toFixed(2)}/hr
                   </span>
                   <span className="text-sm font-semibold">
                     ${Number(member.chargeRate).toFixed(2)}/hr

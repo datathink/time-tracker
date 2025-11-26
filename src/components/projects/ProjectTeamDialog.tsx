@@ -76,7 +76,7 @@ export function ProjectTeamDialog({
                     <DialogHeader>
                         <DialogTitle>Manage Team - {project.name}</DialogTitle>
                         <DialogDescription>
-                            Add or remove team members and set their hourly
+                            Add or remove team members and set their payout
                             rates
                         </DialogDescription>
                     </DialogHeader>

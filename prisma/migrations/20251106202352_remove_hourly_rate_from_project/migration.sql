@@ -1,8 +1,8 @@
 /*
   Warnings:
 
-  - You are about to drop the column `hourlyRate` on the `Project` table. All the data in the column will be lost.
+  - You are about to drop the column `chargeRate` on the `Project` table. All the data in the column will be lost.
 
 */
 -- AlterTable
-ALTER TABLE "Project" DROP COLUMN "hourlyRate";
+ALTER TABLE "Project" DROP COLUMN "chargeRate";
