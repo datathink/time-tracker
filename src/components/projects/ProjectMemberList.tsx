@@ -1,35 +1,35 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   updateProjectMember,
   removeProjectMember,
-} from "@/lib/actions/project-members"
-import { UserX, Edit2, Check, X } from "lucide-react"
-import { Decimal } from "@prisma/client/runtime/library"
-import { Role } from '@prisma/client';
+} from "@/lib/actions/project-members";
+import { UserX, Edit2, Check, X } from "lucide-react";
+import { Decimal } from "@prisma/client/runtime/library";
+import { Role } from "@prisma/client";
 
 interface ProjectMember {
-  id: string
-  role: Role
-  payoutRate: Decimal
-  chargeRate: Decimal
-  isActive: boolean
+  id: string;
+  role: Role;
+  payoutRate: number;
+  chargeRate: number;
+  isActive: boolean;
   user: {
-    id: string
-    name: string | null
-    email: string
-  }
+    id: string;
+    name: string | null;
+    email: string;
+  };
 }
 
 interface ProjectMemberListProps {
-  members: ProjectMember[]
-  canManage: boolean
-  onUpdate?: () => void
+  members: ProjectMember[];
+  canManage: boolean;
+  onUpdate?: () => void;
 }
 
 export function ProjectMemberList({
@@ -37,66 +37,69 @@ export function ProjectMemberList({
   canManage,
   onUpdate,
 }: ProjectMemberListProps) {
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editpayoutRate, setEditpayoutRate] = useState("")
-  const [editChargeRate, setEditChargeRate] = useState("")
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editpayoutRate, setEditpayoutRate] = useState("");
+  const [editChargeRate, setEditChargeRate] = useState("");
 
   const handleRemoveMember = async (memberId: string) => {
-    if (!confirm("Are you sure you want to remove this member?")) return
+    if (!confirm("Are you sure you want to remove this member?")) return;
 
-    const result = await removeProjectMember(memberId)
+    const result = await removeProjectMember(memberId);
     if (result.success && onUpdate) {
-      onUpdate()
+      onUpdate();
     }
-  }
+  };
 
   const handleToggleActive = async (memberId: string, isActive: boolean) => {
-    const result = await updateProjectMember(memberId, { isActive: !isActive })
+    const result = await updateProjectMember(memberId, { isActive: !isActive });
     if (result.success && onUpdate) {
-      onUpdate()
+      onUpdate();
     }
-  }
+  };
 
   const startEdit = (member: ProjectMember) => {
-    setEditingId(member.id)
-    setEditpayoutRate(member.payoutRate.toString())
-    setEditChargeRate(member.chargeRate.toString())
-  }
+    setEditingId(member.id);
+    setEditpayoutRate(member.payoutRate.toString());
+    setEditChargeRate(member.chargeRate.toString());
+  };
 
   const cancelEdit = () => {
-    setEditingId(null)
-    setEditpayoutRate("")
-    setEditChargeRate("")
-  }
+    setEditingId(null);
+    setEditpayoutRate("");
+    setEditChargeRate("");
+  };
 
   const saveEdit = async (memberId: string) => {
-    const rate = parseFloat(editpayoutRate)
-    const charge = parseFloat(editChargeRate)
+    const rate = parseFloat(editpayoutRate);
+    const charge = parseFloat(editChargeRate);
     if (isNaN(rate) || rate <= 0) {
-      alert("Please enter a valid rate")
-      return
+      alert("Please enter a valid rate");
+      return;
     }
 
     if (isNaN(charge) || charge <= 0) {
-      alert("Please enter a valid charge rate")
-      return
+      alert("Please enter a valid charge rate");
+      return;
     }
 
-    const result = await updateProjectMember(memberId, { payoutRate: rate, chargeRate: charge })
+    const result = await updateProjectMember(memberId, {
+      payoutRate: rate,
+      chargeRate: charge,
+    });
     if (result.success) {
-      setEditingId(null)
-      setEditpayoutRate("")
-      setEditChargeRate("")
-      if (onUpdate) onUpdate()
+      setEditingId(null);
+      setEditpayoutRate("");
+      setEditChargeRate("");
+      if (onUpdate) onUpdate();
     }
-  }
+  };
 
   if (members.length === 0) {
     return (
       <div className="text-center py-6 text-gray-500">
         No team members added yet
       </div>
-    )
+    );
   }
 
   return (
@@ -112,9 +115,7 @@ export function ProjectMemberList({
                 <Badge variant={member.isActive ? "default" : "secondary"}>
                   {member.role}
                 </Badge>
-                {!member.isActive && (
-                  <Badge variant="outline">Inactive</Badge>
-                )}
+                {!member.isActive && <Badge variant="outline">Inactive</Badge>}
               </div>
               <div className="text-sm text-gray-600 mt-1">
                 {member.user.email}
@@ -145,11 +146,7 @@ export function ProjectMemberList({
                   >
                     <Check className="h-4 w-4" />
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={cancelEdit}
-                  >
+                  <Button size="sm" variant="ghost" onClick={cancelEdit}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
@@ -178,7 +175,9 @@ export function ProjectMemberList({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleToggleActive(member.id, member.isActive)}
+                    onClick={() =>
+                      handleToggleActive(member.id, member.isActive)
+                    }
                   >
                     {member.isActive ? "Deactivate" : "Activate"}
                   </Button>
@@ -196,5 +195,5 @@ export function ProjectMemberList({
         </Card>
       ))}
     </div>
-  )
+  );
 }
