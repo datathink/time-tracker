@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ProjectForm } from "./ProjectForm";
 import { ProjectTeamDialog } from "./ProjectTeamDialog";
-import { deleteProject } from "@/lib/actions/projects";
+import { getProjects, deleteProject } from "@/lib/actions/projects";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -21,14 +21,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Pencil, Trash2, Users } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 interface Project {
   id: string;
   name: string;
-  clientId: string | null;
+  clientId: string;
   description: string | null;
-  budgetHours: number | null;
+  budgetAmount: number | null;
   status: string;
   color: string;
   client?: {
@@ -45,12 +44,19 @@ interface ProjectListProps {
 }
 
 export function ProjectList({ projects }: ProjectListProps) {
-  const router = useRouter();
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [allProjects, setAllProjects] = useState<Project[]>(projects);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [teamProject, setTeamProject] = useState<Project | null>(null);
   const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const loadProjects = async () => {
+    const result = await getProjects();
+    if (result.success && result.data) {
+      setAllProjects(result.data as Project[]);
+    }
+  };
 
   const handleEdit = (project: Project) => {
     setEditingProject(project);
@@ -69,7 +75,7 @@ export function ProjectList({ projects }: ProjectListProps) {
     const result = await deleteProject(id);
 
     if (result.success) {
-      router.refresh();
+      loadProjects();
     } else {
       alert(result.error || "Failed to delete project");
     }
@@ -79,8 +85,12 @@ export function ProjectList({ projects }: ProjectListProps) {
 
   const handleSuccess = () => {
     setEditingProject(null);
-    router.refresh();
+    loadProjects();
   };
+
+  useEffect(() => {
+    setAllProjects(projects);
+  }, [projects]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -95,7 +105,7 @@ export function ProjectList({ projects }: ProjectListProps) {
     }
   };
 
-  if (projects.length === 0) {
+  if (allProjects.length === 0) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">
@@ -121,13 +131,15 @@ export function ProjectList({ projects }: ProjectListProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {projects.map((project) => (
+            {allProjects.map((project) => (
               <TableRow key={project.id}>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <div
                       className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: project.color }}
+                      style={{
+                        backgroundColor: project.color,
+                      }}
                     />
                     <span className="font-medium">{project.name}</span>
                   </div>
@@ -139,7 +151,7 @@ export function ProjectList({ projects }: ProjectListProps) {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {project.budgetHours ? `${project.budgetHours}h` : "-"}
+                  {project.budgetAmount ? `$${project.budgetAmount}` : "-"}
                 </TableCell>
                 <TableCell>
                   <Badge variant="secondary">
@@ -186,15 +198,17 @@ export function ProjectList({ projects }: ProjectListProps) {
         </Table>
       </div>
 
-      <ProjectForm
-        open={isFormOpen}
-        onOpenChange={(open) => {
-          setIsFormOpen(open);
-          if (!open) setEditingProject(null);
-        }}
-        project={editingProject || undefined}
-        onSuccess={handleSuccess}
-      />
+      {editingProject && (
+        <ProjectForm
+          open={isFormOpen}
+          onOpenChange={(open) => {
+            setIsFormOpen(open);
+            if (!open) setEditingProject(null);
+          }}
+          project={editingProject || undefined}
+          onSuccess={handleSuccess}
+        />
+      )}
 
       {teamProject && (
         <ProjectTeamDialog

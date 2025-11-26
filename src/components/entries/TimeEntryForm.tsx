@@ -351,7 +351,6 @@ export function TimeEntryForm({
                                 <TimeInput
                                     id="startTime"
                                     placeholder="08:00 AM"
-                                    {...register("startTime")}
                                     value={startTime ?? ""}
                                     onChange={(v) =>
                                         setValue("startTime", v || "")
@@ -366,7 +365,6 @@ export function TimeEntryForm({
                                 <TimeInput
                                     id="endTime"
                                     placeholder="04:00 PM"
-                                    {...register("endTime")}
                                     value={endTime ?? ""}
                                     onChange={(v) =>
                                         setValue("endTime", v || "")
