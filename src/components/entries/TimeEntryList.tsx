@@ -218,17 +218,15 @@ export function TimeEntryList({ entries }: TimeEntryListProps) {
         })}
       </div>
 
-      {editingEntry && (
-        <TimeEntryForm
-          open={isFormOpen}
-          onOpenChange={(open) => {
-            setIsFormOpen(open);
-            if (!open) setEditingEntry(null);
-          }}
-          entry={editingEntry || undefined}
-          onSuccess={handleSuccess}
-        />
-      )}
+      <TimeEntryForm
+        open={isFormOpen}
+        onOpenChange={(open) => {
+          setIsFormOpen(open);
+          if (!open) setEditingEntry(null);
+        }}
+        entry={editingEntry || undefined}
+        onSuccess={handleSuccess}
+      />
     </>
   );
 }
