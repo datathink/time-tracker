@@ -6,5 +6,5 @@
 
 */
 -- AlterTable
-ALTER TABLE "ProjectMember" DROP COLUMN "payoutRate",
+ALTER TABLE "ProjectMember" DROP COLUMN "contractorRate",
 ADD COLUMN     "payoutRate" DECIMAL(10,2) NOT NULL;
