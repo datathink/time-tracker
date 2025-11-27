@@ -38,7 +38,12 @@ export async function createProject(data: ProjectFormData) {
     });
 
     revalidatePath("/projects");
-    return { success: true, data: project };
+    return { success: true, data: {
+        ...project,
+        budgetAmount: project.budgetAmount
+          ? project.budgetAmount.toNumber()
+          : null,
+      } };
   } catch (error) {
     console.error("Error creating project:", error);
     if (error instanceof z.ZodError) {
