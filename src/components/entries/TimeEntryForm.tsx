@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,6 +12,7 @@ import {
     calculateEndTime,
     calculateDuration,
     formatDuration,
+    calculateStartTime,
 } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -97,8 +98,12 @@ export function TimeEntryForm({
 }: TimeEntryFormProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [calculationError, setCalculationError] = useState<string | null>(
+        null
+    );
     const [projects, setProjects] = useState<ActiveProject[]>([]);
     const [parsedDuration, setParsedDuration] = useState<number | null>(null);
+    const lastModifiedRef = useRef<"duration" | "start" | "end" | null>(null);
 
     const {
         register,
@@ -154,21 +159,69 @@ export function TimeEntryForm({
         }
     }, [durationInput]);
 
-    // Auto-calculate end time if start time and duration are provided
+    // Smart calculation based on what was last modified
     useEffect(() => {
-        if (startTime && parsedDuration && !endTime) {
-            const calculated = calculateEndTime(startTime, parsedDuration);
-            setValue("endTime", calculated);
-        }
-    }, [startTime, parsedDuration, endTime, setValue]);
+        const hasStart = startTime && startTime.trim() !== "";
+        const hasEnd = endTime && endTime.trim() !== "";
+        const hasDuration = parsedDuration !== null && parsedDuration > 0;
 
-    // Auto-calculate duration if both start and end times are provided
-    useEffect(() => {
-        if (startTime && endTime && !durationInput) {
-            const minutes = calculateDuration(startTime, endTime);
-            setValue("durationInput", formatDuration(minutes));
+        try {
+            // Clear any previous calculation errors
+            setCalculationError(null);
+
+            // Scenario 1: Start + End times provided -> Calculate duration
+            if (
+                hasStart &&
+                hasEnd &&
+                (lastModifiedRef.current === "start" ||
+                    lastModifiedRef.current === "end")
+            ) {
+                const calculatedMinutes = calculateDuration(
+                    startTime!,
+                    endTime!
+                );
+                const currentDuration = parseDuration(durationInput || "");
+
+                // Only update if different to avoid infinite loops
+                if (calculatedMinutes !== currentDuration) {
+                    setValue(
+                        "durationInput",
+                        formatDuration(calculatedMinutes)
+                    );
+                }
+            }
+            // Scenario 2: Duration + Start time -> Calculate end time
+            else if (
+                hasDuration &&
+                hasStart &&
+                (lastModifiedRef.current === "duration" ||
+                    lastModifiedRef.current === "start")
+            ) {
+                const calculated = calculateEndTime(startTime!, parsedDuration);
+                if (calculated !== endTime) {
+                    setValue("endTime", calculated);
+                }
+            }
+            // Scenario 3: Duration + End time -> Calculate start time
+            else if (
+                hasDuration &&
+                hasEnd &&
+                lastModifiedRef.current === "end"
+            ) {
+                const calculated = calculateStartTime(endTime!, parsedDuration);
+                if (calculated !== startTime) {
+                    setValue("startTime", calculated);
+                }
+            }
+        } catch (err) {
+            // Handle calculation errors and display to user
+            const errorMessage =
+                err instanceof Error
+                    ? err.message
+                    : "An error occurred calculating time values";
+            setCalculationError(errorMessage);
         }
-    }, [startTime, endTime, durationInput, setValue]);
+    }, [startTime, endTime, parsedDuration, durationInput, setValue]);
 
     const onSubmit = async (data: FormData) => {
         setLoading(true);
@@ -223,6 +276,12 @@ export function TimeEntryForm({
                         {error && (
                             <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
                                 {error}
+                            </div>
+                        )}
+                        {calculationError && (
+                            <div className="p-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md">
+                                <strong>Calculation Error:</strong>{" "}
+                                {calculationError}
                             </div>
                         )}
                         <div className="space-y-2">
@@ -280,7 +339,7 @@ export function TimeEntryForm({
                                             <span>
                                                 {watch("date") &&
                                                     format(
-                                                        new Date(watch("date")),
+                                                        new Date(watch("date") + "T00:00:00"),
                                                         "EEE, MMMM do, yyyy"
                                                     )}
                                             </span>
@@ -293,9 +352,14 @@ export function TimeEntryForm({
                                     >
                                         <Calendar
                                             mode="single"
+                                            defaultMonth={
+                                                watch("date")
+                                                    ? new Date(watch("date") + "T00:00:00")
+                                                    : new Date()
+                                            }
                                             selected={
                                                 watch("date")
-                                                    ? new Date(watch("date"))
+                                                    ? new Date(watch("date") + "T00:00:00")
                                                     : undefined
                                             }
                                             onSelect={(date) => {
@@ -309,8 +373,7 @@ export function TimeEntryForm({
                                                     );
                                                 }
                                             }}
-                                            captionLayout="dropdown"
-                                            className="rounded-md border"
+                                            className="rounded-md border "
                                         />
                                     </PopoverContent>
                                 </Popover>
@@ -320,6 +383,7 @@ export function TimeEntryForm({
                                     </p>
                                 )}
                             </div>
+
                             <div className="space-y-2">
                                 <Label htmlFor="durationInput">
                                     Duration{" "}
@@ -329,6 +393,10 @@ export function TimeEntryForm({
                                     id="durationInput"
                                     placeholder="2.5h, 2h 30m, 150m"
                                     {...register("durationInput")}
+                                    onChange={(e) => {
+                                        register("durationInput").onChange(e);
+                                        lastModifiedRef.current = "duration";
+                                    }}
                                     disabled={loading}
                                 />
                                 {errors.durationInput && (
@@ -351,10 +419,12 @@ export function TimeEntryForm({
                                 <TimeInput
                                     id="startTime"
                                     placeholder="08:00 AM"
+                                    {...register("startTime")}
                                     value={startTime ?? ""}
-                                    onChange={(v) =>
-                                        setValue("startTime", v || "")
-                                    }
+                                    onChange={(v) => {
+                                        setValue("startTime", v || "");
+                                        lastModifiedRef.current = "start";
+                                    }}
                                     disabled={loading}
                                 />
                             </div>
@@ -365,10 +435,12 @@ export function TimeEntryForm({
                                 <TimeInput
                                     id="endTime"
                                     placeholder="04:00 PM"
+                                    {...register("endTime")}
                                     value={endTime ?? ""}
-                                    onChange={(v) =>
-                                        setValue("endTime", v || "")
-                                    }
+                                    onChange={(v) => {
+                                        setValue("endTime", v || "");
+                                        lastModifiedRef.current = "end";
+                                    }}
                                     disabled={loading}
                                 />
                             </div>
