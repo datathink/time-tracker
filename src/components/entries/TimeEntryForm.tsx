@@ -8,11 +8,11 @@ import { createTimeEntry, updateTimeEntry } from "@/lib/actions/entries";
 import { type TimeEntryFormData } from "@/lib/schemas/time-entry";
 import { getActiveProjects } from "@/lib/actions/projects";
 import {
-  parseDuration,
-  calculateEndTime,
-  calculateDuration,
-  formatDuration,
-  calculateStartTime,
+    parseDuration,
+    calculateEndTime,
+    calculateDuration,
+    formatDuration,
+    calculateStartTime,
 } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,12 +58,12 @@ type ActiveProject = Prisma.ProjectGetPayload<{
 }>;
 
 const timeEntryFormSchema = z.object({
-  date: z.string().min(1, "Date is required"),
-  projectId: z.string().min(1, "Project is required"),
-  durationInput: z.string().min(1, "Duration is required"),
-  startTime: z.string().optional(),
-  endTime: z.string().optional(),
-  description: z.string().min(10, "Description is required"),
+    date: z.string().min(1, "Date is required"),
+    projectId: z.string().min(1, "Project is required"),
+    durationInput: z.string().min(1, "Duration is required"),
+    startTime: z.string().optional(),
+    endTime: z.string().optional(),
+    description: z.string().min(10, "Description is required"),
 });
 
 type FormData = z.infer<typeof timeEntryFormSchema>;
@@ -96,12 +96,14 @@ export function TimeEntryForm({
     defaultDate,
     onSuccess,
 }: TimeEntryFormProps) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [calculationError, setCalculationError] = useState<string | null>(null);
-  const [projects, setProjects] = useState<ActiveProject[]>([]);
-  const [parsedDuration, setParsedDuration] = useState<number | null>(null);
-  const lastModifiedRef = useRef<"duration" | "start" | "end" | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [calculationError, setCalculationError] = useState<string | null>(
+        null
+    );
+    const [projects, setProjects] = useState<ActiveProject[]>([]);
+    const [parsedDuration, setParsedDuration] = useState<number | null>(null);
+    const lastModifiedRef = useRef<"duration" | "start" | "end" | null>(null);
 
     const {
         register,
@@ -157,59 +159,69 @@ export function TimeEntryForm({
         }
     }, [durationInput]);
 
-  // Smart calculation based on what was last modified
-  useEffect(() => {
-    const hasStart = startTime && startTime.trim() !== "";
-    const hasEnd = endTime && endTime.trim() !== "";
-    const hasDuration = parsedDuration !== null && parsedDuration > 0;
+    // Smart calculation based on what was last modified
+    useEffect(() => {
+        const hasStart = startTime && startTime.trim() !== "";
+        const hasEnd = endTime && endTime.trim() !== "";
+        const hasDuration = parsedDuration !== null && parsedDuration > 0;
 
-    try {
-      // Clear any previous calculation errors
-      setCalculationError(null);
+        try {
+            // Clear any previous calculation errors
+            setCalculationError(null);
 
-      // Scenario 1: Start + End times provided -> Calculate duration
-      if (
-        hasStart &&
-        hasEnd &&
-        (lastModifiedRef.current === "start" ||
-          lastModifiedRef.current === "end")
-      ) {
-        const calculatedMinutes = calculateDuration(startTime!, endTime!);
-        const currentDuration = parseDuration(durationInput || "");
+            // Scenario 1: Start + End times provided -> Calculate duration
+            if (
+                hasStart &&
+                hasEnd &&
+                (lastModifiedRef.current === "start" ||
+                    lastModifiedRef.current === "end")
+            ) {
+                const calculatedMinutes = calculateDuration(
+                    startTime!,
+                    endTime!
+                );
+                const currentDuration = parseDuration(durationInput || "");
 
-        // Only update if different to avoid infinite loops
-        if (calculatedMinutes !== currentDuration) {
-          setValue("durationInput", formatDuration(calculatedMinutes));
+                // Only update if different to avoid infinite loops
+                if (calculatedMinutes !== currentDuration) {
+                    setValue(
+                        "durationInput",
+                        formatDuration(calculatedMinutes)
+                    );
+                }
+            }
+            // Scenario 2: Duration + Start time -> Calculate end time
+            else if (
+                hasDuration &&
+                hasStart &&
+                (lastModifiedRef.current === "duration" ||
+                    lastModifiedRef.current === "start")
+            ) {
+                const calculated = calculateEndTime(startTime!, parsedDuration);
+                if (calculated !== endTime) {
+                    setValue("endTime", calculated);
+                }
+            }
+            // Scenario 3: Duration + End time -> Calculate start time
+            else if (
+                hasDuration &&
+                hasEnd &&
+                lastModifiedRef.current === "end"
+            ) {
+                const calculated = calculateStartTime(endTime!, parsedDuration);
+                if (calculated !== startTime) {
+                    setValue("startTime", calculated);
+                }
+            }
+        } catch (err) {
+            // Handle calculation errors and display to user
+            const errorMessage =
+                err instanceof Error
+                    ? err.message
+                    : "An error occurred calculating time values";
+            setCalculationError(errorMessage);
         }
-      }
-      // Scenario 2: Duration + Start time -> Calculate end time
-      else if (
-        hasDuration &&
-        hasStart &&
-        (lastModifiedRef.current === "duration" ||
-          lastModifiedRef.current === "start")
-      ) {
-        const calculated = calculateEndTime(startTime!, parsedDuration);
-        if (calculated !== endTime) {
-          setValue("endTime", calculated);
-        }
-      }
-      // Scenario 3: Duration + End time -> Calculate start time
-      else if (hasDuration && hasEnd && lastModifiedRef.current === "end") {
-        const calculated = calculateStartTime(endTime!, parsedDuration);
-        if (calculated !== startTime) {
-          setValue("startTime", calculated);
-        }
-      }
-    } catch (err) {
-      // Handle calculation errors and display to user
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "An error occurred calculating time values";
-      setCalculationError(errorMessage);
-    }
-  }, [startTime, endTime, parsedDuration, durationInput, setValue]);
+    }, [startTime, endTime, parsedDuration, durationInput, setValue]);
 
     const onSubmit = async (data: FormData) => {
         setLoading(true);
@@ -246,190 +258,229 @@ export function TimeEntryForm({
         setLoading(false);
     };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>
-            {entry ? "Edit Time Entry" : "New Time Entry"}
-          </DialogTitle>
-          <DialogDescription>
-            {entry
-              ? "Update time entry information"
-              : "Log time for work you've completed"}
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-4 py-4">
-            {error && (
-              <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
-                {error}
-              </div>
-            )}
-            {calculationError && (
-              <div className="p-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md">
-                <strong>Calculation Error:</strong> {calculationError}
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="projectId">
-                Project <span className="text-red-500">*</span>
-              </Label>
-              <Select
-                value={selectedProjectId || undefined}
-                onValueChange={(value) => setValue("projectId", value)}
-                disabled={loading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a project" />
-                </SelectTrigger>
-                <SelectContent>
-                  {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-2 h-2 rounded-full"
-                          style={{
-                            backgroundColor: project.color,
-                          }}
-                        />
-                        {project.name}
-                        {project.client && (
-                          <span className="text-xs text-gray-500">
-                            ({project.client.name})
-                          </span>
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                    <DialogTitle>
+                        {entry ? "Edit Time Entry" : "New Time Entry"}
+                    </DialogTitle>
+                    <DialogDescription>
+                        {entry
+                            ? "Update time entry information"
+                            : "Log time for work you've completed"}
+                    </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <div className="space-y-4 py-4">
+                        {error && (
+                            <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
+                                {error}
+                            </div>
                         )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="date">
-                  Date <span className="text-red-500">*</span>
-                </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-between text-left font-normal"
-                      disabled={loading}
-                    >
-                      <span>
-                        {watch("date") &&
-                          format(new Date(watch("date")), "EEE, MMMM do, yyyy")}
-                      </span>
-                      <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      defaultMonth={
-                        watch("date") ? new Date(watch("date")) : new Date()
-                      }
-                      selected={
-                        watch("date") ? new Date(watch("date")) : undefined
-                      }
-                      onSelect={(date) => {
-                        if (date) {
-                          setValue("date", format(date, "yyyy-MM-dd"));
-                        }
-                      }}
-                      className="rounded-md border "
-                    />
-                  </PopoverContent>
-                </Popover>
-                {errors.date && (
-                  <p className="text-sm text-red-500">{errors.date.message}</p>
-                )}
-              </div>
+                        {calculationError && (
+                            <div className="p-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md">
+                                <strong>Calculation Error:</strong>{" "}
+                                {calculationError}
+                            </div>
+                        )}
+                        <div className="space-y-2">
+                            <Label htmlFor="projectId">
+                                Project <span className="text-red-500">*</span>
+                            </Label>
+                            <Select
+                                value={selectedProjectId || undefined}
+                                onValueChange={(value) =>
+                                    setValue("projectId", value)
+                                }
+                                disabled={loading}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a project" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {projects.map((project) => (
+                                        <SelectItem
+                                            key={project.id}
+                                            value={project.id}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <div
+                                                    className="w-2 h-2 rounded-full"
+                                                    style={{
+                                                        backgroundColor:
+                                                            project.color,
+                                                    }}
+                                                />
+                                                {project.name}
+                                                {project.client && (
+                                                    <span className="text-xs text-gray-500">
+                                                        ({project.client.name})
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="date">
+                                    Date <span className="text-red-500">*</span>
+                                </Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full justify-between text-left font-normal"
+                                            disabled={loading}
+                                        >
+                                            <span>
+                                                {watch("date") &&
+                                                    format(
+                                                        new Date(watch("date")),
+                                                        "EEE, MMMM do, yyyy"
+                                                    )}
+                                            </span>
+                                            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent
+                                        className="w-auto p-0"
+                                        align="start"
+                                    >
+                                        <Calendar
+                                            mode="single"
+                                            defaultMonth={
+                                                watch("date")
+                                                    ? new Date(watch("date"))
+                                                    : new Date()
+                                            }
+                                            selected={
+                                                watch("date")
+                                                    ? new Date(watch("date"))
+                                                    : undefined
+                                            }
+                                            onSelect={(date) => {
+                                                if (date) {
+                                                    setValue(
+                                                        "date",
+                                                        format(
+                                                            date,
+                                                            "yyyy-MM-dd"
+                                                        )
+                                                    );
+                                                }
+                                            }}
+                                            className="rounded-md border "
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                                {errors.date && (
+                                    <p className="text-sm text-red-500">
+                                        {errors.date.message}
+                                    </p>
+                                )}
+                            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="durationInput">
-                  Duration <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="durationInput"
-                  placeholder="2.5h, 2h 30m, 150m"
-                  {...register("durationInput")}
-                  onChange={(e) => {
-                    register("durationInput").onChange(e);
-                    lastModifiedRef.current = "duration";
-                  }}
-                  disabled={loading}
-                />
-                {errors.durationInput && (
-                  <p className="text-sm text-red-500">
-                    {errors.durationInput.message}
-                  </p>
-                )}
-                {parsedDuration !== null && (
-                  <p className="text-xs text-gray-500">
-                    = {formatDuration(parsedDuration)} (
-                    {(parsedDuration / 60).toFixed(2)} hours)
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="startTime">Start Time (optional)</Label>
-                <TimeInput
-                  id="startTime"
-                  placeholder="08:00 AM"
-                  {...register("startTime")}
-                  value={startTime ?? ""}
-                  onChange={(v) => {
-                    setValue("startTime", v || "");
-                    lastModifiedRef.current = "start";
-                  }}
-                  disabled={loading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="endTime">End Time (optional)</Label>
-                <TimeInput
-                  id="endTime"
-                  placeholder="04:00 PM"
-                  {...register("endTime")}
-                  value={endTime ?? ""}
-                  onChange={(v) => {
-                    setValue("endTime", v || "");
-                    lastModifiedRef.current = "end";
-                  }}
-                  disabled={loading}
-                />
-              </div>
-              <div className="space-y-2 col-span-2">
-                <Label htmlFor="description">
-                  Description <span className="text-red-500">*</span>
-                </Label>
-                <Textarea
-                  id="description"
-                  placeholder="What did you work on?"
-                  rows={3}
-                  {...register("description")}
-                  disabled={loading}
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading || parsedDuration === null}>
-              {loading ? "Saving..." : entry ? "Update" : "Create"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
+                            <div className="space-y-2">
+                                <Label htmlFor="durationInput">
+                                    Duration{" "}
+                                    <span className="text-red-500">*</span>
+                                </Label>
+                                <Input
+                                    id="durationInput"
+                                    placeholder="2.5h, 2h 30m, 150m"
+                                    {...register("durationInput")}
+                                    onChange={(e) => {
+                                        register("durationInput").onChange(e);
+                                        lastModifiedRef.current = "duration";
+                                    }}
+                                    disabled={loading}
+                                />
+                                {errors.durationInput && (
+                                    <p className="text-sm text-red-500">
+                                        {errors.durationInput.message}
+                                    </p>
+                                )}
+                                {parsedDuration !== null && (
+                                    <p className="text-xs text-gray-500">
+                                        = {formatDuration(parsedDuration)} (
+                                        {(parsedDuration / 60).toFixed(2)}{" "}
+                                        hours)
+                                    </p>
+                                )}
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="startTime">
+                                    Start Time (optional)
+                                </Label>
+                                <TimeInput
+                                    id="startTime"
+                                    placeholder="08:00 AM"
+                                    {...register("startTime")}
+                                    value={startTime ?? ""}
+                                    onChange={(v) => {
+                                        setValue("startTime", v || "");
+                                        lastModifiedRef.current = "start";
+                                    }}
+                                    disabled={loading}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="endTime">
+                                    End Time (optional)
+                                </Label>
+                                <TimeInput
+                                    id="endTime"
+                                    placeholder="04:00 PM"
+                                    {...register("endTime")}
+                                    value={endTime ?? ""}
+                                    onChange={(v) => {
+                                        setValue("endTime", v || "");
+                                        lastModifiedRef.current = "end";
+                                    }}
+                                    disabled={loading}
+                                />
+                            </div>
+                            <div className="space-y-2 col-span-2">
+                                <Label htmlFor="description">
+                                    Description{" "}
+                                    <span className="text-red-500">*</span>
+                                </Label>
+                                <Textarea
+                                    id="description"
+                                    placeholder="What did you work on?"
+                                    rows={3}
+                                    {...register("description")}
+                                    disabled={loading}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => onOpenChange(false)}
+                            disabled={loading}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={loading || parsedDuration === null}
+                        >
+                            {loading
+                                ? "Saving..."
+                                : entry
+                                  ? "Update"
+                                  : "Create"}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
 }
