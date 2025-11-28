@@ -339,7 +339,7 @@ export function TimeEntryForm({
                                             <span>
                                                 {watch("date") &&
                                                     format(
-                                                        new Date(watch("date")),
+                                                        new Date(watch("date") + "T00:00:00"),
                                                         "EEE, MMMM do, yyyy"
                                                     )}
                                             </span>
@@ -354,12 +354,12 @@ export function TimeEntryForm({
                                             mode="single"
                                             defaultMonth={
                                                 watch("date")
-                                                    ? new Date(watch("date"))
+                                                    ? new Date(watch("date") + "T00:00:00")
                                                     : new Date()
                                             }
                                             selected={
                                                 watch("date")
-                                                    ? new Date(watch("date"))
+                                                    ? new Date(watch("date") + "T00:00:00")
                                                     : undefined
                                             }
                                             onSelect={(date) => {

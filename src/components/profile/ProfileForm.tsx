@@ -203,7 +203,7 @@ export function ProfileForm() {
                                                     {field.value
                                                         ? format(
                                                               new Date(
-                                                                  field.value
+                                                                  field.value + "T00:00:00"
                                                               ),
                                                               " MMMM do, yyyy"
                                                           )
@@ -221,7 +221,7 @@ export function ProfileForm() {
                                             mode="single"
                                             selected={
                                                 field.value
-                                                    ? new Date(field.value)
+                                                    ? new Date(field.value + "T00:00:00")
                                                     : undefined
                                             }
                                             onSelect={(date) =>
