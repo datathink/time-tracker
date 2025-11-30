@@ -6,6 +6,14 @@ import { ProjectTeamDialog } from "./ProjectTeamDialog";
 import { getProjects, deleteProject } from "@/lib/actions/projects";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -20,7 +28,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Pencil, Trash2, Users } from "lucide-react";
+import {
+  AlertCircleIcon,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  Users,
+} from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface Project {
   id: string;
@@ -50,6 +65,9 @@ export function ProjectList({ projects }: ProjectListProps) {
   const [teamProject, setTeamProject] = useState<Project | null>(null);
   const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteProject, setConfirmDeleteProject] =
+    useState<Project | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const loadProjects = async () => {
     const result = await getProjects();
@@ -68,16 +86,20 @@ export function ProjectList({ projects }: ProjectListProps) {
     setIsTeamDialogOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this project?")) return;
+  const handleDelete = (project: Project) => {
+    setConfirmDeleteProject(project);
+  };
 
+  const performDelete = async (id: string) => {
     setDeletingId(id);
+    setDeleteError(null);
     const result = await deleteProject(id);
+    setConfirmDeleteProject(null);
 
     if (result.success) {
       loadProjects();
     } else {
-      alert(result.error || "Failed to delete project");
+      setDeleteError(result.error || "Failed to delete project");
     }
 
     setDeletingId(null);
@@ -90,7 +112,13 @@ export function ProjectList({ projects }: ProjectListProps) {
 
   useEffect(() => {
     setAllProjects(projects);
-  }, [projects]);
+    if (deleteError) {
+      const timer = setTimeout(() => {
+        setDeleteError(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [projects, deleteError]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -182,7 +210,7 @@ export function ProjectList({ projects }: ProjectListProps) {
                         Manage Team
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => handleDelete(project.id)}
+                        onClick={() => handleDelete(project)}
                         disabled={deletingId === project.id}
                         className="text-red-600"
                       >
@@ -220,6 +248,59 @@ export function ProjectList({ projects }: ProjectListProps) {
           }}
           onSuccess={handleSuccess}
         />
+      )}
+
+      <Dialog
+        open={!!confirmDeleteProject}
+        onOpenChange={(open) => {
+          if (!open) setConfirmDeleteProject(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete project</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the {confirmDeleteProject?.name}{" "}
+              project? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setConfirmDeleteProject(null)}
+              disabled={
+                !!confirmDeleteProject && deletingId === confirmDeleteProject.id
+              }
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() =>
+                confirmDeleteProject && performDelete(confirmDeleteProject.id)
+              }
+              disabled={
+                !!confirmDeleteProject && deletingId === confirmDeleteProject.id
+              }
+            >
+              {deletingId && confirmDeleteProject?.id === deletingId
+                ? "Deleting..."
+                : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {deleteError && (
+        <div className="fixed top-5 right-120 left-120 m-1 w-auto z-50">
+          <Alert variant="destructive">
+            <AlertCircleIcon />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{deleteError}</AlertDescription>
+          </Alert>
+        </div>
       )}
     </>
   );
