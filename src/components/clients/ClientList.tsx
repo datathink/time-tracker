@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ClientForm } from "./ClientForm";
 import { getClients, deleteClient } from "@/lib/actions/clients";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { AlertCircleIcon, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { set } from "zod";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
@@ -75,10 +75,10 @@ export function ClientList({ clients }: ClientListProps) {
     setDeletingId(id);
     setDeleteError(null);
     const result = await deleteClient(id);
+    setConfirmDeleteClient(null);
 
     if (result.success) {
       loadClients();
-      setConfirmDeleteClient(null);
     } else {
       setDeleteError(result.error || "Failed to delete client");
     }
@@ -90,6 +90,16 @@ export function ClientList({ clients }: ClientListProps) {
     setEditingClient(null);
     loadClients();
   };
+
+  useEffect(() => {
+    setAllClients(clients);
+    if (deleteError) {
+      const timer = setTimeout(() => {
+        setDeleteError(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [clients, deleteError]);
 
   if (allClients.length === 0) {
     return (
@@ -207,20 +217,11 @@ export function ClientList({ clients }: ClientListProps) {
       </Dialog>
 
       {deleteError && (
-        <div className="fixed bottom-4 right-4 max-w-sm z-50">
-          <Alert variant="destructive" className="shadow-md">
-            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+        <div className="fixed top-5 right-120 left-120 m-1 w-auto z-50">
+          <Alert variant="destructive">
+            <AlertCircleIcon />
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>{deleteError}</AlertDescription>
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              className="mt-2 h-auto p-0 text-destructive hover:text-destructive/80"
-              onClick={() => setDeleteError(null)}
-            >
-              Dismiss
-            </Button>
           </Alert>
         </div>
       )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { use, useEffect, useState } from "react";
 import { TimeEntryForm } from "./TimeEntryForm";
 import { getTimeEntries, deleteTimeEntry } from "@/lib/actions/entries";
 import { formatDuration, formatDecimalHours } from "@/lib/utils";
@@ -28,7 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  AlertCircle,
+  AlertCircleIcon,
   MoreHorizontal,
   Pencil,
   Trash2,
@@ -86,10 +86,10 @@ export function TimeEntryList({ entries }: TimeEntryListProps) {
     setDeletingId(id);
     setDeleteError(null);
     const result = await deleteTimeEntry(id);
+    setConfirmDeleteEntry(null);
 
     if (result.success) {
       loadTimeEntries();
-      setConfirmDeleteEntry(null);
     } else {
       setDeleteError(result.error || "Failed to delete time entry");
     }
@@ -101,6 +101,16 @@ export function TimeEntryList({ entries }: TimeEntryListProps) {
     setEditingEntry(null);
     loadTimeEntries();
   };
+
+  useEffect(() => {
+    setAllEntries(entries);
+    if (deleteError) {
+      const timer = setTimeout(() => {
+        setDeleteError(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [entries, deleteError]);
 
   // Group entries by date
   const groupedEntries = allEntries.reduce(
@@ -294,20 +304,11 @@ export function TimeEntryList({ entries }: TimeEntryListProps) {
       </Dialog>
 
       {deleteError && (
-        <div className="fixed bottom-4 right-4 max-w-sm z-50">
-          <Alert variant="destructive" className="shadow-md">
-            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+        <div className="fixed top-5 right-120 left-120 m-1 w-auto z-50">
+          <Alert variant="destructive">
+            <AlertCircleIcon />
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>{deleteError}</AlertDescription>
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              className="mt-2 h-auto p-0 text-destructive hover:text-destructive/80"
-              onClick={() => setDeleteError(null)}
-            >
-              Dismiss
-            </Button>
           </Alert>
         </div>
       )}
