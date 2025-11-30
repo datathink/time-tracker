@@ -2,9 +2,17 @@
 
 import { useState } from "react";
 import { TimeEntryForm } from "./TimeEntryForm";
-import { deleteTimeEntry } from "@/lib/actions/entries";
+import { getTimeEntries, deleteTimeEntry } from "@/lib/actions/entries";
 import { formatDuration, formatDecimalHours } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -19,9 +27,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Pencil, Trash2, Clock } from "lucide-react";
-import { useRouter } from "next/navigation";
+import {
+  AlertCircle,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  Clock,
+} from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { format } from "date-fns";
+import { set } from "zod";
 
 interface TimeEntry {
   id: string;
@@ -43,26 +58,40 @@ interface TimeEntryListProps {
 }
 
 export function TimeEntryList({ entries }: TimeEntryListProps) {
-  const router = useRouter();
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
+  const [allEntries, setAllEntries] = useState<TimeEntry[]>(entries);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteEntry, setConfirmDeleteEntry] =
+    useState<TimeEntry | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const loadTimeEntries = async () => {
+    const result = await getTimeEntries();
+    if (result.success) {
+      setAllEntries(result.data);
+    }
+  };
 
   const handleEdit = (entry: TimeEntry) => {
     setEditingEntry(entry);
     setIsFormOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this time entry?")) return;
+  const handleDelete = (timeEntry: TimeEntry) => {
+    setConfirmDeleteEntry(timeEntry);
+  };
 
+  const performDelete = async (id: string) => {
     setDeletingId(id);
+    setDeleteError(null);
     const result = await deleteTimeEntry(id);
 
     if (result.success) {
-      router.refresh();
+      loadTimeEntries();
+      setConfirmDeleteEntry(null);
     } else {
-      alert(result.error || "Failed to delete time entry");
+      setDeleteError(result.error || "Failed to delete time entry");
     }
 
     setDeletingId(null);
@@ -70,11 +99,11 @@ export function TimeEntryList({ entries }: TimeEntryListProps) {
 
   const handleSuccess = () => {
     setEditingEntry(null);
-    router.refresh();
+    loadTimeEntries();
   };
 
   // Group entries by date
-  const groupedEntries = entries.reduce(
+  const groupedEntries = allEntries.reduce(
     (acc, entry) => {
       const dateKey = format(new Date(entry.date), "yyyy-MM-dd");
       if (!acc[dateKey]) {
@@ -196,7 +225,7 @@ export function TimeEntryList({ entries }: TimeEntryListProps) {
                                 Edit
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => handleDelete(entry.id)}
+                                onClick={() => handleDelete(entry)}
                                 disabled={deletingId === entry.id}
                                 className="text-red-600"
                               >
@@ -227,6 +256,61 @@ export function TimeEntryList({ entries }: TimeEntryListProps) {
         entry={editingEntry || undefined}
         onSuccess={handleSuccess}
       />
+
+      <Dialog
+        open={!!confirmDeleteEntry}
+        onOpenChange={(open) => {
+          if (!open) setConfirmDeleteEntry(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete time entry</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this time entry? This action
+              cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setConfirmDeleteEntry(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                if (confirmDeleteEntry) {
+                  await performDelete(confirmDeleteEntry.id);
+                  setConfirmDeleteEntry(null);
+                }
+              }}
+              disabled={
+                !!confirmDeleteEntry && deletingId === confirmDeleteEntry?.id
+              }
+            >
+              {deletingId === confirmDeleteEntry?.id ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {deleteError && (
+        <div className="fixed bottom-4 right-4 max-w-sm z-50">
+          <Alert variant="destructive" className="shadow-md">
+            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{deleteError}</AlertDescription>
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              className="mt-2 h-auto p-0 text-destructive hover:text-destructive/80"
+              onClick={() => setDeleteError(null)}
+            >
+              Dismiss
+            </Button>
+          </Alert>
+        </div>
+      )}
     </>
   );
 }
