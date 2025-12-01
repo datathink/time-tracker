@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { ProjectForm } from "./ProjectForm";
 import { ProjectTeamDialog } from "./ProjectTeamDialog";
 import { getProjects, deleteProject } from "@/lib/actions/projects";
@@ -28,14 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import {
-  AlertCircleIcon,
-  MoreHorizontal,
-  Pencil,
-  Trash2,
-  Users,
-} from "lucide-react";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { MoreHorizontal, Pencil, Trash2, Users } from "lucide-react";
 
 interface Project {
   id: string;
@@ -67,7 +61,6 @@ export function ProjectList({ projects }: ProjectListProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteProject, setConfirmDeleteProject] =
     useState<Project | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const loadProjects = async () => {
     const result = await getProjects();
@@ -92,14 +85,14 @@ export function ProjectList({ projects }: ProjectListProps) {
 
   const performDelete = async (id: string) => {
     setDeletingId(id);
-    setDeleteError(null);
     const result = await deleteProject(id);
     setConfirmDeleteProject(null);
 
     if (result.success) {
       loadProjects();
+      toast.success("Project deleted successfully");
     } else {
-      setDeleteError(result.error || "Failed to delete project");
+      toast.error(result.error || "Failed to delete project");
     }
 
     setDeletingId(null);
@@ -112,13 +105,7 @@ export function ProjectList({ projects }: ProjectListProps) {
 
   useEffect(() => {
     setAllProjects(projects);
-    if (deleteError) {
-      const timer = setTimeout(() => {
-        setDeleteError(null);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [projects, deleteError]);
+  }, [projects]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -292,16 +279,6 @@ export function ProjectList({ projects }: ProjectListProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {deleteError && (
-        <div className="fixed top-5 right-120 left-120 m-1 w-auto z-50">
-          <Alert variant="destructive">
-            <AlertCircleIcon />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{deleteError}</AlertDescription>
-          </Alert>
-        </div>
-      )}
     </>
   );
 }

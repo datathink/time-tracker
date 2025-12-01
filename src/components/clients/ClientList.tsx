@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { ClientForm } from "./ClientForm";
 import { getClients, deleteClient } from "@/lib/actions/clients";
 import { Button } from "@/components/ui/button";
@@ -27,10 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircleIcon, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import { set } from "zod";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 interface Client {
   id: string;
   name: string;
@@ -53,7 +51,6 @@ export function ClientList({ clients }: ClientListProps) {
   const [confirmDeleteClient, setConfirmDeleteClient] = useState<Client | null>(
     null
   );
-  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const loadClients = async () => {
     const result = await getClients();
@@ -73,14 +70,14 @@ export function ClientList({ clients }: ClientListProps) {
 
   const performDelete = async (id: string) => {
     setDeletingId(id);
-    setDeleteError(null);
     const result = await deleteClient(id);
     setConfirmDeleteClient(null);
 
     if (result.success) {
       loadClients();
+      toast.success("Client deleted successfully");
     } else {
-      setDeleteError(result.error || "Failed to delete client");
+      toast.error(result.error || "Failed to delete client");
     }
 
     setDeletingId(null);
@@ -93,13 +90,7 @@ export function ClientList({ clients }: ClientListProps) {
 
   useEffect(() => {
     setAllClients(clients);
-    if (deleteError) {
-      const timer = setTimeout(() => {
-        setDeleteError(null);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [clients, deleteError]);
+  }, [clients]);
 
   if (allClients.length === 0) {
     return (
@@ -215,16 +206,6 @@ export function ClientList({ clients }: ClientListProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {deleteError && (
-        <div className="fixed top-5 right-120 left-120 m-1 w-auto z-50">
-          <Alert variant="destructive">
-            <AlertCircleIcon />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{deleteError}</AlertDescription>
-          </Alert>
-        </div>
-      )}
     </>
   );
 }
