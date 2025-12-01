@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 type TimeInputProps = {
   value?: string;
   onChange?: (value: string) => void;
+  name?: string;
   placeholder?: string;
   disabled?: boolean;
   id?: string;
