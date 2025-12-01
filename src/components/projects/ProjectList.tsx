@@ -3,7 +3,12 @@
 import { useEffect, useState } from "react";
 import { ProjectForm } from "./ProjectForm";
 import { ProjectTeamDialog } from "./ProjectTeamDialog";
-import { getProjects, deleteProject } from "@/lib/actions/projects";
+import {
+  getUsersProjects,
+  getAllProjects,
+  deleteProject,
+} from "@/lib/actions/projects";
+import { isAdminUser } from "@/lib/actions/clients";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -50,13 +55,33 @@ export function ProjectList({ projects }: ProjectListProps) {
   const [teamProject, setTeamProject] = useState<Project | null>(null);
   const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const loadProjects = async () => {
-    const result = await getProjects();
-    if (result.success && result.data) {
-      setAllProjects(result.data as Project[]);
+    if (isAdmin) {
+      const result = await getAllProjects();
+      if (result.success) {
+        setAllProjects(result.data as Project[]);
+      }
+    } else {
+      const result = await getUsersProjects();
+      if (result.success) {
+        setAllProjects(result.data as Project[]);
+      }
     }
   };
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const result = await isAdminUser();
+      setIsAdmin(result);
+    };
+    checkAdmin();
+  }, []);
+
+  useEffect(() => {
+    loadProjects();
+  }, [isAdmin]);
 
   const handleEdit = (project: Project) => {
     setEditingProject(project);
@@ -122,7 +147,7 @@ export function ProjectList({ projects }: ProjectListProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Project</TableHead>
-              <TableHead>Client</TableHead>
+              {isAdmin && <TableHead>Client</TableHead>}
               <TableHead>Status</TableHead>
               <TableHead>Budget</TableHead>
               <TableHead>Team</TableHead>
@@ -144,7 +169,9 @@ export function ProjectList({ projects }: ProjectListProps) {
                     <span className="font-medium">{project.name}</span>
                   </div>
                 </TableCell>
-                <TableCell>{project.client?.name || "-"}</TableCell>
+                {isAdmin && (
+                  <TableCell>{project.client?.name || "-"}</TableCell>
+                )}
                 <TableCell>
                   <Badge className={getStatusColor(project.status)}>
                     {project.status}
@@ -163,35 +190,41 @@ export function ProjectList({ projects }: ProjectListProps) {
                     {project._count?.timeEntries || 0}
                   </Badge>
                 </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEdit(project)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleManageTeam(project)}
-                      >
-                        <Users className="mr-2 h-4 w-4" />
-                        Manage Team
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleDelete(project.id)}
-                        disabled={deletingId === project.id}
-                        className="text-red-600"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        {deletingId === project.id ? "Deleting..." : "Delete"}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
+                {isAdmin && (
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEdit(project)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleManageTeam(project)}
+                        >
+                          <Users className="mr-2 h-4 w-4" />
+                          Manage Team
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(project.id)}
+                          disabled={deletingId === project.id}
+                          className="text-red-600"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          {deletingId === project.id ? "Deleting..." : "Delete"}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>
