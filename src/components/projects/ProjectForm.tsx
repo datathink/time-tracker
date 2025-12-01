@@ -29,7 +29,11 @@ import {
 import { Prisma } from "@prisma/client";
 
 type ClientWithCount = Prisma.ClientGetPayload<{
-  include: {
+  select: {
+    id: true;
+    name: true;
+    email: true;
+    company: true;
     _count: {
       select: {
         projects: true;

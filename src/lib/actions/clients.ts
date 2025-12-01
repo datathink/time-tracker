@@ -6,6 +6,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
 import { clientSchema, type ClientFormData } from "@/lib/schemas/client";
+import { is } from "date-fns/locale";
 
 // Get current user from session
 export async function getCurrentUser() {
@@ -90,8 +91,8 @@ export async function updateClient(id: string, data: ClientFormData) {
   }
 }
 
-// Delete a client
-export async function deleteClient(id: string) {
+// Archive a client
+export async function archiveClient(id: string) {
   try {
     const isAdmin = await isAdminUser();
 
@@ -99,20 +100,30 @@ export async function deleteClient(id: string) {
       return { success: false, error: "Unauthorized" };
     }
 
-    await prisma.client.delete({
+    await prisma.client.update({
       where: { id },
+      data: {
+        isArchived: true,
+      },
+    });
+
+    await prisma.project.updateMany({
+      where: { clientId: id },
+      data: {
+        status: "archived",
+      },
     });
 
     revalidatePath("/clients");
     return { success: true };
   } catch (error) {
-    console.error("Error deleting client:", error);
-    return { success: false, error: "Failed to delete client" };
+    console.error("Error archiving client:", error);
+    return { success: false, error: "Failed to archive client" };
   }
 }
 
 // Get all clients
-export async function getClients() {
+export async function getClients(areArchived: boolean = false) {
   try {
     const isAdmin = await isAdminUser();
 
@@ -120,18 +131,46 @@ export async function getClients() {
       return { success: false, error: "Unauthorized", data: [] };
     }
 
-    const clients = await prisma.client.findMany({
-      orderBy: { name: "asc" },
-      include: {
-        _count: {
-          select: {
-            projects: true,
+    const clients = areArchived
+      ? await prisma.client.findMany({
+          where: {
+            isArchived: true,
           },
-        },
-      },
-    });
+          orderBy: { name: "asc" },
+          include: {
+            _count: {
+              select: {
+                projects: true,
+              },
+            },
+          },
+        })
+      : await prisma.client.findMany({
+          where: {
+            isArchived: false,
+          },
+          orderBy: { name: "asc" },
+          include: {
+            _count: {
+              select: {
+                projects: true,
+              },
+            },
+          },
+        });
 
-    return { success: true, data: clients };
+    return {
+      success: true,
+      data: clients.map((client) => ({
+        id: client.id,
+        name: client.name,
+        email: client.email,
+        company: client.company,
+        createdAt: client.createdAt,
+        updatedAt: client.updatedAt,
+        _count: client._count,
+      })),
+    };
   } catch (error) {
     console.error("Error fetching clients:", error);
     return { success: false, error: "Failed to fetch clients", data: [] };
@@ -139,7 +178,7 @@ export async function getClients() {
 }
 
 // Get a single client by ID
-export async function getClient(id: string) {
+export async function getClient(id: string, isArchived: boolean = false) {
   try {
     const isAdmin = await isAdminUser();
 
@@ -147,18 +186,36 @@ export async function getClient(id: string) {
       return { success: false, error: "Unauthorized" };
     }
 
-    const client = await prisma.client.findUnique({
-      where: { id },
-      include: {
-        projects: true,
-      },
-    });
+    const client = isArchived
+      ? await prisma.client.findUnique({
+          where: { id, isArchived: true },
+          include: {
+            projects: true,
+          },
+        })
+      : await prisma.client.findUnique({
+          where: { id, isArchived: false },
+          include: {
+            projects: true,
+          },
+        });
 
     if (!client) {
       return { success: false, error: "Client not found" };
     }
 
-    return { success: true, data: client };
+    return {
+      success: true,
+      data: {
+        id: client.id,
+        name: client.name,
+        email: client.email,
+        company: client.company,
+        createdAt: client.createdAt,
+        updatedAt: client.updatedAt,
+        projects: client.projects,
+      },
+    };
   } catch (error) {
     console.error("Error fetching client:", error);
     return { success: false, error: "Failed to fetch client" };

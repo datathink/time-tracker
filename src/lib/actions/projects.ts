@@ -6,6 +6,8 @@ import { z } from "zod";
 import { isAdminUser, getCurrentUser } from "./clients";
 import { projectSchema, type ProjectFormData } from "@/lib/schemas/project";
 import { Decimal } from "@prisma/client/runtime/library";
+import { is } from "date-fns/locale";
+import { act } from "react";
 
 // Create a new project
 export async function createProject(data: ProjectFormData) {
@@ -98,8 +100,8 @@ export async function updateProject(id: string, data: ProjectFormData) {
   }
 }
 
-// Delete a project
-export async function deleteProject(id: string) {
+// Archive a project
+export async function archiveProject(id: string) {
   try {
     const isAdmin = await isAdminUser();
 
@@ -117,15 +119,18 @@ export async function deleteProject(id: string) {
       return { success: false, error: "Project not found" };
     }
 
-    await prisma.project.delete({
+    await prisma.project.update({
       where: { id },
+      data: {
+        status: "archived",
+      },
     });
 
     revalidatePath("/projects");
     return { success: true };
   } catch (error) {
-    console.error("Error deleting project:", error);
-    return { success: false, error: "Failed to delete project" };
+    console.error("Error archiving project:", error);
+    return { success: false, error: "Failed to archive project" };
   }
 }
 
@@ -141,6 +146,7 @@ export async function getUsersProjects() {
     // Get projects where user is a member
     const projects = await prisma.project.findMany({
       where: {
+        status: "active",
         members: {
           some: {
             userId: user.id,
@@ -174,7 +180,7 @@ export async function getUsersProjects() {
 }
 
 // Get all projects (admin only)
-export async function getAllProjects() {
+export async function getAllProjects(active: boolean = true) {
   try {
     const isAdmin = await isAdminUser();
 
@@ -184,18 +190,33 @@ export async function getAllProjects() {
     }
 
     // Get all projects (for admin users)
-    const projects = await prisma.project.findMany({
-      orderBy: { name: "asc" },
-      include: {
-        client: true,
-        _count: {
-          select: {
-            timeEntries: true,
-            members: true,
+    const projects = active
+      ? await prisma.project.findMany({
+          where: { status: "active" },
+          orderBy: { name: "asc" },
+          include: {
+            client: true,
+            _count: {
+              select: {
+                timeEntries: true,
+                members: true,
+              },
+            },
           },
-        },
-      },
-    });
+        })
+      : await prisma.project.findMany({
+          where: { status: "archived" },
+          orderBy: { name: "asc" },
+          include: {
+            client: true,
+            _count: {
+              select: {
+                timeEntries: true,
+                members: true,
+              },
+            },
+          },
+        });
 
     return {
       success: true,
@@ -253,7 +274,7 @@ export async function getActiveProjects() {
 }
 
 // Get a single project by ID
-export async function getProject(id: string) {
+export async function getProject(id: string, active: boolean = true) {
   try {
     const isAdmin = await isAdminUser();
 
@@ -262,17 +283,29 @@ export async function getProject(id: string) {
       return { success: false, error: "Unauthorized" };
     }
 
-    const project = await prisma.project.findUnique({
-      where: { id },
-      include: {
-        client: true,
-        members: {
+    const project = active
+      ? await prisma.project.findUnique({
+          where: { id, status: "active" },
           include: {
-            user: true,
+            client: true,
+            members: {
+              include: {
+                user: true,
+              },
+            },
           },
-        },
-      },
-    });
+        })
+      : await prisma.project.findUnique({
+          where: { id, status: "archived" },
+          include: {
+            client: true,
+            members: {
+              include: {
+                user: true,
+              },
+            },
+          },
+        });
 
     if (!project) {
       return { success: false, error: "Project not found" };
