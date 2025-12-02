@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, List, Calendar } from "lucide-react";
+import { Plus, List, Calendar, Table } from "lucide-react";
 import { CalendarView } from "@/components/entries/CalendarView";
+import { TimeSheetTable } from "@/components/entries/TableView";
 import { TimeEntryList } from "@/components/entries/ListView";
 import { TimeEntryForm } from "@/components/entries/TimeEntryForm";
 import { deleteTimeEntry } from "@/lib/actions/entries";
@@ -12,143 +13,158 @@ import { startOfWeek, endOfWeek } from "date-fns";
 import { Prisma } from "@prisma/client";
 
 type TimeEntryWithRelations = Prisma.TimeEntryGetPayload<{
-    include: {
-        project: {
-            select: {
-                id: true;
-                name: true;
-                color: true;
-            };
-        };
+  include: {
+    project: {
+      select: {
+        id: true;
+        name: true;
+        color: true;
+      };
     };
+  };
 }>;
 
 export default function EntriesPage() {
-    const [entries, setEntries] = useState<TimeEntryWithRelations[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [isFormOpen, setIsFormOpen] = useState(false);
-    const [currentWeek, setCurrentWeek] = useState(new Date());
-    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-    const [editingEntry, setEditingEntry] =
-        useState<TimeEntryWithRelations | null>(null);
-    const [viewMode, setViewMode] = useState<"week" | "list">("week");
+  const [entries, setEntries] = useState<TimeEntryWithRelations[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [currentWeek, setCurrentWeek] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [editingEntry, setEditingEntry] =
+    useState<TimeEntryWithRelations | null>(null);
+  const [viewMode, setViewMode] = useState<"week" | "table" | "list">("week");
 
-    const loadEntries = async (weekDate: Date) => {
-        setLoading(true);
-        const weekStart = startOfWeek(weekDate, { weekStartsOn: 0 }); // Sunday
-        const weekEnd = endOfWeek(weekDate, { weekStartsOn: 0 });
+  const loadEntries = async (weekDate: Date) => {
+    setLoading(true);
+    const weekStart = startOfWeek(weekDate, { weekStartsOn: 0 }); // Sunday
+    const weekEnd = endOfWeek(weekDate, { weekStartsOn: 0 });
 
-        const result = await getWeekTimeEntries(
-            weekStart.toISOString(),
-            weekEnd.toISOString()
-        );
-        if (result.success) {
-            setEntries(result.data);
-        }
-        setLoading(false);
-    };
-
-    useEffect(() => {
-        loadEntries(currentWeek);
-    }, [currentWeek]);
-
-    const handleWeekChange = (newWeek: Date) => {
-        setCurrentWeek(newWeek);
-    };
-
-    const handleAddEntry = (date: Date) => {
-        setSelectedDate(date);
-        setEditingEntry(null);
-        setIsFormOpen(true);
-    };
-
-    const handleEditEntry = (entry: TimeEntryWithRelations) => {
-        setEditingEntry(entry);
-        setSelectedDate(new Date(entry.date));
-        setIsFormOpen(true);
-    };
-
-    const handleSuccess = () => {
-        loadEntries(currentWeek);
-        setEditingEntry(null);
-        setSelectedDate(null);
-    };
-
-    const handleDeleteEntry = async (entryId: string) => {
-        const result = await deleteTimeEntry(entryId);
-        if (result.success) {
-            setEntries((prev) => prev.filter((e) => e.id !== entryId));
-        }
-        return result;
-    };
-
-    const handleFormClose = (open: boolean) => {
-        setIsFormOpen(open);
-        if (!open) {
-            setEditingEntry(null);
-            setSelectedDate(null);
-        }
-    };
-
-    return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold">Time Entries</h1>
-                    <p className="text-gray-600">Track your time by week</p>
-                </div>
-                <div className="flex gap-2">
-                    <Button
-                        variant={viewMode === "week" ? "default" : "outline"}
-                        onClick={() => setViewMode("week")}
-                        size="sm"
-                    >
-                        <Calendar />
-                        Calendar View
-                    </Button>
-                    <Button
-                        variant={viewMode === "list" ? "default" : "outline"}
-                        onClick={() => setViewMode("list")}
-                        size="sm"
-                    >
-                        <List />
-                        List View
-                    </Button>
-                    <Button onClick={() => handleAddEntry(new Date())}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        New Entry
-                    </Button>
-                </div>
-            </div>
-
-            {loading ? (
-                <div className="text-center py-12">
-                    <p className="text-gray-500">Loading entries...</p>
-                </div>
-            ) : viewMode === "week" ? (
-                <CalendarView
-                    entries={entries}
-                    currentWeek={currentWeek}
-                    onWeekChange={handleWeekChange}
-                    onAddEntry={handleAddEntry}
-                    onEditEntry={handleEditEntry}
-                    onDeleteEntry={handleDeleteEntry}
-                />
-            ) : (
-                <TimeEntryList
-                    entries={entries}
-                    onEditEntry={handleEditEntry}
-                    onDeleteEntry={handleDeleteEntry}
-                />
-            )}
-
-            <TimeEntryForm
-                open={isFormOpen}
-                onOpenChange={handleFormClose}
-                onSuccess={handleSuccess}
-                entry={editingEntry}
-                defaultDate={selectedDate}
-            />
-        </div>
+    const result = await getWeekTimeEntries(
+      weekStart.toISOString(),
+      weekEnd.toISOString()
     );
+    if (result.success) {
+      setEntries(result.data);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadEntries(currentWeek);
+  }, [currentWeek]);
+
+  const handleWeekChange = (newWeek: Date) => {
+    setCurrentWeek(newWeek);
+  };
+
+  const handleAddEntry = (date: Date) => {
+    setSelectedDate(date);
+    setEditingEntry(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEditEntry = (entry: TimeEntryWithRelations) => {
+    setEditingEntry(entry);
+    setSelectedDate(new Date(entry.date));
+    setIsFormOpen(true);
+  };
+
+  const handleSuccess = () => {
+    loadEntries(currentWeek);
+    setEditingEntry(null);
+    setSelectedDate(null);
+  };
+
+  const handleDeleteEntry = async (entryId: string) => {
+    const result = await deleteTimeEntry(entryId);
+    if (result.success) {
+      setEntries((prev) => prev.filter((e) => e.id !== entryId));
+    }
+    return result;
+  };
+
+  const handleFormClose = (open: boolean) => {
+    setIsFormOpen(open);
+    if (!open) {
+      setEditingEntry(null);
+      setSelectedDate(null);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Time Entries</h1>
+          <p className="text-gray-600">Track your time by week</p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant={viewMode === "week" ? "default" : "outline"}
+            onClick={() => setViewMode("week")}
+            size="sm"
+          >
+            <Calendar />
+            Calendar View
+          </Button>
+          <Button
+            variant={viewMode === "table" ? "default" : "outline"}
+            onClick={() => setViewMode("table")}
+            size="sm"
+          >
+            <Table />
+            Table View
+          </Button>
+          <Button
+            variant={viewMode === "list" ? "default" : "outline"}
+            onClick={() => setViewMode("list")}
+            size="sm"
+          >
+            <List />
+            List View
+          </Button>
+          <Button onClick={() => handleAddEntry(new Date())}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Entry
+          </Button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500">Loading entries...</p>
+        </div>
+      ) : viewMode === "week" ? (
+        <CalendarView
+          entries={entries}
+          currentWeek={currentWeek}
+          onWeekChange={handleWeekChange}
+          onAddEntry={handleAddEntry}
+          onEditEntry={handleEditEntry}
+          onDeleteEntry={handleDeleteEntry}
+        />
+      ) : viewMode === "list" ? (
+        <TimeEntryList
+          entries={entries}
+          onEditEntry={handleEditEntry}
+          onDeleteEntry={handleDeleteEntry}
+        />
+      ) : (
+        <TimeSheetTable
+          entries={entries}
+          // The TimeSheetTable manages its own week navigation internally,
+          // but for simplicity here, it receives the data for the week
+          // currently loaded by the parent component (page.tsx).
+        />
+      )}
+
+      <TimeEntryForm
+        open={isFormOpen}
+        onOpenChange={handleFormClose}
+        onSuccess={handleSuccess}
+        entry={editingEntry}
+        defaultDate={selectedDate}
+      />
+    </div>
+  );
 }
