@@ -196,7 +196,6 @@ export function WeekView({
                             )}
                           </div>
 
-                          {/* Trash Button - appears on hover */}
                           <Button
                             size="sm"
                             variant="ghost"
