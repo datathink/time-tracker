@@ -128,7 +128,6 @@ model Project {
   color         String      @default("#6366f1") // For UI display
   userId        String      // Project owner
 
-
   // Relations
   client       Client?   @relation(fields: [clientId], references: [id])
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -176,7 +175,6 @@ model Client {
   email        String?
   company      String?
   isArchived   Boolean   @default(false)
-
 
   // Relations
   projects     Project[]
