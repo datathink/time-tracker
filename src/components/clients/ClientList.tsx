@@ -211,10 +211,7 @@ export function ClientList({ clients }: ClientListProps) {
                                     performDelete(confirmDeleteClient.id);
                                 }
                             }}
-                            disabled={
-                                !!confirmDeleteClient &&
-                                deletingId === confirmDeleteClient?.id
-                            }
+                            disabled={deletingId === confirmDeleteClient?.id}
                         >
                             {deletingId === confirmDeleteClient?.id
                                 ? "Deleting..."
