@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,6 +12,7 @@ import {
     calculateEndTime,
     calculateDuration,
     formatDuration,
+    calculateStartTime,
 } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,6 +100,7 @@ export function TimeEntryForm({
     const [error, setError] = useState<string | null>(null);
     const [projects, setProjects] = useState<ActiveProject[]>([]);
     const [parsedDuration, setParsedDuration] = useState<number | null>(null);
+    const lastModifiedRef = useRef<"duration" | "start" | "end" | null>(null);
 
     const {
         register,
@@ -125,6 +127,26 @@ export function TimeEntryForm({
         },
     });
 
+    useEffect(() => {
+        if (open && entry) {
+            reset({
+                date: format(new Date(entry.date), "yyyy-MM-dd"),
+                projectId: entry.projectId || "",
+                durationInput: entry.duration
+                    ? formatDuration(entry.duration)
+                    : "",
+                startTime: entry.startTime || "",
+                endTime: entry.endTime || "",
+                description: entry.description || "",
+            });
+        } else if (open && defaultDate) {
+            reset({
+                date: format(defaultDate, "yyyy-MM-dd"),
+                projectId: "",
+            });
+        }
+    }, [open, entry, defaultDate, reset]);
+
     const selectedProjectId = watch("projectId");
     const durationInput = watch("durationInput");
     const startTime = watch("startTime");
@@ -144,6 +166,14 @@ export function TimeEntryForm({
         }
     }, [open, defaultDate, entry, setValue]);
 
+    // Reset form when it's closed
+    useEffect(() => {
+        if (!open) {
+            reset();
+            setError(null);
+        }
+    }, [open, reset, setError]);
+
     // Parse duration input
     useEffect(() => {
         if (durationInput) {
@@ -154,21 +184,69 @@ export function TimeEntryForm({
         }
     }, [durationInput]);
 
-    // Auto-calculate end time if start time and duration are provided
+    // Smart calculation based on what was last modified
     useEffect(() => {
-        if (startTime && parsedDuration && !endTime) {
-            const calculated = calculateEndTime(startTime, parsedDuration);
-            setValue("endTime", calculated);
-        }
-    }, [startTime, parsedDuration, endTime, setValue]);
+        const hasStart = startTime && startTime.trim() !== "";
+        const hasEnd = endTime && endTime.trim() !== "";
+        const hasDuration = parsedDuration !== null && parsedDuration > 0;
 
-    // Auto-calculate duration if both start and end times are provided
-    useEffect(() => {
-        if (startTime && endTime && !durationInput) {
-            const minutes = calculateDuration(startTime, endTime);
-            setValue("durationInput", formatDuration(minutes));
+        try {
+            // Clear any previous errors before recalculating
+            setError(null);
+
+            // Scenario 1: Start + End times provided -> Calculate duration
+            if (
+                hasStart &&
+                hasEnd &&
+                (lastModifiedRef.current === "start" ||
+                    lastModifiedRef.current === "end")
+            ) {
+                const calculatedMinutes = calculateDuration(
+                    startTime!,
+                    endTime!
+                );
+                const currentDuration = parseDuration(durationInput || "");
+
+                // Only update if different to avoid infinite loops
+                if (calculatedMinutes !== currentDuration) {
+                    setValue(
+                        "durationInput",
+                        formatDuration(calculatedMinutes)
+                    );
+                }
+            }
+            // Scenario 2: Duration + Start time -> Calculate end time
+            else if (
+                hasDuration &&
+                hasStart &&
+                (lastModifiedRef.current === "duration" ||
+                    lastModifiedRef.current === "start")
+            ) {
+                const calculated = calculateEndTime(startTime!, parsedDuration);
+                if (calculated !== endTime) {
+                    setValue("endTime", calculated);
+                }
+            }
+            // Scenario 3: Duration + End time -> Calculate start time
+            else if (
+                hasDuration &&
+                hasEnd &&
+                lastModifiedRef.current === "end"
+            ) {
+                const calculated = calculateStartTime(endTime!, parsedDuration);
+                if (calculated !== startTime) {
+                    setValue("startTime", calculated);
+                }
+            }
+        } catch (err) {
+            // Handle calculation errors and display to user
+            const errorMessage =
+                err instanceof Error
+                    ? err.message
+                    : "Invalid time values for calculation";
+            setError(errorMessage);
         }
-    }, [startTime, endTime, durationInput, setValue]);
+    }, [startTime, endTime, parsedDuration, durationInput, setValue]);
 
     const onSubmit = async (data: FormData) => {
         setLoading(true);
@@ -280,7 +358,10 @@ export function TimeEntryForm({
                                             <span>
                                                 {watch("date") &&
                                                     format(
-                                                        new Date(watch("date")),
+                                                        new Date(
+                                                            watch("date") +
+                                                                "T00:00:00"
+                                                        ),
                                                         "EEE, MMMM do, yyyy"
                                                     )}
                                             </span>
@@ -293,9 +374,20 @@ export function TimeEntryForm({
                                     >
                                         <Calendar
                                             mode="single"
+                                            defaultMonth={
+                                                watch("date")
+                                                    ? new Date(
+                                                          watch("date") +
+                                                              "T00:00:00"
+                                                      )
+                                                    : new Date()
+                                            }
                                             selected={
                                                 watch("date")
-                                                    ? new Date(watch("date"))
+                                                    ? new Date(
+                                                          watch("date") +
+                                                              "T00:00:00"
+                                                      )
                                                     : undefined
                                             }
                                             onSelect={(date) => {
@@ -309,8 +401,7 @@ export function TimeEntryForm({
                                                     );
                                                 }
                                             }}
-                                            captionLayout="dropdown"
-                                            className="rounded-md border"
+                                            className="rounded-md border "
                                         />
                                     </PopoverContent>
                                 </Popover>
@@ -320,6 +411,7 @@ export function TimeEntryForm({
                                     </p>
                                 )}
                             </div>
+
                             <div className="space-y-2">
                                 <Label htmlFor="durationInput">
                                     Duration{" "}
@@ -328,7 +420,12 @@ export function TimeEntryForm({
                                 <Input
                                     id="durationInput"
                                     placeholder="2.5h, 2h 30m, 150m"
-                                    {...register("durationInput")}
+                                    {...register("durationInput", {
+                                        onChange: () => {
+                                            lastModifiedRef.current =
+                                                "duration";
+                                        },
+                                    })}
                                     disabled={loading}
                                 />
                                 {errors.durationInput && (
@@ -352,11 +449,19 @@ export function TimeEntryForm({
                                     id="startTime"
                                     placeholder="08:00 AM"
                                     value={startTime ?? ""}
-                                    onChange={(v) =>
-                                        setValue("startTime", v || "")
-                                    }
+                                    onChange={(v) => {
+                                        setValue("startTime", v || "", {
+                                            shouldValidate: true,
+                                        });
+                                        lastModifiedRef.current = "start";
+                                    }}
                                     disabled={loading}
                                 />
+                                {errors.startTime && (
+                                    <p className="text-sm text-red-500">
+                                        {errors.startTime.message}
+                                    </p>
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="endTime">
@@ -366,11 +471,19 @@ export function TimeEntryForm({
                                     id="endTime"
                                     placeholder="04:00 PM"
                                     value={endTime ?? ""}
-                                    onChange={(v) =>
-                                        setValue("endTime", v || "")
-                                    }
+                                    onChange={(v) => {
+                                        setValue("endTime", v || "", {
+                                            shouldValidate: true,
+                                        });
+                                        lastModifiedRef.current = "end";
+                                    }}
                                     disabled={loading}
                                 />
+                                {errors.endTime && (
+                                    <p className="text-sm text-red-500">
+                                        {errors.endTime.message}
+                                    </p>
+                                )}
                             </div>
                             <div className="space-y-2 col-span-2">
                                 <Label htmlFor="description">
@@ -398,7 +511,9 @@ export function TimeEntryForm({
                         </Button>
                         <Button
                             type="submit"
-                            disabled={loading || parsedDuration === null}
+                            disabled={
+                                loading || parsedDuration === null || !!error
+                            }
                         >
                             {loading
                                 ? "Saving..."

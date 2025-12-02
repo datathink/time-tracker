@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, List } from "lucide-react";
-import { WeekView } from "@/components/entries/WeekView";
-import { TimeEntryList } from "@/components/entries/TimeEntryList";
+import { Plus, List, Calendar } from "lucide-react";
+import { CalendarView } from "@/components/entries/CalendarView";
+import { TimeEntryList } from "@/components/entries/ListView";
 import { TimeEntryForm } from "@/components/entries/TimeEntryForm";
+import { deleteTimeEntry } from "@/lib/actions/entries";
 import { getWeekTimeEntries } from "@/lib/actions/entries";
 import { startOfWeek, endOfWeek } from "date-fns";
 import { Prisma } from "@prisma/client";
@@ -73,6 +74,14 @@ export default function EntriesPage() {
         setSelectedDate(null);
     };
 
+    const handleDeleteEntry = async (entryId: string) => {
+        const result = await deleteTimeEntry(entryId);
+        if (result.success) {
+            setEntries((prev) => prev.filter((e) => e.id !== entryId));
+        }
+        return result;
+    };
+
     const handleFormClose = (open: boolean) => {
         setIsFormOpen(open);
         if (!open) {
@@ -94,14 +103,15 @@ export default function EntriesPage() {
                         onClick={() => setViewMode("week")}
                         size="sm"
                     >
-                        Week View
+                        <Calendar />
+                        Calendar View
                     </Button>
                     <Button
                         variant={viewMode === "list" ? "default" : "outline"}
                         onClick={() => setViewMode("list")}
                         size="sm"
                     >
-                        <List className="mr-2 h-4 w-4" />
+                        <List />
                         List View
                     </Button>
                     <Button onClick={() => handleAddEntry(new Date())}>
@@ -116,15 +126,20 @@ export default function EntriesPage() {
                     <p className="text-gray-500">Loading entries...</p>
                 </div>
             ) : viewMode === "week" ? (
-                <WeekView
+                <CalendarView
                     entries={entries}
                     currentWeek={currentWeek}
                     onWeekChange={handleWeekChange}
                     onAddEntry={handleAddEntry}
                     onEditEntry={handleEditEntry}
+                    onDeleteEntry={handleDeleteEntry}
                 />
             ) : (
-                <TimeEntryList entries={entries} />
+                <TimeEntryList
+                    entries={entries}
+                    onEditEntry={handleEditEntry}
+                    onDeleteEntry={handleDeleteEntry}
+                />
             )}
 
             <TimeEntryForm
