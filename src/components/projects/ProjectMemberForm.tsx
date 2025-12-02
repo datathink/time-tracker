@@ -27,9 +27,9 @@ import { addProjectMember, getAllUsers } from "@/lib/actions/project-members";
 
 const formSchema = z.object({
     userId: z.string().min(1, "Please select a user"),
-    contractorRate: z
+    payoutRate: z
         .string()
-        .refine((val) => parseFloat(val) > 0, "Enter a valid contractor rate"),
+        .refine((val) => parseFloat(val) > 0, "Enter a valid payout rate"),
     chargeRate: z
         .string()
         .refine(
@@ -71,13 +71,12 @@ export function ProjectMemberForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
             userId: "",
-            contractorRate: "",
+            payoutRate: "",
             chargeRate: "",
             role: "member",
         },
     });
 
-    // ✅ Load available users
     useEffect(() => {
         const loadUsers = async () => {
             const result = await getAllUsers();
@@ -94,14 +93,13 @@ export function ProjectMemberForm({
         }
     }, [open, existingMemberIds]);
 
-    // ✅ Submit handler
     const onSubmit = async (data: FormData) => {
         setLoading(true);
 
         const result = await addProjectMember({
             projectId,
             userId: data.userId,
-            contractorRate: parseFloat(data.contractorRate),
+            payoutRate: parseFloat(data.payoutRate),
             chargeRate: parseFloat(data.chargeRate),
             role: data.role,
         });
@@ -125,7 +123,7 @@ export function ProjectMemberForm({
                 <DialogHeader>
                     <DialogTitle>Add Team Member</DialogTitle>
                     <DialogDescription>
-                        Add a user to this project and set their hourly rate
+                        Add a user to this project and set their payout rate
                     </DialogDescription>
                 </DialogHeader>
 
@@ -167,22 +165,20 @@ export function ProjectMemberForm({
                         )}
                     </div>
 
-                    {/* Contractor Rate */}
+                    {/* Payout Rate */}
                     <div className="space-y-2">
-                        <Label htmlFor="contractorRate">
-                            Contractor Rate ($)
-                        </Label>
+                        <Label htmlFor="payoutRate">Payout Rate ($)</Label>
                         <Input
-                            id="contractorRate"
+                            id="payoutRate"
                             type="number"
-                            step="0.01"
+                            step="1.00"
                             min="0"
-                            {...form.register("contractorRate")}
+                            {...form.register("payoutRate")}
                             placeholder="75.00"
                         />
-                        {form.formState.errors.contractorRate && (
+                        {form.formState.errors.payoutRate && (
                             <p className="text-sm text-red-500">
-                                {form.formState.errors.contractorRate.message}
+                                {form.formState.errors.payoutRate.message}
                             </p>
                         )}
                     </div>
@@ -193,7 +189,7 @@ export function ProjectMemberForm({
                         <Input
                             id="chargeRate"
                             type="number"
-                            step="0.01"
+                            step="1.00"
                             min="0"
                             {...form.register("chargeRate")}
                             placeholder="150.00"

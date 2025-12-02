@@ -15,7 +15,7 @@ import { getProjectMembers } from "@/lib/actions/project-members";
 import { Plus } from "lucide-react";
 import { Prisma } from "@prisma/client";
 
-type ProjectMemberWithUser = Prisma.ProjectMemberGetPayload<{
+type RawProjectMemberWithUser = Prisma.ProjectMemberGetPayload<{
     include: {
         user: {
             select: {
@@ -26,6 +26,14 @@ type ProjectMemberWithUser = Prisma.ProjectMemberGetPayload<{
         };
     };
 }>;
+
+type ProjectMemberWithUser = Omit<
+    RawProjectMemberWithUser,
+    "chargeRate" | "payoutRate"
+> & {
+    payoutRate: number;
+    chargeRate: number;
+};
 
 interface Project {
     id: string;
@@ -76,7 +84,7 @@ export function ProjectTeamDialog({
                     <DialogHeader>
                         <DialogTitle>Manage Team - {project.name}</DialogTitle>
                         <DialogDescription>
-                            Add or remove team members and set their hourly
+                            Add or remove team members and set their payout
                             rates
                         </DialogDescription>
                     </DialogHeader>
