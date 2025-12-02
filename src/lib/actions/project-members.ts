@@ -5,7 +5,8 @@ import prisma from "@/lib/db/prisma";
 import { z } from "zod";
 import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
-import { Role } from '@prisma/client';
+import { Role } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
 
 // Get current user from session
 async function getCurrentUser() {
@@ -39,8 +40,8 @@ async function canManageProject(projectId: string, userId: string) {
 const addMemberSchema = z.object({
     projectId: z.string(),
     userId: z.string(),
-    contractorRate: z.number().positive(),
-    chargeRate: z.number().positive(),
+    payoutRate: z.union([z.number().positive(), z.instanceof(Decimal)]),
+    chargeRate: z.union([z.number().positive(), z.instanceof(Decimal)]),
     role: z.enum(["owner", "manager", "member"]).default("member"),
 });
 
@@ -51,9 +52,15 @@ export async function addProjectMember(data: z.infer<typeof addMemberSchema>) {
         const validated = addMemberSchema.parse(data);
 
         // Check if current user can manage this project
-        const canManage = await canManageProject(validated.projectId, currentUser.id);
+        const canManage = await canManageProject(
+            validated.projectId,
+            currentUser.id
+        );
         if (!canManage) {
-            return { success: false, error: "You don't have permission to manage this project" };
+            return {
+                success: false,
+                error: "You don't have permission to manage this project",
+            };
         }
 
         // Check if member already exists
@@ -67,7 +74,10 @@ export async function addProjectMember(data: z.infer<typeof addMemberSchema>) {
         });
 
         if (existing) {
-            return { success: false, error: "User is already a member of this project" };
+            return {
+                success: false,
+                error: "User is already a member of this project",
+            };
         }
 
         // Add the member
@@ -75,8 +85,8 @@ export async function addProjectMember(data: z.infer<typeof addMemberSchema>) {
             data: {
                 projectId: validated.projectId,
                 userId: validated.userId,
-                contractorRate: validated.contractorRate,
-                chargeRate: validated.chargeRate,
+                payoutRate: new Decimal(validated.payoutRate),
+                chargeRate: new Decimal(validated.chargeRate),
                 role: validated.role,
                 isActive: true,
             },
@@ -92,7 +102,14 @@ export async function addProjectMember(data: z.infer<typeof addMemberSchema>) {
         });
 
         revalidatePath("/projects");
-        return { success: true, data: member };
+        return {
+            success: true,
+            data: {
+                ...member,
+                payoutRate: member.payoutRate.toNumber(),
+                chargeRate: member.chargeRate.toNumber(),
+            },
+        };
     } catch (error) {
         console.error("Error adding project member:", error);
         if (error instanceof z.ZodError) {
@@ -105,7 +122,12 @@ export async function addProjectMember(data: z.infer<typeof addMemberSchema>) {
 // Update a project member's rate or role
 export async function updateProjectMember(
     memberId: string,
-    data: { contractorRate?: number; chargeRate?: number; role?: string; isActive?: boolean }
+    data: {
+        payoutRate?: number;
+        chargeRate?: number;
+        role?: string;
+        isActive?: boolean;
+    }
 ) {
     try {
         const currentUser = await getCurrentUser();
@@ -121,18 +143,28 @@ export async function updateProjectMember(
         }
 
         // Check if current user can manage this project
-        const canManage = await canManageProject(member.projectId, currentUser.id);
+        const canManage = await canManageProject(
+            member.projectId,
+            currentUser.id
+        );
         if (!canManage) {
-            return { success: false, error: "You don't have permission to manage this project" };
+            return {
+                success: false,
+                error: "You don't have permission to manage this project",
+            };
         }
 
         // Update the member
         const updated = await prisma.projectMember.update({
             where: { id: memberId },
             data: {
-                ...(data.contractorRate !== undefined && { contractorRate: data.contractorRate }),
-                ...(data.chargeRate !== undefined && { chargeRate: data.chargeRate }),
-                ...(data.role !== undefined && { role: data.role as Role}),
+                ...(data.payoutRate !== undefined && {
+                    payoutRate: new Decimal(data.payoutRate),
+                }),
+                ...(data.chargeRate !== undefined && {
+                    chargeRate: new Decimal(data.chargeRate),
+                }),
+                ...(data.role !== undefined && { role: data.role as Role }),
                 ...(data.isActive !== undefined && { isActive: data.isActive }),
             },
             include: {
@@ -147,7 +179,14 @@ export async function updateProjectMember(
         });
 
         revalidatePath("/projects");
-        return { success: true, data: updated };
+        return {
+            success: true,
+            data: {
+                ...updated,
+                payoutRate: updated.payoutRate.toNumber(),
+                chargeRate: updated.chargeRate.toNumber(),
+            },
+        };
     } catch (error) {
         console.error("Error updating project member:", error);
         return { success: false, error: "Failed to update project member" };
@@ -170,9 +209,15 @@ export async function removeProjectMember(memberId: string) {
         }
 
         // Check if current user can manage this project
-        const canManage = await canManageProject(member.projectId, currentUser.id);
+        const canManage = await canManageProject(
+            member.projectId,
+            currentUser.id
+        );
         if (!canManage) {
-            return { success: false, error: "You don't have permission to manage this project" };
+            return {
+                success: false,
+                error: "You don't have permission to manage this project",
+            };
         }
 
         // Delete the member
@@ -206,7 +251,10 @@ export async function getProjectMembers(projectId: string) {
         });
 
         if (!canManage && !isMember) {
-            return { success: false, error: "You don't have access to this project" };
+            return {
+                success: false,
+                error: "You don't have access to this project",
+            };
         }
 
         const members = await prisma.projectMember.findMany({
@@ -223,10 +271,21 @@ export async function getProjectMembers(projectId: string) {
             orderBy: { createdAt: "asc" },
         });
 
-        return { success: true, data: members };
+        return {
+            success: true,
+            data: members.map((member) => ({
+                ...member,
+                payoutRate: member.payoutRate.toNumber(),
+                chargeRate: member.chargeRate.toNumber(),
+            })),
+        };
     } catch (error) {
         console.error("Error fetching project members:", error);
-        return { success: false, error: "Failed to fetch project members", data: [] };
+        return {
+            success: false,
+            error: "Failed to fetch project members",
+            data: [],
+        };
     }
 }
 
@@ -242,7 +301,11 @@ export async function getAllUsers() {
         });
 
         if (user?.role !== "admin") {
-            return { success: false, error: "Only admins can view all users", data: [] };
+            return {
+                success: false,
+                error: "Only admins can view all users",
+                data: [],
+            };
         }
 
         const users = await prisma.user.findMany({
