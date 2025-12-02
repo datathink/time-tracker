@@ -56,7 +56,6 @@ export function TimeEntryList({
   onEditEntry,
   onSuccess,
 }: TimeEntryListProps) {
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<TimeEntry | null>(null);
 
@@ -72,18 +71,9 @@ export function TimeEntryList({
   const handleDeleteConfirm = async () => {
     if (!entryToDelete) return;
 
-    setDeletingId(entryToDelete.id);
-    const result = await onDeleteEntry(entryToDelete.id);
-
-    if (result.success) {
-      // Parent will handle state update
-    } else {
-      alert(result.error || "Failed to delete time entry");
-    }
-
-    setDeletingId(null);
-    setEntryToDelete(null);
+    await onDeleteEntry(entryToDelete.id);
     setDeleteDialogOpen(false);
+    setEntryToDelete(null);
   };
 
   // Group entries by date
@@ -217,13 +207,10 @@ export function TimeEntryList({
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => handleDeleteClick(entry)}
-                                  disabled={deletingId === entry.id}
                                   className="text-red-600 focus:text-red-600"
                                 >
                                   <Trash2 className="mr-2 h-4 w-4" />
-                                  {deletingId === entry.id
-                                    ? "Deleting..."
-                                    : "Delete"}
+                                  Delete
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
