@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { ProjectForm } from "./ProjectForm";
 import { ProjectTeamDialog } from "./ProjectTeamDialog";
-import { getProjects, deleteProject } from "@/lib/actions/projects";
+import { deleteProject } from "@/lib/actions/projects";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -50,24 +50,17 @@ interface Project {
 
 interface ProjectListProps {
     projects: Project[];
+    loadProjects: () => void;
 }
 
-export function ProjectList({ projects }: ProjectListProps) {
+export function ProjectList({ projects, loadProjects }: ProjectListProps) {
     const [editingProject, setEditingProject] = useState<Project | null>(null);
-    const [allProjects, setAllProjects] = useState<Project[]>(projects);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [teamProject, setTeamProject] = useState<Project | null>(null);
     const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [confirmDeleteProject, setConfirmDeleteProject] =
         useState<Project | null>(null);
-
-    const loadProjects = async () => {
-        const result = await getProjects();
-        if (result.success && result.data) {
-            setAllProjects(result.data as Project[]);
-        }
-    };
 
     const handleEdit = (project: Project) => {
         setEditingProject(project);
@@ -103,10 +96,6 @@ export function ProjectList({ projects }: ProjectListProps) {
         loadProjects();
     };
 
-    useEffect(() => {
-        setAllProjects(projects);
-    }, [projects]);
-
     const getStatusColor = (status: string) => {
         switch (status) {
             case "active":
@@ -120,7 +109,7 @@ export function ProjectList({ projects }: ProjectListProps) {
         }
     };
 
-    if (allProjects.length === 0) {
+    if (projects.length === 0) {
         return (
             <div className="text-center py-12">
                 <p className="text-gray-500">
@@ -146,7 +135,7 @@ export function ProjectList({ projects }: ProjectListProps) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {allProjects.map((project) => (
+                        {projects.map((project) => (
                             <TableRow key={project.id}>
                                 <TableCell>
                                     <div className="flex items-center gap-2">
@@ -220,15 +209,10 @@ export function ProjectList({ projects }: ProjectListProps) {
                                                 onClick={() =>
                                                     handleDelete(project)
                                                 }
-                                                disabled={
-                                                    deletingId === project.id
-                                                }
                                                 className="text-red-600"
                                             >
                                                 <Trash2 className="mr-2 h-4 w-4" />
-                                                {deletingId === project.id
-                                                    ? "Deleting..."
-                                                    : "Delete"}
+                                                Delete
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>

@@ -154,8 +154,10 @@ export function TimeEntryForm({
 
     useEffect(() => {
         const loadData = async () => {
-            const [projectsResult] = await Promise.all([getActiveProjects()]);
-            if (projectsResult.success) setProjects(projectsResult.data);
+            const projectsResult = await getActiveProjects();
+            if (projectsResult.success) {
+                setProjects(projectsResult.data);
+            }
         };
         if (open) {
             loadData();

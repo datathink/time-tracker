@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { ClientForm } from "./ClientForm";
-import { getClients, deleteClient } from "@/lib/actions/clients";
+import { deleteClient } from "@/lib/actions/clients";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -42,22 +42,15 @@ interface Client {
 
 interface ClientListProps {
     clients: Client[];
+    loadClients: () => void;
 }
 
-export function ClientList({ clients }: ClientListProps) {
-    const [allClients, setAllClients] = useState<Client[]>(clients);
+export function ClientList({ clients, loadClients }: ClientListProps) {
     const [editingClient, setEditingClient] = useState<Client | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [confirmDeleteClient, setConfirmDeleteClient] =
         useState<Client | null>(null);
-
-    const loadClients = async () => {
-        const result = await getClients();
-        if (result.success) {
-            setAllClients(result.data);
-        }
-    };
 
     const handleEdit = (client: Client) => {
         setEditingClient(client);
@@ -88,11 +81,7 @@ export function ClientList({ clients }: ClientListProps) {
         loadClients();
     };
 
-    useEffect(() => {
-        setAllClients(clients);
-    }, [clients]);
-
-    if (allClients.length === 0) {
+    if (clients.length === 0) {
         return (
             <div className="text-center py-12">
                 <p className="text-gray-500">
@@ -116,7 +105,7 @@ export function ClientList({ clients }: ClientListProps) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {allClients.map((client) => (
+                        {clients.map((client) => (
                             <TableRow key={client.id}>
                                 <TableCell className="font-medium">
                                     {client.name}
@@ -152,15 +141,10 @@ export function ClientList({ clients }: ClientListProps) {
                                                 onClick={() =>
                                                     handleDelete(client)
                                                 }
-                                                disabled={
-                                                    deletingId === client.id
-                                                }
                                                 className="text-red-600"
                                             >
                                                 <Trash2 className="mr-2 h-4 w-4" />
-                                                {deletingId === client.id
-                                                    ? "Deleting..."
-                                                    : "Delete"}
+                                                Delete
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>

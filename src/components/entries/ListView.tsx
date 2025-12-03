@@ -30,6 +30,7 @@ import {
 import { MoreHorizontal, Pencil, Trash2, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { Prisma } from "@prisma/client";
+import { toast } from "sonner";
 
 type TimeEntry = Prisma.TimeEntryGetPayload<{
     include: {
@@ -47,15 +48,17 @@ interface TimeEntryListProps {
     entries: TimeEntry[];
     onDeleteEntry: (entryId: string) => Promise<any>;
     onEditEntry: (entry: TimeEntry) => void;
+    loadEntries: () => void;
 }
 
 export function TimeEntryList({
     entries,
     onDeleteEntry,
     onEditEntry,
+    loadEntries,
 }: TimeEntryListProps) {
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [entryToDelete, setEntryToDelete] = useState<TimeEntry | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     const handleEdit = (entry: TimeEntry) => {
         onEditEntry(entry);
@@ -63,15 +66,23 @@ export function TimeEntryList({
 
     const handleDeleteClick = (entry: TimeEntry) => {
         setEntryToDelete(entry);
-        setDeleteDialogOpen(true);
     };
 
     const handleDeleteConfirm = async () => {
         if (!entryToDelete) return;
 
-        await onDeleteEntry(entryToDelete.id);
-        setDeleteDialogOpen(false);
+        setDeletingId(entryToDelete.id);
+        const result = await onDeleteEntry(entryToDelete.id);
         setEntryToDelete(null);
+
+        if (result.success) {
+            loadEntries();
+            toast.success("Time entry deleted successfully");
+        } else {
+            toast.error(result.error || "Failed to delete time entry");
+        }
+
+        setDeletingId(null);
     };
 
     // Group entries by date
@@ -131,13 +142,13 @@ export function TimeEntryList({
                                                 <TableHead className="w-[180px] font-bold">
                                                     Project
                                                 </TableHead>
-                                                <TableHead className="w-[140px] font-bold">
+                                                <TableHead className="w-[170px] font-bold">
                                                     Time
                                                 </TableHead>
                                                 <TableHead className="w-[120px] font-bold">
                                                     Duration
                                                 </TableHead>
-                                                <TableHead className="min-w-[250px] font-bold">
+                                                <TableHead className="min-w-[220px] font-bold">
                                                     Description
                                                 </TableHead>
                                                 <TableHead className="w-[100px] font-bold text-center">
@@ -177,7 +188,7 @@ export function TimeEntryList({
                                                             </span>
                                                         )}
                                                     </TableCell>
-                                                    <TableCell className="w-[140px] py-3 text-sm">
+                                                    <TableCell className="w-[170px] py-3 text-sm">
                                                         {entry.startTime &&
                                                         entry.endTime
                                                             ? `${entry.startTime} - ${entry.endTime}`
@@ -194,7 +205,7 @@ export function TimeEntryList({
                                                             </div>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="py-3 pr-20 min-w-[250px]">
+                                                    <TableCell className="py-3 pr-20 min-w-[220px]">
                                                         <div className="line-clamp-2 break-words pr-4">
                                                             {entry.description || (
                                                                 <span className="text-gray-400 italic">
@@ -256,12 +267,12 @@ export function TimeEntryList({
             </div>
 
             <AlertDialog
-                open={deleteDialogOpen}
-                onOpenChange={setDeleteDialogOpen}
+                open={!!entryToDelete}
+                onOpenChange={() => setEntryToDelete(null)}
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete time entry?</AlertDialogTitle>
+                        <AlertDialogTitle>Delete time entry</AlertDialogTitle>
                         <AlertDialogDescription>
                             This will permanently delete this time entry for
                             {entryToDelete?.project && (
@@ -280,12 +291,19 @@ export function TimeEntryList({
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel
+                            onClick={() => setEntryToDelete(null)}
+                        >
+                            Cancel
+                        </AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDeleteConfirm}
                             className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                            disabled={deletingId === entryToDelete?.id}
                         >
-                            Delete
+                            {deletingId === entryToDelete?.id
+                                ? "Deleting..."
+                                : "Delete"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
