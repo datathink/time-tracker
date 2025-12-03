@@ -226,23 +226,18 @@ export function TimeSheetTable({ entries }: TimeSheetTableProps) {
                             <SelectValue placeholder="Select a project..." />
                           </SelectTrigger>
                           <SelectContent>
-                            {projects.map(
-                              (
-                                project // Use fetched projects
-                              ) => (
-                                <SelectItem key={project.id} value={project.id}>
-                                  <div className="flex items-center gap-2">
-                                    <div
-                                      className="w-2 h-2 rounded-full"
-                                      style={{
-                                        backgroundColor: project.color,
-                                      }}
-                                    />
-                                    {project.name}
-                                  </div>
-                                </SelectItem>
-                              )
-                            )}
+                            i{" "}
+                            {projects.map((project) => (
+                              <SelectItem key={project.id} value={project.id}>
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className="w-2 h-2 rounded-full"
+                                    style={{ backgroundColor: project.color }}
+                                  />
+                                  {project.name}
+                                </div>
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         {rows.length > 1 && (
@@ -257,6 +252,7 @@ export function TimeSheetTable({ entries }: TimeSheetTableProps) {
                         )}
                       </div>
                     </td>
+
                     {daysOfWeek.map((day) => {
                       const totalMinutes = getTotalForProjectAndDay(
                         row.projectId,
@@ -277,6 +273,7 @@ export function TimeSheetTable({ entries }: TimeSheetTableProps) {
                         </td>
                       );
                     })}
+
                     <td className="text-center p-2 font-medium text-sm">
                       {totalForRow > 0
                         ? formatDurationHHMM(totalForRow)
@@ -286,33 +283,33 @@ export function TimeSheetTable({ entries }: TimeSheetTableProps) {
                 );
               })}
 
-              {/* Footer Total Row */}
-              <tr className="bg-gray-50 font-semibold">
-                <td className="p-3 border-r"></td>
+              {/* Footer Total Row - Fixed Structure */}
+              <tr className="bg-gray-50 font-semibold border-t-2 border-gray-200">
+                <td className="p-3 border-r">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={addRow}
+                    className="flex items-center gap-0 text-sm font-medium text-black hover:text-gray-600 rounded-md px-3 py-2 -ml-1"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add timesheet row
+                  </Button>
+                </td>
+
+                {/* Day total cells - align with day columns above */}
                 {daysOfWeek.map((day) => (
-                  <td key={day.toISOString()} className="text-center p-3">
+                  <td
+                    key={day.toISOString()}
+                    className="text-center p-3 text-sm"
+                  >
                     {formatDurationHHMM(getTotalForDay(day))}
                   </td>
                 ))}
-                <td className="text-center p-3">
-                  {formatDurationHHMM(getGrandTotal())}
-                </td>
-              </tr>
 
-              {/* Actions Row */}
-              <tr>
-                <td colSpan={9} className="p-2">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={addRow}
-                      className="text-sm"
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add timesheet row
-                    </Button>
-                  </div>
+                {/* Grand total cell - align with week total column */}
+                <td className="text-center p-3 text-sm font-bold text-gray-800">
+                  {formatDurationHHMM(getGrandTotal())}
                 </td>
               </tr>
             </tbody>
