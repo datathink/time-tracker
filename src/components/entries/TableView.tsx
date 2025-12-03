@@ -9,6 +9,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import {
   format,
@@ -21,7 +31,7 @@ import {
 } from "date-fns";
 import { TimeEntryForm } from "./TimeEntryForm";
 import { useRouter } from "next/navigation";
-import { getActiveProjects } from "@/lib/actions/projects"; // Added import
+import { getActiveProjects } from "@/lib/actions/projects";
 
 // Utility function to convert minutes to HH:MM format
 const formatDurationHHMM = (minutes: number): string => {
@@ -30,12 +40,11 @@ const formatDurationHHMM = (minutes: number): string => {
   return `${hours}:${mins.toString().padStart(2, "0")}`;
 };
 
-// Helper function for consistent date parsing (matches CalendarView logic)
+// Helper function for consistent date parsing
 const parseEntryDate = (date: Date) => {
   return new Date(date);
 };
 
-// Interfaces should be defined outside the component or be self-contained
 interface TimeEntry {
   id: string;
   date: Date;
@@ -59,9 +68,13 @@ interface ActiveProject {
 
 interface TimeSheetTableProps {
   entries: TimeEntry[];
+  onDeleteEntry: (entryId: string) => Promise<any>; // Added this prop
 }
 
-export function TimeSheetTable({ entries }: TimeSheetTableProps) {
+export function TimeSheetTable({
+  entries,
+  onDeleteEntry,
+}: TimeSheetTableProps) {
   const router = useRouter();
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [rows, setRows] = useState<Array<{ projectId: string | null }>>([
@@ -75,6 +88,11 @@ export function TimeSheetTable({ entries }: TimeSheetTableProps) {
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
   const [projects, setProjects] = useState<ActiveProject[]>([]);
 
+  // State for delete dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [rowToDeleteIndex, setRowToDeleteIndex] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   // Load active projects on mount
   useEffect(() => {
     const loadProjects = async () => {
@@ -83,6 +101,16 @@ export function TimeSheetTable({ entries }: TimeSheetTableProps) {
     };
     loadProjects();
   }, []);
+
+  // Auto-populate rows based on existing entries
+  useEffect(() => {
+    const uniqueProjectIds = Array.from(
+      new Set(entries.map((entry) => entry.projectId))
+    );
+    if (uniqueProjectIds.length > 0) {
+      setRows(uniqueProjectIds.map((projectId) => ({ projectId })));
+    }
+  }, [entries]);
 
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
@@ -94,11 +122,6 @@ export function TimeSheetTable({ entries }: TimeSheetTableProps) {
       const entryDate = parseEntryDate(entry.date);
       return entry.projectId === projectId && isSameDay(entryDate, day);
     });
-  };
-
-  const getTotalForProjectAndDay = (projectId: string | null, day: Date) => {
-    const dayEntries = getEntriesForProjectAndDay(projectId, day);
-    return dayEntries.reduce((sum, entry) => sum + entry.duration, 0);
   };
 
   const getTotalForDay = (day: Date) => {
@@ -125,8 +148,50 @@ export function TimeSheetTable({ entries }: TimeSheetTableProps) {
     setRows([...rows, { projectId: null }]);
   };
 
-  const deleteRow = (index: number) => {
-    setRows(rows.filter((_, i) => i !== index));
+  // Logic to initiate delete
+  const handleDeleteRowClick = (index: number) => {
+    const projectId = rows[index].projectId;
+    const totalDuration = getTotalForProject(projectId);
+
+    // If row has no duration (empty), delete immediately without confirmation
+    if (totalDuration === 0) {
+      setRows(rows.filter((_, i) => i !== index));
+      return;
+    }
+
+    // Otherwise, open confirmation dialog
+    setRowToDeleteIndex(index);
+    setDeleteDialogOpen(true);
+  };
+
+  // Logic to confirm delete
+  const handleConfirmDelete = async () => {
+    if (rowToDeleteIndex === null) return;
+
+    setIsDeleting(true);
+    const projectId = rows[rowToDeleteIndex].projectId;
+
+    // Find all entries for this project currently in view
+    const entriesToDelete = entries.filter(
+      (entry) => entry.projectId === projectId
+    );
+
+    try {
+      // Execute all deletes
+      await Promise.all(
+        entriesToDelete.map((entry) => onDeleteEntry(entry.id))
+      );
+
+      // Update UI
+      setRows(rows.filter((_, i) => i !== rowToDeleteIndex));
+      setDeleteDialogOpen(false);
+      setRowToDeleteIndex(null);
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to delete entries", error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const updateRowProject = (index: number, projectId: string) => {
@@ -135,30 +200,16 @@ export function TimeSheetTable({ entries }: TimeSheetTableProps) {
     setRows(newRows);
   };
 
-  const handleCellClick = (projectId: string | null, day: Date) => {
-    setSelectedDate(day);
-    setSelectedProjectId(projectId);
-
-    // Get the entries for the selected project and day
-    const cellEntries = projectId
-      ? getEntriesForProjectAndDay(projectId, day)
-      : entries.filter((entry) => {
-          const entryDate = parseEntryDate(entry.date);
-          return isSameDay(entryDate, day);
-        });
-
-    // If exactly one existing entry found, open editor for that entry
-    if (cellEntries.length === 1) {
-      setEditingEntry(cellEntries[0]);
-    } else {
-      setEditingEntry(null);
-    }
-    setIsFormOpen(true);
-  };
-
   const goToPreviousWeek = () => setCurrentWeek(subWeeks(currentWeek, 1));
   const goToNextWeek = () => setCurrentWeek(addWeeks(currentWeek, 1));
   const goToCurrentWeek = () => setCurrentWeek(new Date());
+
+  // Helper to get project details for the dialog
+  const getProjectToDelete = () => {
+    if (rowToDeleteIndex === null) return null;
+    const projectId = rows[rowToDeleteIndex].projectId;
+    return projects.find((p) => p.id === projectId);
+  };
 
   return (
     <div className="space-y-4">
@@ -180,11 +231,9 @@ export function TimeSheetTable({ entries }: TimeSheetTableProps) {
         </div>
       </div>
 
-      {/* Timesheet Table */}
       <div className="border rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            {/* Header Row */}
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="text-left p-3 font-medium text-sm min-w-[400px] border-r">
@@ -207,7 +256,6 @@ export function TimeSheetTable({ entries }: TimeSheetTableProps) {
               </tr>
             </thead>
 
-            {/* Body Rows */}
             <tbody>
               {rows.map((row, rowIndex) => {
                 const totalForRow = getTotalForProject(row.projectId);
@@ -226,7 +274,6 @@ export function TimeSheetTable({ entries }: TimeSheetTableProps) {
                             <SelectValue placeholder="Select a project..." />
                           </SelectTrigger>
                           <SelectContent>
-                            i{" "}
                             {projects.map((project) => (
                               <SelectItem key={project.id} value={project.id}>
                                 <div className="flex items-center gap-2">
@@ -245,35 +292,59 @@ export function TimeSheetTable({ entries }: TimeSheetTableProps) {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => deleteRow(rowIndex)}
+                            // Changed to new handler
+                            onClick={() => handleDeleteRowClick(rowIndex)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         )}
                       </div>
                     </td>
-
                     {daysOfWeek.map((day) => {
-                      const totalMinutes = getTotalForProjectAndDay(
+                      const dayEntries = getEntriesForProjectAndDay(
                         row.projectId,
                         day
                       );
                       return (
                         <td key={day.toISOString()} className="p-2">
-                          <div
-                            onClick={() => handleCellClick(row.projectId, day)}
-                            className="bg-gray-100 border border-gray-200 rounded-md h-10 flex items-center justify-center hover:border-gray-300 cursor-pointer transition"
-                          >
-                            <span className="text-sm text-gray-700">
-                              {totalMinutes > 0
-                                ? formatDurationHHMM(totalMinutes)
-                                : "0:00"}
-                            </span>
+                          <div className="flex flex-col gap-1">
+                            {dayEntries.length > 0 ? (
+                              dayEntries.map((entry) => (
+                                <div
+                                  key={entry.id}
+                                  onClick={() => {
+                                    setEditingEntry(entry);
+                                    setSelectedDate(day);
+                                    setSelectedProjectId(row.projectId);
+                                    setIsFormOpen(true);
+                                  }}
+                                  className="bg-gray-100 border border-gray-200 rounded-md h-10 flex items-center justify-center hover:border-gray-300 hover:bg-gray-200 cursor-pointer transition"
+                                  title={entry.description}
+                                >
+                                  <span className="text-sm text-gray-700 font-medium">
+                                    {formatDurationHHMM(entry.duration)}
+                                  </span>
+                                </div>
+                              ))
+                            ) : (
+                              <div
+                                onClick={() => {
+                                  setEditingEntry(null);
+                                  setSelectedDate(day);
+                                  setSelectedProjectId(row.projectId);
+                                  setIsFormOpen(true);
+                                }}
+                                className="bg-gray-50 border border-dashed border-gray-300 rounded-md h-10 flex items-center justify-center hover:border-gray-400 hover:bg-gray-100 cursor-pointer transition"
+                              >
+                                <span className="text-sm text-gray-400">
+                                  hh:mm
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </td>
                       );
                     })}
-
                     <td className="text-center p-2 font-medium text-sm">
                       {totalForRow > 0
                         ? formatDurationHHMM(totalForRow)
@@ -282,8 +353,6 @@ export function TimeSheetTable({ entries }: TimeSheetTableProps) {
                   </tr>
                 );
               })}
-
-              {/* Footer Total Row - Fixed Structure */}
               <tr className="bg-gray-50 font-semibold border-t-2 border-gray-200">
                 <td className="p-3 border-r">
                   <Button
@@ -296,8 +365,6 @@ export function TimeSheetTable({ entries }: TimeSheetTableProps) {
                     Add timesheet row
                   </Button>
                 </td>
-
-                {/* Day total cells - align with day columns above */}
                 {daysOfWeek.map((day) => (
                   <td
                     key={day.toISOString()}
@@ -306,8 +373,6 @@ export function TimeSheetTable({ entries }: TimeSheetTableProps) {
                     {formatDurationHHMM(getTotalForDay(day))}
                   </td>
                 ))}
-
-                {/* Grand total cell - align with week total column */}
                 <td className="text-center p-3 text-sm font-bold text-gray-800">
                   {formatDurationHHMM(getGrandTotal())}
                 </td>
@@ -317,7 +382,6 @@ export function TimeSheetTable({ entries }: TimeSheetTableProps) {
         </div>
       </div>
 
-      {/* Time Entry Form */}
       <TimeEntryForm
         open={isFormOpen}
         onOpenChange={(open) => {
@@ -330,6 +394,7 @@ export function TimeSheetTable({ entries }: TimeSheetTableProps) {
         }}
         entry={editingEntry}
         defaultDate={selectedDate}
+        existingEntries={entries}
         onSuccess={() => {
           setEditingEntry(null);
           setSelectedDate(null);
@@ -337,6 +402,47 @@ export function TimeSheetTable({ entries }: TimeSheetTableProps) {
           router.refresh();
         }}
       />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete timesheet row?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the row and all associated time
+              entries for
+              {getProjectToDelete() && (
+                <span className="font-bold">
+                  {" "}
+                  {getProjectToDelete()?.name}{" "}
+                </span>
+              )}
+              in this week.
+              <br />
+              <br />
+              Total time to be deleted:{" "}
+              <span className="font-bold">
+                {rowToDeleteIndex !== null &&
+                  formatDurationHHMM(
+                    getTotalForProject(rows[rowToDeleteIndex].projectId)
+                  )}
+              </span>
+              .
+              <br />
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {isDeleting ? "Deleting..." : "Delete Row"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

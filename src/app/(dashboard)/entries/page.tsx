@@ -150,12 +150,7 @@ export default function EntriesPage() {
           onDeleteEntry={handleDeleteEntry}
         />
       ) : (
-        <TimeSheetTable
-          entries={entries}
-          // The TimeSheetTable manages its own week navigation internally,
-          // but for simplicity here, it receives the data for the week
-          // currently loaded by the parent component (page.tsx).
-        />
+        <TimeSheetTable entries={entries} onDeleteEntry={handleDeleteEntry} />
       )}
 
       <TimeEntryForm
@@ -164,6 +159,7 @@ export default function EntriesPage() {
         onSuccess={handleSuccess}
         entry={editingEntry}
         defaultDate={selectedDate}
+        existingEntries={entries}
       />
     </div>
   );
