@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Toggle } from "@/components/ui/toggle";
 import {
     Select,
     SelectContent,
@@ -63,9 +64,18 @@ const timeEntryFormSchema = z.object({
     startTime: z.string().optional(),
     endTime: z.string().optional(),
     description: z.string().min(10, "Description is required"),
+    billable: z.boolean().default(true),
 });
 
-type FormData = z.infer<typeof timeEntryFormSchema>;
+type FormData = {
+    date: string;
+    projectId: string;
+    durationInput: string;
+    description: string;
+    startTime?: string;
+    endTime?: string;
+    billable?: boolean;
+};
 
 interface TimeEntryFormProps {
     open: boolean;
@@ -78,6 +88,7 @@ interface TimeEntryFormProps {
         startTime: string | null;
         endTime: string | null;
         description: string;
+        billable: boolean;
         project?: {
             id: string;
             name: string;
@@ -122,6 +133,7 @@ export function TimeEntryForm({
             startTime: entry?.startTime || "",
             endTime: entry?.endTime || "",
             description: entry?.description || "",
+            billable: entry?.billable ?? true,
         },
     });
 
@@ -129,6 +141,7 @@ export function TimeEntryForm({
     const durationInput = watch("durationInput");
     const startTime = watch("startTime");
     const endTime = watch("endTime");
+    const billable = watch("billable");
 
     useEffect(() => {
         const loadData = async () => {
@@ -188,6 +201,7 @@ export function TimeEntryForm({
             startTime: data.startTime || null,
             endTime: data.endTime || null,
             description: data.description,
+            billable: data.billable ?? true,
         };
 
         const result = entry
@@ -384,6 +398,27 @@ export function TimeEntryForm({
                                     {...register("description")}
                                     disabled={loading}
                                 />
+                            </div>
+                            <div className="flex items-center space-x-4 col-span-2">
+                                <Label htmlFor="billable" className="mb-0">
+                                    This time entry is billable
+                                </Label>
+                                <Toggle
+                                    id="billable"
+                                    pressed={billable}
+                                    onPressedChange={(pressed) =>
+                                        setValue("billable", pressed)
+                                    }
+                                    disabled={loading}
+                                    variant="outline"
+                                    className={`${
+                                        billable
+                                            ? "bg-green-100 text-green-700 border-green-300"
+                                            : ""
+                                    }`}
+                                >
+                                    {billable ? "Billable" : "Non-Billable"}
+                                </Toggle>
                             </div>
                         </div>
                     </div>

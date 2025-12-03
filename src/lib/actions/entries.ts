@@ -57,6 +57,7 @@ export async function createTimeEntry(data: TimeEntryFormData) {
         startTime: validated.startTime || null,
         endTime: validated.endTime || null,
         description: validated.description,
+        billable: validated.billable,
       },
     });
 
@@ -122,6 +123,7 @@ export async function updateTimeEntry(id: string, data: TimeEntryFormData) {
         startTime: validated.startTime || null,
         endTime: validated.endTime || null,
         description: validated.description,
+        billable: validated.billable,
       },
     });
 

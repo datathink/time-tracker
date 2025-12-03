@@ -5,6 +5,7 @@ import { TimeEntryForm } from "./TimeEntryForm";
 import { deleteTimeEntry } from "@/lib/actions/entries";
 import { formatDuration, formatDecimalHours } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -31,6 +32,7 @@ interface TimeEntry {
   startTime: string | null;
   endTime: string | null;
   description: string;
+  billable: boolean;
   project?: {
     id: string;
     name: string;
@@ -127,7 +129,7 @@ export function TimeEntryList({ entries }: TimeEntryListProps) {
                       <TableHead>Time</TableHead>
                       <TableHead>Duration</TableHead>
                       <TableHead>Description</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Billable</TableHead>
                       <TableHead className="w-[70px]"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -176,6 +178,20 @@ export function TimeEntryList({ entries }: TimeEntryListProps) {
                               </span>
                             )}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          {entry.billable ? (
+                            <Badge
+                              variant="default"
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              Billable
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary">
+                              Non-Billable
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell>
                           <DropdownMenu>
