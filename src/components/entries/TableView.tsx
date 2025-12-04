@@ -30,6 +30,7 @@ import {
   isSameDay,
   isWithinInterval,
 } from "date-fns";
+import { formatDecimalHours } from "@/lib/utils";
 import { TimeEntryForm } from "./TimeEntryForm";
 import { getActiveProjects } from "@/lib/actions/projects";
 
@@ -93,6 +94,7 @@ export function TimeSheetTable({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [rowToDeleteIndex, setRowToDeleteIndex] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<TimeEntry | null>(null);
 
   // Load active projects on mount
   useEffect(() => {
@@ -205,6 +207,19 @@ export function TimeSheetTable({
       setRowToDeleteIndex(null);
     } catch (error) {
       console.error("Failed to delete entries", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleConfirmEntryDelete = async () => {
+    if (!entryToDelete) return;
+    setIsDeleting(true);
+    try {
+      await onDeleteEntry(entryToDelete.id);
+      setEntryToDelete(null);
+    } catch (error) {
+      console.error("failed to delete entry", error);
     } finally {
       setIsDeleting(false);
     }
@@ -333,12 +348,23 @@ export function TimeSheetTable({
                                     setSelectedProjectId(row.projectId);
                                     setIsFormOpen(true);
                                   }}
-                                  className="bg-gray-100 border border-gray-200 rounded-md h-10 flex items-center justify-center hover:border-gray-300 hover:bg-gray-200 cursor-pointer transition"
+                                  className="group relative bg-gray-100 border border-gray-200 rounded-md h-10 flex items-center justify-center hover:border-gray-300 hover:bg-gray-200 cursor-pointer transition"
                                   title={entry.description}
                                 >
                                   <span className="text-sm text-gray-700 font-medium">
                                     {formatDurationHHMM(entry.duration)}
                                   </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute -top-1 -right-1 h-6 w-6 text-red-600 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 z-10"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEntryToDelete(entry);
+                                    }}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
                                 </div>
                               ))
                             ) : (
@@ -454,6 +480,40 @@ export function TimeSheetTable({
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
               {isDeleting ? "Deleting..." : "Delete Row"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog
+        open={!!entryToDelete}
+        onOpenChange={(open) => !open && setEntryToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete time entry?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this time entry for
+              {entryToDelete?.project && (
+                <span className="font-bold"> {entryToDelete.project.name}</span>
+              )}
+              {entryToDelete?.duration && (
+                <span className="font-bold">
+                  {" "}
+                  ({formatDecimalHours(entryToDelete.duration)}
+                  h)
+                </span>
+              )}
+              . This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmEntryDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {isDeleting ? "Deleting..." : "Delete Entry"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

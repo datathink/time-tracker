@@ -196,7 +196,7 @@ export function CalendarView({
                           </div>
 
                           <Button
-                            size="sm"
+                            size="icon"
                             variant="ghost"
                             className="absolute top-1.5 right-1.5 h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:bg-red-50"
                             onClick={(e) => {
@@ -242,7 +242,7 @@ export function CalendarView({
               onClick={handleDeleteConfirm}
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
-              Delete
+              Delete Entry
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
