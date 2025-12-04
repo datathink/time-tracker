@@ -150,7 +150,11 @@ export default function EntriesPage() {
           onDeleteEntry={handleDeleteEntry}
         />
       ) : (
-        <TimeSheetTable entries={entries} onDeleteEntry={handleDeleteEntry} />
+        <TimeSheetTable
+          entries={entries}
+          onDeleteEntry={handleDeleteEntry}
+          onSuccess={handleSuccess}
+        />
       )}
 
       <TimeEntryForm

@@ -30,7 +30,6 @@ import {
   isSameDay,
 } from "date-fns";
 import { TimeEntryForm } from "./TimeEntryForm";
-import { useRouter } from "next/navigation";
 import { getActiveProjects } from "@/lib/actions/projects";
 
 // Utility function to convert minutes to HH:MM format
@@ -68,14 +67,15 @@ interface ActiveProject {
 
 interface TimeSheetTableProps {
   entries: TimeEntry[];
-  onDeleteEntry: (entryId: string) => Promise<any>; // Added this prop
+  onDeleteEntry: (entryId: string) => Promise<any>;
+  onSuccess: () => void;
 }
 
 export function TimeSheetTable({
   entries,
   onDeleteEntry,
+  onSuccess,
 }: TimeSheetTableProps) {
-  const router = useRouter();
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [rows, setRows] = useState<Array<{ projectId: string | null }>>([
     { projectId: null },
@@ -186,7 +186,6 @@ export function TimeSheetTable({
       setRows(rows.filter((_, i) => i !== rowToDeleteIndex));
       setDeleteDialogOpen(false);
       setRowToDeleteIndex(null);
-      router.refresh();
     } catch (error) {
       console.error("Failed to delete entries", error);
     } finally {
@@ -399,7 +398,7 @@ export function TimeSheetTable({
           setEditingEntry(null);
           setSelectedDate(null);
           setSelectedProjectId(null);
-          router.refresh();
+          onSuccess();
         }}
       />
 
