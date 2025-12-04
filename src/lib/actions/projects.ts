@@ -37,19 +37,24 @@ export async function createProject(data: ProjectFormData) {
     });
 
     revalidatePath("/projects");
-    return { success: true, data: project };
+    return { success: true,
+      data: {
+      ...project,
+      budgetAmount: project.budgetAmount
+        ? project.budgetAmount.toNumber()
+        : null,
+      }
+    };
   } catch (error) {
     console.error("Error creating project:", error);
     if (error instanceof z.ZodError) {
       return { success: false, error: error.issues[0].message };
     }
-    return { success: false, error: "Failed to create project" };
-  }
 }
 
 // Update an existing project
 export async function updateProject(id: string, data: ProjectFormData) {
-  try {
+    try {
     const validated = projectSchema.parse(data);
     const isAdmin = await isAdminUser();
 
@@ -63,9 +68,9 @@ export async function updateProject(id: string, data: ProjectFormData) {
       where: { id },
     });
 
-    if (!existingProject) {
-      return { success: false, error: "Project not found" };
-    }
+        if (!existingProject) {
+            return { success: false, error: "Project not found" };
+        }
 
     const project = await prisma.project.update({
       where: { id },
@@ -97,7 +102,6 @@ export async function updateProject(id: string, data: ProjectFormData) {
       return { success: false, error: error.issues[0].message };
     }
     return { success: false, error: "Failed to update project" };
-  }
 }
 
 // Archive a project
@@ -115,9 +119,9 @@ export async function archiveProject(id: string) {
       where: { id },
     });
 
-    if (!existingProject) {
-      return { success: false, error: "Project not found" };
-    }
+        if (!existingProject) {
+            return { success: false, error: "Project not found" };
+        }
 
     await prisma.project.update({
       where: { id },
