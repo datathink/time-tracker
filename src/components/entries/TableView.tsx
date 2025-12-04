@@ -28,6 +28,7 @@ import {
   addWeeks,
   subWeeks,
   isSameDay,
+  isWithinInterval,
 } from "date-fns";
 import { TimeEntryForm } from "./TimeEntryForm";
 import { getActiveProjects } from "@/lib/actions/projects";
@@ -104,8 +105,9 @@ export function TimeSheetTable({
 
   // Auto-populate rows based on existing entries
   useEffect(() => {
+    const weekEntries = getEntriesForCurrentWeek();
     const uniqueProjectIds = Array.from(
-      new Set(entries.map((entry) => entry.projectId))
+      new Set(weekEntries.map((entry) => entry.projectId))
     );
     if (uniqueProjectIds.length > 0) {
       setRows(uniqueProjectIds.map((projectId) => ({ projectId })));
@@ -116,16 +118,27 @@ export function TimeSheetTable({
   const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
   const daysOfWeek = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
+  // Filter entries for the current week
+  const getEntriesForCurrentWeek = () => {
+    return entries.filter((entry) => {
+      const entryDate = parseEntryDate(entry.date);
+      return isWithinInterval(entryDate, { start: weekStart, end: weekEnd });
+    });
+  };
+
+  // Get entries for specific project and day
   const getEntriesForProjectAndDay = (projectId: string | null, day: Date) => {
     if (!projectId) return [];
-    return entries.filter((entry) => {
+    const weekEntries = getEntriesForCurrentWeek();
+    return weekEntries.filter((entry) => {
       const entryDate = parseEntryDate(entry.date);
       return entry.projectId === projectId && isSameDay(entryDate, day);
     });
   };
-
+  // Get total for a specific day in current week
   const getTotalForDay = (day: Date) => {
-    return entries
+    const weekEntries = getEntriesForCurrentWeek();
+    return weekEntries
       .filter((entry) => {
         const entryDate = parseEntryDate(entry.date);
         return isSameDay(entryDate, day);
@@ -133,15 +146,18 @@ export function TimeSheetTable({
       .reduce((sum, entry) => sum + entry.duration, 0);
   };
 
+  //Get total for a project in current week
   const getTotalForProject = (projectId: string | null) => {
     if (!projectId) return 0;
-    return entries
+    const weekEntries = getEntriesForCurrentWeek();
+    return weekEntries
       .filter((entry) => entry.projectId === projectId)
       .reduce((sum, entry) => sum + entry.duration, 0);
   };
 
   const getGrandTotal = () => {
-    return entries.reduce((sum, entry) => sum + entry.duration, 0);
+    const weekEntries = getEntriesForCurrentWeek();
+    return weekEntries.reduce((sum, entry) => sum + entry.duration, 0);
   };
 
   const addRow = () => {
@@ -172,7 +188,8 @@ export function TimeSheetTable({
     const projectId = rows[rowToDeleteIndex].projectId;
 
     // Find all entries for this project currently in view
-    const entriesToDelete = entries.filter(
+    const weekEntries = getEntriesForCurrentWeek();
+    const entriesToDelete = weekEntries.filter(
       (entry) => entry.projectId === projectId
     );
 
@@ -250,7 +267,7 @@ export function TimeSheetTable({
                   </th>
                 ))}
                 <th className="text-center p-3 font-medium text-sm min-w-[90px]">
-                  Week Total
+                  Total
                 </th>
               </tr>
             </thead>
@@ -291,7 +308,6 @@ export function TimeSheetTable({
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            // Changed to new handler
                             onClick={() => handleDeleteRowClick(rowIndex)}
                           >
                             <Trash2 className="h-4 w-4" />
