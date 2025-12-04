@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ProjectForm } from "./ProjectForm";
-import { ProjectTeamDialog } from "./ProjectTeamDialog";
 import { getProjects, deleteProject } from "@/lib/actions/projects";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,11 +44,11 @@ interface ProjectListProps {
 }
 
 export function ProjectList({ projects }: ProjectListProps) {
+  const router = useRouter(); // Initialize router
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [allProjects, setAllProjects] = useState<Project[]>(projects);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [teamProject, setTeamProject] = useState<Project | null>(null);
-  const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
+  // Removed teamProject and isTeamDialogOpen state
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const loadProjects = async () => {
@@ -63,9 +63,9 @@ export function ProjectList({ projects }: ProjectListProps) {
     setIsFormOpen(true);
   };
 
+  // New handler for navigation
   const handleManageTeam = (project: Project) => {
-    setTeamProject(project);
-    setIsTeamDialogOpen(true);
+    router.push(`/projects/${project.id}/team`);
   };
 
   const handleDelete = async (id: string) => {
@@ -121,20 +121,20 @@ export function ProjectList({ projects }: ProjectListProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Project</TableHead>
-              <TableHead>Client</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Budget</TableHead>
-              <TableHead>Team</TableHead>
-              <TableHead>Time Entries</TableHead>
-              <TableHead className="w-[70px]"></TableHead>
+              <TableHead className="font-bold pl-6">Project</TableHead>
+              <TableHead className="font-bold">Client</TableHead>
+              <TableHead className="font-bold">Status</TableHead>
+              <TableHead className="font-bold">Budget</TableHead>
+              <TableHead className="font-bold">Team</TableHead>
+              <TableHead className="font-bold">Time Entries</TableHead>
+              <TableHead className="font-bold">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {allProjects.map((project) => (
               <TableRow key={project.id}>
                 <TableCell>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 pl-3">
                     <div
                       className="w-3 h-3 rounded-full"
                       style={{
@@ -173,7 +173,7 @@ export function ProjectList({ projects }: ProjectListProps) {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => handleEdit(project)}>
                         <Pencil className="mr-2 h-4 w-4" />
-                        Edit
+                        Edit Project
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleManageTeam(project)}
@@ -187,7 +187,9 @@ export function ProjectList({ projects }: ProjectListProps) {
                         className="text-red-600"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
-                        {deletingId === project.id ? "Deleting..." : "Delete"}
+                        {deletingId === project.id
+                          ? "Deleting..."
+                          : "Delete Project"}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -210,17 +212,7 @@ export function ProjectList({ projects }: ProjectListProps) {
         />
       )}
 
-      {teamProject && (
-        <ProjectTeamDialog
-          project={teamProject}
-          open={isTeamDialogOpen}
-          onOpenChange={(open) => {
-            setIsTeamDialogOpen(open);
-            if (!open) setTeamProject(null);
-          }}
-          onSuccess={handleSuccess}
-        />
-      )}
+      {/* Removed ProjectTeamDialog component usage here */}
     </>
   );
 }
