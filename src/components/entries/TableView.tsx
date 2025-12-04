@@ -19,7 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, FilePen, Plus, Trash2 } from "lucide-react";
 import {
   format,
   startOfWeek,
@@ -375,9 +375,10 @@ export function TimeSheetTable({
                                   setSelectedProjectId(row.projectId);
                                   setIsFormOpen(true);
                                 }}
-                                className="bg-gray-50 border border-dashed border-gray-300 rounded-md h-10 flex items-center justify-center hover:border-gray-400 hover:bg-gray-100 cursor-pointer transition"
+                                className="bg-gray-50 border border-dashed border-gray-300 rounded-md h-10 flex items-center justify-center hover:border-gray-400 hover:bg-gray-100 transition group relative cursor-pointer"
                               >
-                                <span className="text-sm text-gray-400">
+                                <FilePen className="h-4 w-4 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity absolute" />
+                                <span className="text-sm text-gray-400 group-hover:opacity-0 transition-opacity">
                                   hh:mm
                                 </span>
                               </div>
