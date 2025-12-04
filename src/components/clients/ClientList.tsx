@@ -1,9 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { ClientForm } from "./ClientForm";
-import { getClients, deleteClient } from "@/lib/actions/clients";
+import { deleteClient } from "@/lib/actions/clients";
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import {
     Table,
     TableBody,
@@ -33,36 +42,35 @@ interface Client {
 
 interface ClientListProps {
     clients: Client[];
+    loadClients: () => void;
 }
 
-export function ClientList({ clients }: ClientListProps) {
-    const [allClients, setAllClients] = useState<Client[]>(clients);
+export function ClientList({ clients, loadClients }: ClientListProps) {
     const [editingClient, setEditingClient] = useState<Client | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
-
-    const loadClients = async () => {
-        const result = await getClients();
-        if (result.success) {
-            setAllClients(result.data);
-        }
-    };
+    const [confirmDeleteClient, setConfirmDeleteClient] =
+        useState<Client | null>(null);
 
     const handleEdit = (client: Client) => {
         setEditingClient(client);
         setIsFormOpen(true);
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this client?")) return;
+    const handleDelete = (client: Client) => {
+        setConfirmDeleteClient(client);
+    };
 
+    const performDelete = async (id: string) => {
         setDeletingId(id);
         const result = await deleteClient(id);
+        setConfirmDeleteClient(null);
 
         if (result.success) {
             loadClients();
+            toast.success("Client deleted successfully");
         } else {
-            alert(result.error || "Failed to delete client");
+            toast.error(result.error || "Failed to delete client");
         }
 
         setDeletingId(null);
@@ -73,7 +81,7 @@ export function ClientList({ clients }: ClientListProps) {
         loadClients();
     };
 
-    if (allClients.length === 0) {
+    if (clients.length === 0) {
         return (
             <div className="text-center py-12">
                 <p className="text-gray-500">
@@ -97,7 +105,7 @@ export function ClientList({ clients }: ClientListProps) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {allClients.map((client) => (
+                        {clients.map((client) => (
                             <TableRow key={client.id}>
                                 <TableCell className="font-medium">
                                     {client.name}
@@ -131,17 +139,12 @@ export function ClientList({ clients }: ClientListProps) {
                                             </DropdownMenuItem>
                                             <DropdownMenuItem
                                                 onClick={() =>
-                                                    handleDelete(client.id)
-                                                }
-                                                disabled={
-                                                    deletingId === client.id
+                                                    handleDelete(client)
                                                 }
                                                 className="text-red-600"
                                             >
                                                 <Trash2 className="mr-2 h-4 w-4" />
-                                                {deletingId === client.id
-                                                    ? "Deleting..."
-                                                    : "Delete"}
+                                                Delete
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
@@ -163,6 +166,43 @@ export function ClientList({ clients }: ClientListProps) {
                     onSuccess={handleSuccess}
                 />
             )}
+
+            <Dialog
+                open={!!confirmDeleteClient}
+                onOpenChange={() => setConfirmDeleteClient(null)}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete client</DialogTitle>
+                    </DialogHeader>
+                    <DialogDescription>
+                        Are you sure you want to delete this client? This action
+                        cannot be undone.
+                    </DialogDescription>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setConfirmDeleteClient(null)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={() => {
+                                if (confirmDeleteClient) {
+                                    performDelete(confirmDeleteClient.id);
+                                }
+                            }}
+                            disabled={deletingId === confirmDeleteClient?.id}
+                        >
+                            {deletingId === confirmDeleteClient?.id
+                                ? "Deleting..."
+                                : "Delete"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }
