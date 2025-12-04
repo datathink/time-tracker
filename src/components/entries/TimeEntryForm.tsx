@@ -399,26 +399,28 @@ export function TimeEntryForm({
                                     disabled={loading}
                                 />
                             </div>
-                            <div className="flex items-center space-x-4 col-span-2">
-                                <Label htmlFor="billable" className="mb-0">
-                                    This time entry is billable
-                                </Label>
-                                <Toggle
-                                    id="billable"
-                                    pressed={billable}
-                                    onPressedChange={(pressed) =>
-                                        setValue("billable", pressed)
+                            <div className="col-span-2">
+                                <div className="flex items-center gap-4 mb-2">
+                                    <Label htmlFor="billable" className="text-base font-medium">
+                                        Billable Hours
+                                    </Label>
+                                    <Toggle
+                                        id="billable"
+                                        pressed={billable}
+                                        onPressedChange={(pressed) => setValue("billable", pressed)}
+                                        disabled={loading}
+                                        variant="ios" 
+                                        size="default" 
+                                        className="flex-shrink-0"
+                                        aria-label={billable ? "Billable hours" : "Non-billable hours"}
+                                    />
+                                </div>
+                                <p className="text-sm text-gray-500">
+                                    {billable 
+                                        ? "This time will be included in client invoices"
+                                        : "This time is for internal/non-billable work"
                                     }
-                                    disabled={loading}
-                                    variant="outline"
-                                    className={`${
-                                        billable
-                                            ? "bg-green-100 text-green-700 border-green-300"
-                                            : ""
-                                    }`}
-                                >
-                                    {billable ? "Billable" : "Non-Billable"}
-                                </Toggle>
+                                </p>
                             </div>
                         </div>
                     </div>
