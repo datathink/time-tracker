@@ -516,6 +516,7 @@ export function TimeSheetTable({
                 }}
                 entry={editingEntry}
                 defaultDate={selectedDate}
+                defaultProjectId={selectedProjectId}
                 existingEntries={entries}
                 onSuccess={() => {
                     setEditingEntry(null);

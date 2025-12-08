@@ -109,6 +109,7 @@ interface TimeEntryFormProps {
         } | null;
     } | null;
     defaultDate?: Date | null;
+    defaultProjectId?: string | null;
     onSuccess?: () => void;
     existingEntries?: ExistingEntry[];
 }
@@ -118,6 +119,7 @@ export function TimeEntryForm({
     onOpenChange,
     entry,
     defaultDate,
+    defaultProjectId,
     onSuccess,
     existingEntries = [],
 }: TimeEntryFormProps) {
@@ -179,7 +181,7 @@ export function TimeEntryForm({
                     date: defaultDate
                         ? format(defaultDate, "yyyy-MM-dd")
                         : format(new Date(), "yyyy-MM-dd"),
-                    projectId: "",
+                    projectId: defaultProjectId || "",
                     durationInput: "",
                     startTime: "",
                     endTime: "",
@@ -188,7 +190,7 @@ export function TimeEntryForm({
             }
             setCollisionEntry(null);
         }
-    }, [open, entry, defaultDate, reset]);
+    }, [open, entry, defaultDate, defaultProjectId, reset]);
 
     // Collision Detection Logic
     useEffect(() => {
