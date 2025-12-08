@@ -25,6 +25,10 @@ import {
     FormControl,
     FormMessage,
 } from "@/components/ui/form";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { cn } from "@/lib/utils";
+import { CalendarIcon } from "lucide-react";
+import { Calendar } from "../ui/calendar";
 
 const profileFormSchema = z.object({
     fullName: z.string().min(1, "Full name is required"),
@@ -181,16 +185,65 @@ export function ProfileForm() {
                     <FormField
                         name="birthDate"
                         render={({ field }) => (
-                            <FormItem>
+                            <FormItem className="flex flex-col">
                                 <FormLabel>Birth date</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        id="birthDate"
-                                        type="date"
-                                        {...field}
-                                        disabled={loading}
-                                    />
-                                </FormControl>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <FormControl>
+                                            <Button
+                                                variant={"outline"}
+                                                className={cn(
+                                                    "w-full justify-between text-left font-normal",
+                                                    !field.value &&
+                                                        "text-muted-foreground"
+                                                )}
+                                                disabled={loading}
+                                            >
+                                                <span>
+                                                    {field.value
+                                                        ? format(
+                                                              new Date(
+                                                                  field.value + "T00:00:00"
+                                                              ),
+                                                              " MMMM do, yyyy"
+                                                          )
+                                                        : "Pick a date"}
+                                                </span>
+                                                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                                            </Button>
+                                        </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent
+                                        className="w-auto p-0"
+                                        align="start"
+                                    >
+                                        <Calendar
+                                            mode="single"
+                                            selected={
+                                                field.value
+                                                    ? new Date(field.value + "T00:00:00")
+                                                    : undefined
+                                            }
+                                            onSelect={(date) =>
+                                                field.onChange(
+                                                    date
+                                                        ? format(
+                                                              date,
+                                                              "yyyy-MM-dd"
+                                                          )
+                                                        : ""
+                                                )
+                                            }
+                                            disabled={(date) =>
+                                                date > new Date() ||
+                                                date < new Date("1900-01-01")
+                                            }
+                                            captionLayout="dropdown"
+                                            className="rounded-md border"
+                                            autoFocus
+                                        />
+                                    </PopoverContent>
+                                </Popover>
                                 <FormMessage />
                             </FormItem>
                         )}

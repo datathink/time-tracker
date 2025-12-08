@@ -46,7 +46,7 @@ export async function createTimeEntry(data: TimeEntryFormData) {
 
     // Parse date in local timezone to avoid timezone issues
     const [year, month, day] = validated.date.split("-").map(Number);
-    const localDate = new Date(year, month - 1, day);
+    const localDate = new Date(Date.UTC(year, month - 1, day));
 
     const timeEntry = await prisma.timeEntry.create({
       data: {
@@ -112,7 +112,7 @@ export async function updateTimeEntry(id: string, data: TimeEntryFormData) {
 
     // Parse date in local timezone to avoid timezone issues
     const [year, month, day] = validated.date.split("-").map(Number);
-    const localDate = new Date(year, month - 1, day);
+    const localDate = new Date(Date.UTC(year, month - 1, day));
 
     const timeEntry = await prisma.timeEntry.update({
       where: { id },

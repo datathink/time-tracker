@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 type TimeInputProps = {
   value?: string;
   onChange?: (value: string) => void;
+  name?: string;
   placeholder?: string;
   disabled?: boolean;
   id?: string;
@@ -80,7 +81,7 @@ function parseTime(input: string): string | null {
   return null;
 }
 
-const TIME_OPTIONS = (() => {
+const ALL_TIME_OPTIONS = (() => {
   const options = Array.from({ length: 96 }, (_, i) => {
     const totalMinutes = i * 15;
     const hours24 = Math.floor(totalMinutes / 60);
@@ -97,6 +98,38 @@ const TIME_OPTIONS = (() => {
   const eightAMIndex = options.findIndex((t) => t.time24 === "08:00");
   return [...options.slice(eightAMIndex), ...options.slice(0, eightAMIndex)];
 })();
+
+// Filter time options based on input
+function filterTimeOptions(input: string): typeof ALL_TIME_OPTIONS {
+  if (!input || input.trim() === "") {
+    return ALL_TIME_OPTIONS;
+  }
+
+  const cleaned = input.trim().toLowerCase().replace(/\s+/g, "");
+
+  return ALL_TIME_OPTIONS.filter((option) => {
+    const time12Lower = option.time12.toLowerCase().replace(/\s+/g, "");
+    const time24Lower = option.time24.toLowerCase();
+
+    // Match against 12-hour format (without spaces)
+    if (time12Lower.includes(cleaned)) return true;
+
+    // Match against 24-hour format
+    if (time24Lower.includes(cleaned)) return true;
+
+    // Match if input is just numbers and matches the hour
+    const numberMatch = cleaned.match(/^(\d+)$/);
+    if (numberMatch) {
+      const num = numberMatch[1];
+      // Match hour in 12-hour format
+      if (option.time12.split(":")[0] === num) return true;
+      // Match hour in 24-hour format
+      if (option.time24.split(":")[0] === num.padStart(2, "0")) return true;
+    }
+
+    return false;
+  });
+}
 
 export const TimeInput = React.forwardRef<HTMLInputElement, TimeInputProps>(
   (
@@ -116,10 +149,36 @@ export const TimeInput = React.forwardRef<HTMLInputElement, TimeInputProps>(
     const dropdownRef = React.useRef<HTMLDivElement>(null);
     const inputRef = React.useRef<HTMLInputElement>(null);
     const [error, setError] = React.useState<string | null>(null);
+    const [filteredOptions, setFilteredOptions] =
+      React.useState(ALL_TIME_OPTIONS);
+    const [isTyping, setIsTyping] = React.useState(false);
 
     React.useEffect(() => {
       setInputVal(to12Hour(value));
     }, [value]);
+
+    // Update filtered options when input changes
+    React.useEffect(() => {
+      if (isTyping) {
+        const filtered = filterTimeOptions(inputVal);
+        setFilteredOptions(filtered);
+      } else {
+        // When not typing (dropdown opened via click), show all options
+        setFilteredOptions(ALL_TIME_OPTIONS);
+      }
+
+      // Reset focused index if current index is out of bounds
+      if (focusedIdx >= filteredOptions.length) {
+        setFocusedIdx(filteredOptions.length > 0 ? 0 : -1);
+      }
+    }, [inputVal, focusedIdx, isTyping, filteredOptions.length]);
+
+    // Auto-focus first matching item when typing
+    React.useEffect(() => {
+      if (isOpen && inputVal.trim() && isTyping) {
+        setFocusedIdx(0); // Always focus first filtered result
+      }
+    }, [inputVal, isOpen, isTyping]);
 
     const commit = (raw: string) => {
       const parsed = parseTime(raw);
@@ -127,7 +186,7 @@ export const TimeInput = React.forwardRef<HTMLInputElement, TimeInputProps>(
         setInputVal(to12Hour(parsed));
         onChange?.(parsed);
         setError(null);
-      } else {
+      } else if (raw.trim() !== "") {
         setError(
           "Invalid time format. Use formats like: 9:30 AM, 2:45 PM, 16:00"
         );
@@ -136,16 +195,46 @@ export const TimeInput = React.forwardRef<HTMLInputElement, TimeInputProps>(
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Enter") {
-        commit(inputVal);
-        inputRef.current?.blur();
-      } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        if (isOpen && focusedIdx >= 0 && focusedIdx < filteredOptions.length) {
+          // Select the focused option
+          const t = filteredOptions[focusedIdx];
+          setInputVal(t.time12);
+          onChange?.(t.time24);
+          setIsOpen(false);
+          setFocusedIdx(-1);
+          setError(null);
+          setIsTyping(false);
+        } else {
+          commit(inputVal);
+          inputRef.current?.blur();
+          setIsTyping(false);
+        }
+      } else if (e.key === "ArrowDown") {
         e.preventDefault();
         setIsOpen(true);
-        const currentTime24 = parseTime(inputVal) || value;
-        const cur = TIME_OPTIONS.findIndex(
-          (opt) => opt.time24 === currentTime24
-        );
-        setFocusedIdx(cur >= 0 ? cur : 0);
+        setIsTyping(false); // Show all options when using arrow keys
+        setFocusedIdx((prev) => {
+          return prev < filteredOptions.length - 1 ? prev + 1 : 0;
+        });
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setIsOpen(true);
+        setIsTyping(false); // Show all options when using arrow keys
+        setFocusedIdx((prev) => (prev <= 0 ? 0 : prev - 1));
+      } else if (e.key === "Escape") {
+        setIsOpen(false);
+        setFocusedIdx(-1);
+        setIsTyping(false);
+      } else if (e.key === "Tab") {
+        if (isOpen) {
+          setIsOpen(false);
+          setFocusedIdx(-1);
+        }
+        commit(inputVal);
+        setIsTyping(false);
+      } else {
+        // Any other key means user is typing
+        setIsTyping(true);
       }
     };
 
@@ -153,20 +242,22 @@ export const TimeInput = React.forwardRef<HTMLInputElement, TimeInputProps>(
       if (!isOpen) return;
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setFocusedIdx((i) => (i < TIME_OPTIONS.length - 1 ? i + 1 : i));
+        setFocusedIdx((i) => (i < filteredOptions.length - 1 ? i + 1 : i));
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         setFocusedIdx((i) => (i > 0 ? i - 1 : 0));
       } else if (e.key === "Enter" && focusedIdx >= 0) {
         e.preventDefault();
-        const t = TIME_OPTIONS[focusedIdx];
+        const t = filteredOptions[focusedIdx];
         setInputVal(t.time12);
         onChange?.(t.time24);
         setIsOpen(false);
         setFocusedIdx(-1);
+        setIsTyping(false);
       } else if (e.key === "Escape") {
         setIsOpen(false);
         setFocusedIdx(-1);
+        setIsTyping(false);
         inputRef.current?.focus();
       }
     };
@@ -186,11 +277,53 @@ export const TimeInput = React.forwardRef<HTMLInputElement, TimeInputProps>(
         ) {
           setIsOpen(false);
           setFocusedIdx(-1);
+          setIsTyping(false);
+          // Commit on blur if clicking outside
+          if (inputRef.current && document.activeElement !== inputRef.current) {
+            commit(inputVal);
+          }
         }
       };
       document.addEventListener("mousedown", listener);
       return () => document.removeEventListener("mousedown", listener);
-    }, []);
+    }, [inputVal]);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setInputVal(e.target.value);
+      setError(null);
+      setIsOpen(true);
+      setIsTyping(true); // User is typing, so filter options
+    };
+
+    const handleChevronClick = () => {
+      setIsOpen(!isOpen);
+      setIsTyping(false); // Show all options when clicking the chevron
+      if (!isOpen) {
+        // When opening dropdown, focus the current value in the list
+        const currentTime24 = value || parseTime(inputVal);
+        if (currentTime24) {
+          const currentIndex = ALL_TIME_OPTIONS.findIndex(
+            (opt) => opt.time24 === currentTime24
+          );
+          setFocusedIdx(currentIndex >= 0 ? currentIndex : 0);
+        } else {
+          setFocusedIdx(0);
+        }
+      }
+    };
+
+    const handleOptionClick = (t: { time24: string; time12: string }) => {
+      setInputVal(t.time12);
+      onChange?.(t.time24);
+      setIsOpen(false);
+      setFocusedIdx(-1);
+      setError(null);
+      setIsTyping(false);
+      inputRef.current?.focus();
+    };
+
+    // Determine which options to display
+    const displayOptions = isTyping ? filteredOptions : ALL_TIME_OPTIONS;
 
     return (
       <div className="relative">
@@ -211,15 +344,20 @@ export const TimeInput = React.forwardRef<HTMLInputElement, TimeInputProps>(
             }}
             type="text"
             value={inputVal}
-            onChange={(e) => {
-              setInputVal(e.target.value);
-              setError(null);
+            onChange={handleInputChange}
+            onBlur={() => {
+              // Small delay to allow clicking dropdown options
+              setTimeout(() => {
+                if (!isOpen) {
+                  commit(inputVal);
+                }
+              }, 200);
             }}
-            onBlur={() => commit(inputVal)}
             onKeyDown={handleKeyDown}
             onFocus={() => {
               setIsOpen(true);
               setError(null);
+              setIsTyping(false); // Show all options on focus
             }}
             disabled={disabled}
             placeholder={placeholder}
@@ -238,7 +376,7 @@ export const TimeInput = React.forwardRef<HTMLInputElement, TimeInputProps>(
 
           <button
             type="button"
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={handleChevronClick}
             disabled={disabled}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             onKeyDown={handleDropdownKey}
@@ -259,20 +397,15 @@ export const TimeInput = React.forwardRef<HTMLInputElement, TimeInputProps>(
             className="absolute z-20 mt-1 w-full overflow-auto rounded-md border bg-popover text-popover-foreground shadow-md max-h-60"
             ref={dropdownRef}
             role="listbox"
+            onKeyDown={handleDropdownKey}
           >
-            {TIME_OPTIONS.map((t, idx) => (
+            {displayOptions.map((t, idx) => (
               <button
                 key={t.time24}
                 type="button"
                 role="option"
                 aria-selected={t.time24 === value}
-                onClick={() => {
-                  setInputVal(t.time12);
-                  onChange?.(t.time24);
-                  setIsOpen(false);
-                  setFocusedIdx(-1);
-                  setError(null);
-                }}
+                onClick={() => handleOptionClick(t)}
                 onMouseEnter={() => setFocusedIdx(idx)}
                 className={cn(
                   "flex w-full items-center justify-between px-3 py-2 text-sm transition-colors",
@@ -285,6 +418,11 @@ export const TimeInput = React.forwardRef<HTMLInputElement, TimeInputProps>(
                 <span>{t.time12}</span>
               </button>
             ))}
+            {isTyping && displayOptions.length === 0 && (
+              <div className="px-3 py-2 text-sm text-muted-foreground text-center">
+                No matching times
+              </div>
+            )}
           </div>
         )}
       </div>
