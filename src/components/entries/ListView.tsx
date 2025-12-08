@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatDuration, formatDecimalHours } from "@/lib/utils";
+import { formatDuration, formatDecimalHours, fromUTCDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
     Table,
@@ -77,7 +77,7 @@ export function TimeEntryList({
     // Group entries by date
     const groupedEntries = entries.reduce(
         (acc, entry) => {
-            const dateKey = format(new Date(entry.date), "yyyy-MM-dd");
+            const dateKey = format(fromUTCDate(entry.date), "yyyy-MM-dd");
             if (!acc[dateKey]) {
                 acc[dateKey] = [];
             }

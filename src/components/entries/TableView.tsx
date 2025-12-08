@@ -30,7 +30,7 @@ import {
     isSameDay,
     isWithinInterval,
 } from "date-fns";
-import { formatDecimalHours } from "@/lib/utils";
+import { formatDecimalHours, fromUTCDate } from "@/lib/utils";
 import { TimeEntryForm } from "./TimeEntryForm";
 import { getActiveProjects } from "@/lib/actions/projects";
 
@@ -41,10 +41,6 @@ const formatDurationHHMM = (minutes: number): string => {
     return `${hours}:${mins.toString().padStart(2, "0")}`;
 };
 
-// Helper function for consistent date parsing
-const parseEntryDate = (date: Date) => {
-    return new Date(date);
-};
 
 interface TimeEntry {
     id: string;
@@ -125,7 +121,7 @@ export function TimeSheetTable({
     // Filter entries for the current week
     const getEntriesForCurrentWeek = () => {
         return entries.filter((entry) => {
-            const entryDate = parseEntryDate(entry.date);
+            const entryDate = fromUTCDate(entry.date);
             return isWithinInterval(entryDate, {
                 start: weekStart,
                 end: weekEnd,
@@ -141,7 +137,7 @@ export function TimeSheetTable({
         if (!projectId) return [];
         const weekEntries = getEntriesForCurrentWeek();
         return weekEntries.filter((entry) => {
-            const entryDate = parseEntryDate(entry.date);
+            const entryDate = fromUTCDate(entry.date);
             return entry.projectId === projectId && isSameDay(entryDate, day);
         });
     };
@@ -150,7 +146,7 @@ export function TimeSheetTable({
         const weekEntries = getEntriesForCurrentWeek();
         return weekEntries
             .filter((entry) => {
-                const entryDate = parseEntryDate(entry.date);
+                const entryDate = fromUTCDate(entry.date);
                 return isSameDay(entryDate, day);
             })
             .reduce((sum, entry) => sum + entry.duration, 0);

@@ -14,6 +14,7 @@ import {
     formatDuration,
     calculateStartTime,
     formatDecimalHours,
+    fromUTCDate,
 } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -162,7 +163,7 @@ export function TimeEntryForm({
                 // Edit Mode (Initial)
                 setInternalEntryId(entry.id);
                 reset({
-                    date: format(new Date(entry.date), "yyyy-MM-dd"),
+                    date: format(fromUTCDate(entry.date), "yyyy-MM-dd"),
                     projectId: entry.projectId || "",
                     durationInput: entry.duration
                         ? formatDuration(entry.duration)
@@ -198,7 +199,7 @@ export function TimeEntryForm({
         // Find if there is another entry for this Project + Date
         const duplicate = existingEntries.find((e) => {
             const isSameProject = e.projectId === selectedProjectId;
-            const isSameDate = isSameDay(new Date(e.date), dateObj);
+            const isSameDate = isSameDay(fromUTCDate(e.date), dateObj);
             // Crucial: Ignore the entry we are currently editing
             const isNotCurrentEntry = e.id !== internalEntryId;
 
@@ -293,7 +294,7 @@ export function TimeEntryForm({
         setInternalEntryId(collisionEntry.id);
 
         reset({
-            date: format(new Date(collisionEntry.date), "yyyy-MM-dd"),
+            date: format(fromUTCDate(collisionEntry.date), "yyyy-MM-dd"),
             projectId: collisionEntry.projectId,
             durationInput: formatDuration(collisionEntry.duration),
             startTime: collisionEntry.startTime || "",

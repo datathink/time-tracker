@@ -14,7 +14,7 @@ import {
     isSameDay,
     isToday,
 } from "date-fns";
-import { formatDecimalHours } from "@/lib/utils";
+import { formatDecimalHours, fromUTCDate } from "@/lib/utils";
 import { Prisma } from "@prisma/client";
 import {
     AlertDialog,
@@ -65,7 +65,7 @@ export function CalendarView({
 
     const getEntriesForDay = (day: Date) => {
         return entries.filter((entry) => {
-            const entryDate = new Date(entry.date);
+            const entryDate = fromUTCDate(entry.date);
             return isSameDay(entryDate, day);
         });
     };
