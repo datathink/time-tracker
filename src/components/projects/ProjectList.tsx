@@ -211,8 +211,6 @@ export function ProjectList({ projects }: ProjectListProps) {
           onSuccess={handleSuccess}
         />
       )}
-
-      {/* Removed ProjectTeamDialog component usage here */}
     </>
   );
 }
