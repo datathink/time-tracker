@@ -12,6 +12,7 @@ import { getWeekTimeEntries } from "@/lib/actions/entries";
 import { startOfWeek, endOfWeek } from "date-fns";
 import { Prisma } from "@prisma/client";
 import { useQueryState, parseAsStringLiteral } from "nuqs";
+import { toast } from "sonner";
 
 type TimeEntryWithRelations = Prisma.TimeEntryGetPayload<{
     include: {
@@ -49,6 +50,8 @@ export default function EntriesPage() {
         );
         if (result.success) {
             setEntries(result.data);
+        } else {
+            toast.error(result.error || "Failed to load time entries");
         }
         setLoading(false);
     };
@@ -152,6 +155,7 @@ export default function EntriesPage() {
                     entries={entries}
                     onEditEntry={handleEditEntry}
                     onDeleteEntry={handleDeleteEntry}
+                    loadEntries={() => loadEntries(currentWeek)}
                 />
             ) : (
                 <TimeSheetTable
