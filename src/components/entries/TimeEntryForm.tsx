@@ -64,18 +64,10 @@ const timeEntryFormSchema = z.object({
     startTime: z.string().optional(),
     endTime: z.string().optional(),
     description: z.string().min(10, "Description is required"),
-    billable: z.boolean().default(true),
+    billable: z.boolean(),
 });
 
-type FormData = {
-    date: string;
-    projectId: string;
-    durationInput: string;
-    description: string;
-    startTime?: string;
-    endTime?: string;
-    billable?: boolean;
-};
+type FormData = z.infer<typeof timeEntryFormSchema>;
 
 interface TimeEntryFormProps {
     open: boolean;
@@ -399,27 +391,32 @@ export function TimeEntryForm({
                                     disabled={loading}
                                 />
                             </div>
-                            <div className="col-span-2">
+                            <div className="space-y-2 col-span-2">
                                 <div className="flex items-center gap-4 mb-2">
-                                    <Label htmlFor="billable" className="text-base font-medium">
+                                    <Label htmlFor="billable">
                                         Billable Hours
                                     </Label>
                                     <Toggle
                                         id="billable"
                                         pressed={billable}
-                                        onPressedChange={(pressed) => setValue("billable", pressed)}
+                                        onPressedChange={(pressed: boolean) =>
+                                            setValue("billable", pressed)
+                                        }
                                         disabled={loading}
-                                        variant="ios" 
-                                        size="default" 
+                                        variant="ios"
+                                        size="default"
                                         className="flex-shrink-0"
-                                        aria-label={billable ? "Billable hours" : "Non-billable hours"}
+                                        aria-label={
+                                            billable
+                                                ? "Billable hours"
+                                                : "Non-billable hours"
+                                        }
                                     />
                                 </div>
                                 <p className="text-sm text-gray-500">
-                                    {billable 
+                                    {billable
                                         ? "This time will be included in client invoices"
-                                        : "This time is for internal/non-billable work"
-                                    }
+                                        : "This time is for internal/non-billable work"}
                                 </p>
                             </div>
                         </div>
