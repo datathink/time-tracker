@@ -14,7 +14,7 @@ import {
     isSameDay,
     isToday,
 } from "date-fns";
-import { formatDecimalHours } from "@/lib/utils";
+import { formatDecimalHours, fromUTCDate } from "@/lib/utils";
 import { Prisma } from "@prisma/client";
 import {
     AlertDialog,
@@ -65,7 +65,7 @@ export function CalendarView({
 
     const getEntriesForDay = (day: Date) => {
         return entries.filter((entry) => {
-            const entryDate = new Date(entry.date);
+            const entryDate = fromUTCDate(entry.date);
             return isSameDay(entryDate, day);
         });
     };
@@ -119,7 +119,7 @@ export function CalendarView({
                             <ChevronRight className="h-4 w-4" />
                         </Button>
                         <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
                             onClick={goToCurrentWeek}
                         >
@@ -221,7 +221,7 @@ export function CalendarView({
                                                     </div>
 
                                                     <Button
-                                                        size="sm"
+                                                        size="icon"
                                                         variant="ghost"
                                                         className="absolute top-1.5 right-1.5 h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:bg-red-50"
                                                         onClick={(e) => {
@@ -276,7 +276,7 @@ export function CalendarView({
                             onClick={handleDeleteConfirm}
                             className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
                         >
-                            Delete
+                            Delete Entry
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
