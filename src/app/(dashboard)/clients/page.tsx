@@ -7,16 +7,17 @@ import { ClientList } from "@/components/clients/ClientList";
 import { ClientForm } from "@/components/clients/ClientForm";
 import { getClients } from "@/lib/actions/clients";
 import { Prisma } from "@prisma/client";
+import { toast } from "sonner";
 
 type ClientWithCount = Prisma.ClientGetPayload<{
-  include: {
-    _count: {
-      select: {
-        projects: true,
-      }
-    }
-  }
-}>
+    include: {
+        _count: {
+            select: {
+                projects: true;
+            };
+        };
+    };
+}>;
 
 export default function ClientsPage() {
     const [clients, setClients] = useState<ClientWithCount[]>([]);
@@ -28,6 +29,8 @@ export default function ClientsPage() {
         const result = await getClients();
         if (result.success) {
             setClients(result.data);
+        } else {
+            toast.error(result.error || "Failed to load clients");
         }
         setLoading(false);
     };
@@ -58,7 +61,7 @@ export default function ClientsPage() {
                     <p className="text-gray-500">Loading clients...</p>
                 </div>
             ) : (
-                <ClientList clients={clients} />
+                <ClientList clients={clients} loadClients={loadClients} />
             )}
 
             <ClientForm
