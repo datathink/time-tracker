@@ -11,6 +11,7 @@ import { deleteTimeEntry } from "@/lib/actions/entries";
 import { getWeekTimeEntries } from "@/lib/actions/entries";
 import { startOfWeek, endOfWeek } from "date-fns";
 import { Prisma } from "@prisma/client";
+import { useQueryState, parseAsStringLiteral } from "nuqs";
 
 type TimeEntryWithRelations = Prisma.TimeEntryGetPayload<{
     include: {
@@ -32,7 +33,10 @@ export default function EntriesPage() {
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [editingEntry, setEditingEntry] =
         useState<TimeEntryWithRelations | null>(null);
-    const [viewMode, setViewMode] = useState<"week" | "table" | "list">("week");
+    const [viewMode, setViewMode] = useQueryState(
+        "table",
+        parseAsStringLiteral(["week", "table", "list"]).withDefault("table")
+    );
 
     const loadEntries = async (weekDate: Date) => {
         setLoading(true);
@@ -100,20 +104,20 @@ export default function EntriesPage() {
                 </div>
                 <div className="flex gap-2">
                     <Button
-                        variant={viewMode === "week" ? "default" : "outline"}
-                        onClick={() => setViewMode("week")}
-                        size="sm"
-                    >
-                        <Calendar />
-                        Calendar View
-                    </Button>
-                    <Button
                         variant={viewMode === "table" ? "default" : "outline"}
                         onClick={() => setViewMode("table")}
                         size="sm"
                     >
                         <Table />
                         Table View
+                    </Button>
+                    <Button
+                        variant={viewMode === "week" ? "default" : "outline"}
+                        onClick={() => setViewMode("week")}
+                        size="sm"
+                    >
+                        <Calendar />
+                        Calendar View
                     </Button>
                     <Button
                         variant={viewMode === "list" ? "default" : "outline"}
