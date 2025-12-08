@@ -58,14 +58,20 @@ export function ProjectList({ projects }: ProjectListProps) {
     }
   };
 
-  const handleEdit = (project: Project) => {
-    setEditingProject(project);
-    setIsFormOpen(true);
+  const loadProjects = async () => {
+    const result = await getProjects();
+    if (result.success && result.data) {
+      setAllProjects(result.data as Project[]);
+    }
   };
 
   // New handler for navigation
   const handleManageTeam = (project: Project) => {
     router.push(`/projects/${project.id}/team`);
+  };
+
+  const handleDelete = (project: Project) => {
+    setConfirmDeleteProject(project);
   };
 
   const handleDelete = async (id: string) => {
