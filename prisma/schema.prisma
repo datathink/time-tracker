@@ -149,6 +149,8 @@ model ProjectMember {
   payoutRate       Decimal   @db.Decimal(10, 2) // Individual pay rate for this user on this project (USD/hr)
   chargeRate       Decimal   @db.Decimal(10, 2) // Rate charged to client for this user on this project (USD/hr)
   isActive         Boolean   @default(true)
+  invoices         Invoice[] // Relation field for all invoices belonging to this Project Member
+
 
   // Relations
   project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -179,4 +181,22 @@ model Client {
   projects     Project[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+}
+
+model Invoice {
+  id                String    @id @default(uuid())
+  approved          Boolean   @default(false)
+  projectMemberId   String
+  projectMember     ProjectMember   @relation(fields: [projectMemberId], references: [id], onDelete: Cascade)
+  projectId         String
+  lineItems         InvoiceLineItem[]
+}
+
+model InvoiceLineItem {
+  id           String    @id @default(uuid())
+  invoiceId    String
+  invoice      Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  name         String
+  summary      String
+  amount       Decimal   @db.Decimal(10, 2)
 }
