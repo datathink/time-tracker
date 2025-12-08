@@ -34,7 +34,7 @@ export default function EntriesPage() {
     const [editingEntry, setEditingEntry] =
         useState<TimeEntryWithRelations | null>(null);
     const [viewMode, setViewMode] = useQueryState(
-        "table",
+        "view",
         parseAsStringLiteral(["week", "table", "list"]).withDefault("table")
     );
 
@@ -109,7 +109,7 @@ export default function EntriesPage() {
                         size="sm"
                     >
                         <Table />
-                        Table View
+                        Table
                     </Button>
                     <Button
                         variant={viewMode === "week" ? "default" : "outline"}
@@ -117,7 +117,7 @@ export default function EntriesPage() {
                         size="sm"
                     >
                         <Calendar />
-                        Calendar View
+                        Calendar
                     </Button>
                     <Button
                         variant={viewMode === "list" ? "default" : "outline"}
@@ -125,7 +125,7 @@ export default function EntriesPage() {
                         size="sm"
                     >
                         <List />
-                        List View
+                        List
                     </Button>
                     <Button onClick={() => handleAddEntry(new Date())}>
                         <Plus className="mr-2 h-4 w-4" />
