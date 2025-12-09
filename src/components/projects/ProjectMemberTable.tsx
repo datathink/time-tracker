@@ -52,20 +52,31 @@ function getInitials(name: string) {
     .toUpperCase()
     .slice(0, 2);
 }
-
+interface ProjectMember {
+  id: string;
+  isActive: boolean;
+  chargeRate: number;
+  payoutRate: number;
+  role: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+}
 export function ProjectMemberTable({
   members,
   onUpdate,
 }: {
-  members: any[];
+  members: ProjectMember[];
   onUpdate: () => void;
 }) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
-  const [editingMember, setEditingMember] = useState<any | null>(null);
+  const [editingMember, setEditingMember] = useState<ProjectMember | null>(
+    null
+  );
   const [editForm, setEditForm] = useState({ chargeRate: "", payoutRate: "" });
   const [isSaving, setIsSaving] = useState(false);
-
-  // --- Handlers ---
 
   // 1. Handle Remove Member
   const handleRemove = async (memberId: string) => {
@@ -92,7 +103,7 @@ export function ProjectMemberTable({
   };
 
   // 2. Handle Deactivate / Activate
-  const handleToggleStatus = async (member: any) => {
+  const handleToggleStatus = async (member: ProjectMember) => {
     const newStatus = !member.isActive;
 
     setLoadingId(member.id);
@@ -114,7 +125,7 @@ export function ProjectMemberTable({
   };
 
   // 3. Open Edit Modal
-  const openEditModal = (member: any) => {
+  const openEditModal = (member: ProjectMember) => {
     setEditingMember(member);
     setEditForm({
       chargeRate: member.chargeRate.toString(),
@@ -162,7 +173,7 @@ export function ProjectMemberTable({
             <TableHead>Member</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Charge Rate</TableHead>
-            <TableHead>Cost Rate</TableHead>
+            <TableHead>Payout Rate</TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>

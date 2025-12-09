@@ -11,7 +11,6 @@ import {
   DollarSign,
   Briefcase,
 } from "lucide-react";
-// Import the updated table component
 import { ProjectMemberTable } from "@/components/projects/ProjectMemberTable";
 import { ProjectMemberForm } from "@/components/projects/ProjectMemberForm";
 import { getProjectMembers } from "@/lib/actions/project-members";
@@ -20,7 +19,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Prisma } from "@prisma/client";
 import { Separator } from "@/components/ui/separator";
 
-// --- Types ---
 type RawProjectMemberWithUser = Prisma.ProjectMemberGetPayload<{
   include: {
     user: {
@@ -37,15 +35,14 @@ type ProjectMemberWithUser = Omit<
   RawProjectMemberWithUser,
   "chargeRate" | "payoutRate"
 > & {
-  payoutRate: number;
   chargeRate: number;
+  payoutRate: number;
 };
 
 interface ProjectData {
   id: string;
   name: string;
 }
-// --- End Types ---
 
 export default function ProjectTeamPage() {
   const params = useParams();
@@ -79,7 +76,6 @@ export default function ProjectTeamPage() {
     if (projectId) loadData();
   }, [projectId, loadData]);
 
-  // Calculate simple stats
   const totalCostRate = members.reduce(
     (acc, curr) => acc + (curr.payoutRate || 0),
     0
@@ -106,9 +102,9 @@ export default function ProjectTeamPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto py-8 px-6">
-      {/* Header Section */}
-      <div className="flex flex-col gap-4">
+    <div className="max-w-7xl mx-auto py-10 px-6 space-y-10">
+      {/* Page Header */}
+      <div className="flex flex-col gap-6">
         <Button
           variant="ghost"
           size="sm"
@@ -119,16 +115,21 @@ export default function ProjectTeamPage() {
           Back to Projects
         </Button>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
+            <h1 className="text-4xl font-bold tracking-tight">
               {project?.name}
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-muted-foreground mt-2 text-sm">
               Manage team access, roles, and financial rates.
             </p>
           </div>
-          <Button onClick={() => setIsAddMemberOpen(true)} size="lg">
+
+          <Button
+            size="lg"
+            className="px-6"
+            onClick={() => setIsAddMemberOpen(true)}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Add Member
           </Button>
@@ -137,60 +138,62 @@ export default function ProjectTeamPage() {
 
       <Separator />
 
-      {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      {/* Stats Section */}
+      <div className="grid gap-6 md:grid-cols-3">
+        <Card className="rounded-2xl shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <CardTitle className="text-sm font-medium">Total Members</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{members.length}</div>
+            <p className="text-3xl font-semibold">{members.length}</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Hourly Cost</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${totalCostRate.toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Total payout per hour
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+
+        <Card className="rounded-2xl shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <CardTitle className="text-sm font-medium">
               Hourly Billing
             </CardTitle>
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
+            <Briefcase className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <p className="text-3xl font-semibold">
               ${totalChargeRate.toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground">
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
               Total charge per hour
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-medium">Hourly Cost</CardTitle>
+            <DollarSign className="h-5 w-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-semibold">
+              ${totalCostRate.toFixed(2)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Total payout per hour
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Team Member List/Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Team Members</CardTitle>
+      {/* Members Table */}
+      <Card className="rounded-2xl shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-bold">Team Members</CardTitle>
         </CardHeader>
         <CardContent>
           <ProjectMemberTable members={members} onUpdate={loadData} />
         </CardContent>
       </Card>
 
-      {/* Add Member Dialog */}
+      {/* Add Member Modal */}
       <ProjectMemberForm
         projectId={projectId}
         open={isAddMemberOpen}
