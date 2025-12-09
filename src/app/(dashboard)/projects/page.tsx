@@ -35,9 +35,9 @@ export default function ProjectsPage() {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
 
-    const loadProjects = async () => {
+    const loadProjects = async (adminStatus: boolean) => {
         setLoading(true);
-        if (isAdmin) {
+        if (adminStatus) {
             const result = await getAllProjects();
             if (result.success) {
                 setProjects(result.data as Project[]);
@@ -61,19 +61,15 @@ export default function ProjectsPage() {
                 setLoading(false);
                 return;
             }
-            const result = await isAdminUser();
-            setIsAdmin(result);
-            if (result) {
-                loadProjects();
-            } else {
-                setLoading(false);
-            }
+            const adminStatus = await isAdminUser();
+            setIsAdmin(adminStatus);
+            await loadProjects(adminStatus);
         };
         checkAdmin();
-    }, [session, isAdmin]);
+    }, [session?.user]);
 
     const handleSuccess = () => {
-        loadProjects();
+        loadProjects(isAdmin);
     };
 
     return (

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ClientForm } from "./ClientForm";
-import { getClients, archiveClient } from "@/lib/actions/clients";
+import { archiveClient } from "@/lib/actions/clients";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,

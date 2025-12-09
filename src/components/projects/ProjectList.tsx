@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useState } from "react";
 import { ProjectForm } from "./ProjectForm";
 import { ProjectTeamDialog } from "./ProjectTeamDialog";
 import { archiveProject } from "@/lib/actions/projects";
@@ -50,7 +50,7 @@ interface Project {
 
 interface ProjectListProps {
     projects: Project[];
-    loadProjects: () => void;
+    loadProjects: (adminStatus: boolean) => Promise<void>;
     isAdmin: boolean;
 }
 
@@ -87,7 +87,7 @@ export function ProjectList({
         setConfirmArchiveProject(null);
 
         if (result.success) {
-            loadProjects();
+            loadProjects(isAdmin);
             toast.success("Project archived successfully");
         } else {
             toast.error(result.error || "Failed to archive project");
@@ -98,7 +98,7 @@ export function ProjectList({
 
     const handleSuccess = () => {
         setEditingProject(null);
-        loadProjects();
+        loadProjects(isAdmin);
     };
 
     const getStatusColor = (status: string) => {

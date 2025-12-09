@@ -33,16 +33,12 @@ export default function ClientsPage() {
                 setLoading(false);
                 return;
             }
-            const result = await isAdminUser();
-            setIsAdmin(result);
-            if (result) {
-                loadClients();
-            } else {
-                setLoading(false);
-            }
+            const adminStatus = await isAdminUser();
+            setIsAdmin(adminStatus);
+            adminStatus ? loadClients() : setLoading(false);
         };
         checkAdmin();
-    }, [session]);
+    }, [session?.user]);
 
     const handleSuccess = () => {
         loadClients();
