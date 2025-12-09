@@ -6,8 +6,6 @@ import { z } from "zod";
 import { isAdminUser, getCurrentUser } from "./clients";
 import { projectSchema, type ProjectFormData } from "@/lib/schemas/project";
 import { Decimal } from "@prisma/client/runtime/library";
-import { is } from "date-fns/locale";
-import { act } from "react";
 
 // Create a new project
 export async function createProject(data: ProjectFormData) {
