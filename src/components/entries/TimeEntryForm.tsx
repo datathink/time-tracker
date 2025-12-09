@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -8,6 +8,7 @@ import { createTimeEntry, updateTimeEntry } from "@/lib/actions/entries";
 import { type TimeEntryFormData } from "@/lib/schemas/time-entry";
 import { getActiveProjects } from "@/lib/actions/projects";
 import {
+    cn,
     parseDuration,
     calculateEndTime,
     calculateDuration,
@@ -18,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Toggle } from "@/components/ui/toggle";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     Select,
     SelectContent,
@@ -42,7 +43,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, ChevronDown } from "lucide-react";
 import { TimeInput } from "../ui/time-input";
 
 type ActiveProject = Prisma.ProjectGetPayload<{
@@ -102,7 +103,7 @@ export function TimeEntryForm({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [projects, setProjects] = useState<ActiveProject[]>([]);
-    const [parsedDuration, setParsedDuration] = useState<number | null>(null);
+    const [showTimeFields, setShowTimeFields] = useState(false);
     const lastModifiedRef = useRef<"duration" | "start" | "end" | null>(null);
 
     const {
@@ -131,23 +132,38 @@ export function TimeEntryForm({
         },
     });
 
+    // Combined form reset effect - handles dialog open/close and entry changes
     useEffect(() => {
-        if (open && entry) {
-            reset({
-                date: format(new Date(entry.date), "yyyy-MM-dd"),
-                projectId: entry.projectId || "",
-                durationInput: entry.duration
-                    ? formatDuration(entry.duration)
-                    : "",
-                startTime: entry.startTime || "",
-                endTime: entry.endTime || "",
-                description: entry.description || "",
-            });
-        } else if (open && defaultDate) {
-            reset({
-                date: format(defaultDate, "yyyy-MM-dd"),
-                projectId: "",
-            });
+        if (open) {
+            if (entry) {
+                reset({
+                    date: format(new Date(entry.date), "yyyy-MM-dd"),
+                    projectId: entry.projectId || "",
+                    durationInput: entry.duration
+                        ? formatDuration(entry.duration)
+                        : "",
+                    startTime: entry.startTime || "",
+                    endTime: entry.endTime || "",
+                    description: entry.description || "",
+                    billable: entry.billable ?? true,
+                });
+                setShowTimeFields(!!(entry.startTime || entry.endTime));
+            } else {
+                reset({
+                    date: defaultDate
+                        ? format(defaultDate, "yyyy-MM-dd")
+                        : format(new Date(), "yyyy-MM-dd"),
+                    projectId: "",
+                    durationInput: "",
+                    startTime: "",
+                    endTime: "",
+                    description: "",
+                    billable: true,
+                });
+                setShowTimeFields(false);
+            }
+        } else {
+            setError(null);
         }
     }, [open, entry, defaultDate, reset]);
 
@@ -157,6 +173,12 @@ export function TimeEntryForm({
     const endTime = watch("endTime");
     const billable = watch("billable");
 
+    // Compute parsedDuration from durationInput (replaces useEffect + state)
+    const parsedDuration = useMemo(() => {
+        if (!durationInput) return null;
+        return parseDuration(durationInput);
+    }, [durationInput]);
+
     useEffect(() => {
         const loadData = async () => {
             const [projectsResult] = await Promise.all([getActiveProjects()]);
@@ -164,30 +186,8 @@ export function TimeEntryForm({
         };
         if (open) {
             loadData();
-            // Update date if defaultDate changes
-            if (defaultDate && !entry) {
-                setValue("date", format(defaultDate, "yyyy-MM-dd"));
-            }
         }
-    }, [open, defaultDate, entry, setValue]);
-
-    // Reset form when it's closed
-    useEffect(() => {
-        if (!open) {
-            reset();
-            setError(null);
-        }
-    }, [open, reset, setError]);
-
-    // Parse duration input
-    useEffect(() => {
-        if (durationInput) {
-            const minutes = parseDuration(durationInput);
-            setParsedDuration(minutes);
-        } else {
-            setParsedDuration(null);
-        }
-    }, [durationInput]);
+    }, [open]);
 
     // Smart calculation based on what was last modified
     useEffect(() => {
@@ -309,113 +309,119 @@ export function TimeEntryForm({
                                 {error}
                             </div>
                         )}
+                        {/* Date - full width (unlikely to change often) */}
                         <div className="space-y-2">
-                            <Label htmlFor="projectId">
-                                Project <span className="text-red-500">*</span>
+                            <Label htmlFor="date">
+                                Date <span className="text-red-500">*</span>
                             </Label>
-                            <Select
-                                value={selectedProjectId || undefined}
-                                onValueChange={(value) =>
-                                    setValue("projectId", value)
-                                }
-                                disabled={loading}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a project" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {projects.map((project) => (
-                                        <SelectItem
-                                            key={project.id}
-                                            value={project.id}
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <div
-                                                    className="w-2 h-2 rounded-full"
-                                                    style={{
-                                                        backgroundColor:
-                                                            project.color,
-                                                    }}
-                                                />
-                                                {project.name}
-                                                {project.client && (
-                                                    <span className="text-xs text-gray-500">
-                                                        ({project.client.name})
-                                                    </span>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        className="w-full justify-between text-left font-normal"
+                                        disabled={loading}
+                                    >
+                                        <span>
+                                            {watch("date") &&
+                                                format(
+                                                    new Date(
+                                                        watch("date") +
+                                                            "T00:00:00"
+                                                    ),
+                                                    "EEE, MMMM do, yyyy"
                                                 )}
-                                            </div>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                        </span>
+                                        <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent
+                                    className="w-auto p-0"
+                                    align="start"
+                                >
+                                    <Calendar
+                                        mode="single"
+                                        defaultMonth={
+                                            watch("date")
+                                                ? new Date(
+                                                      watch("date") +
+                                                          "T00:00:00"
+                                                  )
+                                                : new Date()
+                                        }
+                                        selected={
+                                            watch("date")
+                                                ? new Date(
+                                                      watch("date") +
+                                                          "T00:00:00"
+                                                  )
+                                                : undefined
+                                        }
+                                        onSelect={(date) => {
+                                            if (date) {
+                                                setValue(
+                                                    "date",
+                                                    format(date, "yyyy-MM-dd")
+                                                );
+                                            }
+                                        }}
+                                        className="rounded-md border"
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                            {errors.date && (
+                                <p className="text-sm text-red-500">
+                                    {errors.date.message}
+                                </p>
+                            )}
                         </div>
+
+                        {/* Project and Duration - 2 columns */}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="date">
-                                    Date <span className="text-red-500">*</span>
+                                <Label htmlFor="projectId">
+                                    Project{" "}
+                                    <span className="text-red-500">*</span>
                                 </Label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            className="w-full justify-between text-left font-normal"
-                                            disabled={loading}
-                                        >
-                                            <span>
-                                                {watch("date") &&
-                                                    format(
-                                                        new Date(
-                                                            watch("date") +
-                                                                "T00:00:00"
-                                                        ),
-                                                        "EEE, MMMM do, yyyy"
+                                <Select
+                                    value={selectedProjectId || undefined}
+                                    onValueChange={(value) =>
+                                        setValue("projectId", value)
+                                    }
+                                    disabled={loading}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select a project" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {projects.map((project) => (
+                                            <SelectItem
+                                                key={project.id}
+                                                value={project.id}
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <div
+                                                        className="w-2 h-2 rounded-full"
+                                                        style={{
+                                                            backgroundColor:
+                                                                project.color,
+                                                        }}
+                                                    />
+                                                    {project.name}
+                                                    {project.client && (
+                                                        <span className="text-xs text-gray-500">
+                                                            (
+                                                            {
+                                                                project.client
+                                                                    .name
+                                                            }
+                                                            )
+                                                        </span>
                                                     )}
-                                            </span>
-                                            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent
-                                        className="w-auto p-0"
-                                        align="start"
-                                    >
-                                        <Calendar
-                                            mode="single"
-                                            defaultMonth={
-                                                watch("date")
-                                                    ? new Date(
-                                                          watch("date") +
-                                                              "T00:00:00"
-                                                      )
-                                                    : new Date()
-                                            }
-                                            selected={
-                                                watch("date")
-                                                    ? new Date(
-                                                          watch("date") +
-                                                              "T00:00:00"
-                                                      )
-                                                    : undefined
-                                            }
-                                            onSelect={(date) => {
-                                                if (date) {
-                                                    setValue(
-                                                        "date",
-                                                        format(
-                                                            date,
-                                                            "yyyy-MM-dd"
-                                                        )
-                                                    );
-                                                }
-                                            }}
-                                            className="rounded-md border "
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                                {errors.date && (
-                                    <p className="text-sm text-red-500">
-                                        {errors.date.message}
-                                    </p>
-                                )}
+                                                </div>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
 
                             <div className="space-y-2">
@@ -447,91 +453,109 @@ export function TimeEntryForm({
                                     </p>
                                 )}
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="startTime">
-                                    Start Time (optional)
-                                </Label>
-                                <TimeInput
-                                    id="startTime"
-                                    placeholder="08:00 AM"
-                                    value={startTime ?? ""}
-                                    onChange={(v) => {
-                                        setValue("startTime", v || "", {
-                                            shouldValidate: true,
-                                        });
-                                        lastModifiedRef.current = "start";
-                                    }}
-                                    disabled={loading}
-                                />
-                                {errors.startTime && (
-                                    <p className="text-sm text-red-500">
-                                        {errors.startTime.message}
-                                    </p>
+                        </div>
+
+                        {/* Collapsible Time Fields Section */}
+                        <button
+                            type="button"
+                            onClick={() => setShowTimeFields(!showTimeFields)}
+                            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            <ChevronDown
+                                className={cn(
+                                    "h-4 w-4 transition-transform",
+                                    showTimeFields && "rotate-180"
                                 )}
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="endTime">
-                                    End Time (optional)
-                                </Label>
-                                <TimeInput
-                                    id="endTime"
-                                    placeholder="04:00 PM"
-                                    value={endTime ?? ""}
-                                    onChange={(v) => {
-                                        setValue("endTime", v || "", {
-                                            shouldValidate: true,
-                                        });
-                                        lastModifiedRef.current = "end";
-                                    }}
-                                    disabled={loading}
-                                />
-                                {errors.endTime && (
-                                    <p className="text-sm text-red-500">
-                                        {errors.endTime.message}
-                                    </p>
-                                )}
-                            </div>
-                            <div className="space-y-2 col-span-2">
-                                <Label htmlFor="description">
-                                    Description{" "}
-                                    <span className="text-red-500">*</span>
-                                </Label>
-                                <Textarea
-                                    id="description"
-                                    placeholder="What did you work on?"
-                                    rows={3}
-                                    {...register("description")}
-                                    disabled={loading}
-                                />
-                            </div>
-                            <div className="space-y-2 col-span-2">
-                                <div className="flex items-center gap-4 mb-2">
-                                    <Label htmlFor="billable">
-                                        Billable Hours
+                            />
+                            {showTimeFields ? "Hide" : "Add"} start/end times
+                        </button>
+
+                        {showTimeFields && (
+                            <div className="grid grid-cols-2 gap-4 pl-6 border-l-2 border-muted">
+                                <div className="space-y-2">
+                                    <Label
+                                        htmlFor="startTime"
+                                        className="text-muted-foreground"
+                                    >
+                                        Start Time
                                     </Label>
-                                    <Toggle
-                                        id="billable"
-                                        pressed={billable}
-                                        onPressedChange={(pressed: boolean) =>
-                                            setValue("billable", pressed)
-                                        }
+                                    <TimeInput
+                                        id="startTime"
+                                        placeholder="08:00 AM"
+                                        value={startTime ?? ""}
+                                        onChange={(v) => {
+                                            setValue("startTime", v || "", {
+                                                shouldValidate: true,
+                                            });
+                                            lastModifiedRef.current = "start";
+                                        }}
                                         disabled={loading}
-                                        variant="ios"
-                                        size="default"
-                                        className="flex-shrink-0"
-                                        aria-label={
-                                            billable
-                                                ? "Billable hours"
-                                                : "Non-billable hours"
-                                        }
                                     />
+                                    {errors.startTime && (
+                                        <p className="text-sm text-red-500">
+                                            {errors.startTime.message}
+                                        </p>
+                                    )}
                                 </div>
-                                <p className="text-sm text-gray-500">
-                                    {billable
-                                        ? "This time will be included in client invoices"
-                                        : "This time is for internal/non-billable work"}
-                                </p>
+                                <div className="space-y-2">
+                                    <Label
+                                        htmlFor="endTime"
+                                        className="text-muted-foreground"
+                                    >
+                                        End Time
+                                    </Label>
+                                    <TimeInput
+                                        id="endTime"
+                                        placeholder="04:00 PM"
+                                        value={endTime ?? ""}
+                                        onChange={(v) => {
+                                            setValue("endTime", v || "", {
+                                                shouldValidate: true,
+                                            });
+                                            lastModifiedRef.current = "end";
+                                        }}
+                                        disabled={loading}
+                                    />
+                                    {errors.endTime && (
+                                        <p className="text-sm text-red-500">
+                                            {errors.endTime.message}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
+                        )}
+
+                        {/* Description - full width */}
+                        <div className="space-y-2">
+                            <Label htmlFor="description">
+                                Description{" "}
+                                <span className="text-red-500">*</span>
+                            </Label>
+                            <Textarea
+                                id="description"
+                                placeholder="What did you work on?"
+                                rows={3}
+                                {...register("description")}
+                                disabled={loading}
+                            />
+                        </div>
+
+                        {/* Billable Checkbox */}
+                        <div className="flex items-center gap-2">
+                            <Checkbox
+                                id="billable"
+                                checked={billable}
+                                onCheckedChange={(checked) =>
+                                    setValue("billable", checked === true)
+                                }
+                                disabled={loading}
+                            />
+                            <Label
+                                htmlFor="billable"
+                                className="text-sm font-normal cursor-pointer"
+                            >
+                                Billable hours
+                            </Label>
                         </div>
                     </div>
                     <DialogFooter>
