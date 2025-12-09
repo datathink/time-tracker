@@ -159,7 +159,7 @@ export function TimeEntryList({
                                                         {entry.project ? (
                                                             <div className="flex items-center gap-2">
                                                                 <div
-                                                                    className="w-3 h-3 rounded-full flex-shrink-0"
+                                                                    className="w-3 h-3 rounded-full shrink-0"
                                                                     style={{
                                                                         backgroundColor:
                                                                             entry
@@ -198,12 +198,9 @@ export function TimeEntryList({
                                                             </div>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="w-[10px] py-3">
+                                                    <TableCell className="w-2.5 py-3">
                                                         {entry.billable ? (
-                                                            <Badge
-                                                                variant="default"
-                                                                className="bg-green-600 hover:bg-green-700"
-                                                            >
+                                                            <Badge variant="default">
                                                                 Billable
                                                             </Badge>
                                                         ) : (
@@ -213,7 +210,7 @@ export function TimeEntryList({
                                                         )}
                                                     </TableCell>
                                                     <TableCell className="py-3 pr-20 min-w-[250px]">
-                                                        <div className="line-clamp-2 break-words pr-4">
+                                                        <div className="line-clamp-2 wrap-break-word pr-4">
                                                             {entry.description || (
                                                                 <span className="text-gray-400 italic">
                                                                     No
