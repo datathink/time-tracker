@@ -28,7 +28,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Pencil, Trash2, Users } from "lucide-react";
+import { MoreHorizontal, Pencil, Users, Archive } from "lucide-react";
 import { toast } from "sonner";
 
 interface Project {
@@ -118,7 +118,10 @@ export function ProjectList({
         return (
             <div className="text-center py-12">
                 <p className="text-gray-500">
-                    No projects yet. Create your first project to get started.
+                    No projects yet.{" "}
+                    {isAdmin
+                        ? "Create your first project to get started."
+                        : "Ask an admin to add you to a project to get started."}
                 </p>
             </div>
         );
@@ -221,7 +224,7 @@ export function ProjectList({
                                                     }
                                                     className="text-red-600"
                                                 >
-                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    <Archive className="mr-2 h-4 w-4" />
                                                     Archive
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
@@ -267,8 +270,7 @@ export function ProjectList({
                         <DialogTitle>Archive project</DialogTitle>
                         <DialogDescription>
                             Are you sure you want to archive the{" "}
-                            {confirmArchiveProject?.name} project? This action
-                            cannot be undone.
+                            {confirmArchiveProject?.name} project?
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>

@@ -27,7 +27,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Archive } from "lucide-react";
 import { toast } from "sonner";
 
 interface Client {
@@ -143,7 +143,7 @@ export function ClientList({ clients, loadClients }: ClientListProps) {
                                                 }
                                                 className="text-red-600"
                                             >
-                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                <Archive className="mr-2 h-4 w-4" />
                                                 Archive
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
@@ -173,11 +173,12 @@ export function ClientList({ clients, loadClients }: ClientListProps) {
             >
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Delete client</DialogTitle>
+                        <DialogTitle>Archive client</DialogTitle>
                     </DialogHeader>
                     <DialogDescription>
-                        Are you sure you want to delete this client? This action
-                        cannot be undone.
+                        Are you sure you want to archive{" "}
+                        {confirmArchiveClient?.name}? This will archive all the
+                        projects of this client.
                     </DialogDescription>
                     <DialogFooter>
                         <Button
