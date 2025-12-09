@@ -17,7 +17,8 @@ model User {
   email         String    @unique
   emailVerified Boolean   @default(false)
   image         String?
-  role          String    @default("member") // admin, member
+  role          UserRole  @default(member)
+  status        UserStatus @default(active)
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -29,6 +30,16 @@ model User {
   timeEntries   TimeEntry[]
   projects      Project[]
   projectMembers ProjectMember[]
+}
+
+enum UserRole {
+  admin
+  member
+}
+
+enum UserStatus {
+  active
+  inactive
 }
 
 model UserProfile {

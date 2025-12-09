@@ -6,7 +6,9 @@
         "dev": "next dev --turbopack",
         "build": "next build --turbopack",
         "start": "next start",
-        "lint": "eslint"
+        "lint": "eslint",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:resolve": "prisma migrate resolve"
     },
     "dependencies": {
         "@hookform/resolvers": "^5.2.2",
