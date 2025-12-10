@@ -16,28 +16,23 @@ import { ProjectMemberForm } from "@/components/projects/ProjectMemberForm";
 import { getProjectMembers } from "@/lib/actions/project-members";
 import { getProject } from "@/lib/actions/projects";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Prisma } from "@prisma/client";
 import { Separator } from "@/components/ui/separator";
+import { Role } from "@prisma/client";
 
-type RawProjectMemberWithUser = Prisma.ProjectMemberGetPayload<{
-  include: {
-    user: {
-      select: {
-        id: true;
-        name: true;
-        email: true;
-      };
-    };
-  };
-}>;
-
-type ProjectMemberWithUser = Omit<
-  RawProjectMemberWithUser,
-  "chargeRate" | "payoutRate"
-> & {
+interface ProjectMember {
+  id: string;
+  userId: string;
+  projectId: string;
+  isActive: boolean;
   chargeRate: number;
   payoutRate: number;
-};
+  role: Role;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+}
 
 interface ProjectData {
   id: string;
@@ -53,7 +48,7 @@ export default function ProjectTeamPage() {
     : projectIdParam;
 
   const [project, setProject] = useState<ProjectData | null>(null);
-  const [members, setMembers] = useState<ProjectMemberWithUser[]>([]);
+  const [members, setMembers] = useState<ProjectMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
 

@@ -25,6 +25,13 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -42,6 +49,7 @@ import {
   removeProjectMember,
   updateProjectMember,
 } from "@/lib/actions/project-members";
+import { Role } from "@prisma/client";
 
 // Helper to get initials
 function getInitials(name: string) {
@@ -57,7 +65,7 @@ interface ProjectMember {
   isActive: boolean;
   chargeRate: number;
   payoutRate: number;
-  role: string;
+  role: Role;
   user: {
     id: string;
     name: string | null;
@@ -75,7 +83,11 @@ export function ProjectMemberTable({
   const [editingMember, setEditingMember] = useState<ProjectMember | null>(
     null
   );
-  const [editForm, setEditForm] = useState({ chargeRate: "", payoutRate: "" });
+  const [editForm, setEditForm] = useState({
+    chargeRate: "",
+    payoutRate: "",
+    role: "member" as Role,
+  });
   const [isSaving, setIsSaving] = useState(false);
 
   // 1. Handle Remove Member
@@ -130,11 +142,12 @@ export function ProjectMemberTable({
     setEditForm({
       chargeRate: member.chargeRate.toString(),
       payoutRate: member.payoutRate.toString(),
+      role: member.role,
     });
   };
 
   // 4. Save Rates
-  const saveRates = async () => {
+  const saveChanges = async () => {
     if (!editingMember) return;
 
     setIsSaving(true);
@@ -142,6 +155,7 @@ export function ProjectMemberTable({
       const result = await updateProjectMember(editingMember.id, {
         chargeRate: parseFloat(editForm.chargeRate) || 0,
         payoutRate: parseFloat(editForm.payoutRate) || 0,
+        role: editForm.role,
       });
 
       if (result.success) {
@@ -151,7 +165,7 @@ export function ProjectMemberTable({
         console.error(result.error);
       }
     } catch (error) {
-      console.error("Failed to update rates.");
+      console.error("Failed to update member.");
     } finally {
       setIsSaving(false);
     }
@@ -255,7 +269,7 @@ export function ProjectMemberTable({
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => openEditModal(member)}>
                       <Pencil className="mr-2 h-4 w-4" />
-                      Edit Rates
+                      Edit User
                     </DropdownMenuItem>
 
                     <DropdownMenuSeparator />
@@ -293,18 +307,41 @@ export function ProjectMemberTable({
         </TableBody>
       </Table>
 
-      {/* Edit Rates Modal */}
+      {/* Edit Member Modal */}
       <Dialog
         open={!!editingMember}
         onOpenChange={(open) => !open && setEditingMember(null)}
       >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Edit Member Rates</DialogTitle>
+            <DialogTitle>Edit Member</DialogTitle>
             <DialogDescription>
-              Adjust financial rates for {editingMember?.user.name}.
+              Adjust financial rates and role for {editingMember?.user.name}.
             </DialogDescription>
           </DialogHeader>
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="role" className="text-right">
+              Role
+            </Label>
+            <Select
+              value={editForm.role}
+              onValueChange={(value) =>
+                setEditForm({ ...editForm, role: value as Role })
+              }
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select a role" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.values(Role).map((role) => (
+                  <SelectItem key={role} value={role}>
+                    {role.charAt(0).toUpperCase() + role.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
@@ -351,7 +388,7 @@ export function ProjectMemberTable({
               Cancel
             </Button>
 
-            <Button onClick={saveRates} disabled={isSaving}>
+            <Button onClick={saveChanges} disabled={isSaving}>
               {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes
             </Button>
