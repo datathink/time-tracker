@@ -77,7 +77,7 @@ export function ProjectList({
         setIsTeamDialogOpen(true);
     };
 
-    const handleArchive = async (project: Project) => {
+    const handleArchive = (project: Project) => {
         setConfirmArchiveProject(project);
     };
 

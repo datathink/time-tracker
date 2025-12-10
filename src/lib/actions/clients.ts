@@ -6,7 +6,6 @@ import { z } from "zod";
 import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
 import { clientSchema, type ClientFormData } from "@/lib/schemas/client";
-import { is } from "date-fns/locale";
 
 // Get current user from session
 export async function getCurrentUser() {
@@ -131,33 +130,19 @@ export async function getClients(areArchived: boolean = false) {
             return { success: false, error: "Unauthorized", data: [] };
         }
 
-        const clients = areArchived
-            ? await prisma.client.findMany({
-                  where: {
-                      isArchived: true,
-                  },
-                  orderBy: { name: "asc" },
-                  include: {
-                      _count: {
-                          select: {
-                              projects: true,
-                          },
-                      },
-                  },
-              })
-            : await prisma.client.findMany({
-                  where: {
-                      isArchived: false,
-                  },
-                  orderBy: { name: "asc" },
-                  include: {
-                      _count: {
-                          select: {
-                              projects: true,
-                          },
-                      },
-                  },
-              });
+        const clients = await prisma.client.findMany({
+            where: {
+                isArchived: areArchived,
+            },
+            orderBy: { name: "asc" },
+            include: {
+                _count: {
+                    select: {
+                        projects: true,
+                    },
+                },
+            },
+        });
 
         return {
             success: true,
