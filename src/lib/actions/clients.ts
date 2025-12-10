@@ -3,12 +3,43 @@
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/db/prisma";
 import { z } from "zod";
+import { auth } from "@/lib/auth/auth";
+import { headers } from "next/headers";
 import { clientSchema, type ClientFormData } from "@/lib/schemas/client";
+
+// Get current user from session
+export async function getCurrentUser() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+  return session.user;
+}
+
+// Check if user is admin
+export async function isAdminUser() {
+  const currentUser = await getCurrentUser();
+  const user = await prisma.user.findUnique({
+    where: { id: currentUser?.id },
+    select: { role: true },
+  });
+
+  if (user && user.role === "admin") {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 // Create a new client
 export async function createClient(data: ClientFormData) {
   try {
     const validated = clientSchema.parse(data);
+    const isAdmin = await isAdminUser();
+
+    if (!isAdmin) {
+      return { success: false, error: "Unauthorized" };
+    }
 
     const client = await prisma.client.create({
       data: {
@@ -33,6 +64,11 @@ export async function createClient(data: ClientFormData) {
 export async function updateClient(id: string, data: ClientFormData) {
   try {
     const validated = clientSchema.parse(data);
+    const isAdmin = await isAdminUser();
+
+    if (!isAdmin) {
+      return { success: false, error: "Unauthorized" };
+    }
 
     const client = await prisma.client.update({
       where: { id },
