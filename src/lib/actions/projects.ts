@@ -3,8 +3,7 @@
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/db/prisma";
 import { z } from "zod";
-import { auth } from "@/lib/auth/auth";
-import { headers } from "next/headers";
+import { isAdminUser, getCurrentUser } from "./clients";
 import { projectSchema, type ProjectFormData } from "@/lib/schemas/project";
 import { Decimal } from "@prisma/client/runtime/library";
 
@@ -183,6 +182,60 @@ export async function getProjects() {
     console.error("Error fetching projects:", error);
     return { success: false, error: "Failed to fetch projects", data: [] };
   }
+}
+
+// Get all projects (admin only)
+export async function getAllProjects(active: boolean = true) {
+    try {
+        const isAdmin = await isAdminUser();
+
+        // Check if user is admin
+        if (!isAdmin) {
+            return { success: false, error: "Unauthorized", data: [] };
+        }
+
+        // Get all projects (for admin users)
+        const projects = active
+            ? await prisma.project.findMany({
+                  where: { status: "active" },
+                  orderBy: { name: "asc" },
+                  include: {
+                      client: true,
+                      _count: {
+                          select: {
+                              timeEntries: true,
+                              members: true,
+                          },
+                      },
+                  },
+              })
+            : await prisma.project.findMany({
+                  where: { status: "archived" },
+                  orderBy: { name: "asc" },
+                  include: {
+                      client: true,
+                      _count: {
+                          select: {
+                              timeEntries: true,
+                              members: true,
+                          },
+                      },
+                  },
+              });
+
+        return {
+            success: true,
+            data: projects.map((project) => ({
+                ...project,
+                budgetAmount: project.budgetAmount
+                    ? project.budgetAmount.toNumber()
+                    : null,
+            })),
+        };
+    } catch (error) {
+        console.error("Error fetching all projects:", error);
+        return { success: false, error: "Failed to fetch projects", data: [] };
+    }
 }
 
 // Get active projects for dropdown selects (only projects where user is an active member)

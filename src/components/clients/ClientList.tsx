@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { ClientForm } from "./ClientForm";
-import { deleteClient } from "@/lib/actions/clients";
+import { archiveClient } from "@/lib/actions/clients";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,7 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Archive } from "lucide-react";
 
 interface Client {
   id: string;
