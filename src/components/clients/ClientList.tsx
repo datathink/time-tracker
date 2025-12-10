@@ -48,33 +48,32 @@ interface ClientListProps {
 export function ClientList({ clients, loadClients }: ClientListProps) {
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [confirmDeleteClient, setConfirmDeleteClient] = useState<Client | null>(
-    null
-  );
+  const [archivingId, setArchivingId] = useState<string | null>(null);
+  const [confirmArchiveClient, setConfirmArchiveClient] =
+    useState<Client | null>(null);
 
   const handleEdit = (client: Client) => {
     setEditingClient(client);
     setIsFormOpen(true);
   };
 
-  const handleDelete = (client: Client) => {
-    setConfirmDeleteClient(client);
+  const handleArchive = (client: Client) => {
+    setConfirmArchiveClient(client);
   };
 
-  const performDelete = async (id: string) => {
-    setDeletingId(id);
-    const result = await deleteClient(id);
-    setConfirmDeleteClient(null);
+  const performArchive = async (id: string) => {
+    setArchivingId(id);
+    const result = await archiveClient(id);
+    setConfirmArchiveClient(null);
 
     if (result.success) {
       loadClients();
-      toast.success("Client deleted successfully");
+      toast.success("Client archived successfully");
     } else {
-      toast.error(result.error || "Failed to delete client");
+      toast.error(result.error || "Failed to archive client");
     }
 
-    setDeletingId(null);
+    setArchivingId(null);
   };
 
   const handleSuccess = () => {
@@ -129,11 +128,11 @@ export function ClientList({ clients, loadClients }: ClientListProps) {
                         Edit
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => handleDelete(client)}
+                        onClick={() => handleArchive(client)}
                         className="text-red-600"
                       >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
+                        <Archive className="mr-2 h-4 w-4" />
+                        Archive
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -157,37 +156,37 @@ export function ClientList({ clients, loadClients }: ClientListProps) {
       )}
 
       <Dialog
-        open={!!confirmDeleteClient}
-        onOpenChange={() => setConfirmDeleteClient(null)}
+        open={!!confirmArchiveClient}
+        onOpenChange={() => setConfirmArchiveClient(null)}
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete client</DialogTitle>
+            <DialogTitle>Archive client</DialogTitle>
           </DialogHeader>
           <DialogDescription>
-            Are you sure you want to delete this client? This action cannot be
-            undone.
+            Are you sure you want to archive {confirmArchiveClient?.name}? This
+            will archive all the projects of this client.
           </DialogDescription>
           <DialogFooter>
             <Button
               type="button"
               variant="outline"
-              onClick={() => setConfirmDeleteClient(null)}
+              onClick={() => setConfirmArchiveClient(null)}
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
               onClick={() => {
-                if (confirmDeleteClient) {
-                  performDelete(confirmDeleteClient.id);
+                if (confirmArchiveClient) {
+                  performArchive(confirmArchiveClient.id);
                 }
               }}
-              disabled={deletingId === confirmDeleteClient?.id}
+              disabled={archivingId === confirmArchiveClient?.id}
             >
-              {deletingId === confirmDeleteClient?.id
-                ? "Deleting..."
-                : "Delete"}
+              {archivingId === confirmArchiveClient?.id
+                ? "Archiving..."
+                : "Archive"}
             </Button>
           </DialogFooter>
         </DialogContent>
