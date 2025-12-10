@@ -9,7 +9,7 @@ import { projectSchema, type ProjectFormData } from "@/lib/schemas/project";
 import { Decimal } from "@prisma/client/runtime/library";
 
 // Get current user from session
-async function getCurrentUser() {
+export async function getCurrentUser() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user?.id) {
     throw new Error("Unauthorized");

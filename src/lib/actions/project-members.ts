@@ -3,19 +3,9 @@
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/db/prisma";
 import { z } from "zod";
-import { auth } from "@/lib/auth/auth";
-import { headers } from "next/headers";
 import { Role } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
-
-// Get current user from session
-async function getCurrentUser() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
-  }
-  return session.user;
-}
+import { getCurrentUser } from "./projects";
 
 // Check if user is admin or project owner
 async function canManageProject(projectId: string, userId: string) {
