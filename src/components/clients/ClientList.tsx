@@ -29,7 +29,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Pencil, Archive } from "lucide-react";
-import { toast } from "sonner";
 
 interface Client {
     id: string;
