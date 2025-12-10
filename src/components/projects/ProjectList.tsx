@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { toast } from "sonner";
 import { ProjectForm } from "./ProjectForm";
 import { ProjectTeamDialog } from "./ProjectTeamDialog";
-import { deleteProject } from "@/lib/actions/projects";
+import { archiveProject } from "@/lib/actions/projects";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -29,7 +28,8 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Pencil, Trash2, Users } from "lucide-react";
+import { MoreHorizontal, Pencil, Users, Archive } from "lucide-react";
+import { toast } from "sonner";
 
 interface Project {
     id: string;
@@ -50,16 +50,21 @@ interface Project {
 
 interface ProjectListProps {
     projects: Project[];
-    loadProjects: () => void;
+    loadProjects: (adminStatus: boolean) => Promise<void>;
+    isAdmin: boolean;
 }
 
-export function ProjectList({ projects, loadProjects }: ProjectListProps) {
+export function ProjectList({
+    projects,
+    loadProjects,
+    isAdmin,
+}: ProjectListProps) {
     const [editingProject, setEditingProject] = useState<Project | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [teamProject, setTeamProject] = useState<Project | null>(null);
     const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
-    const [deletingId, setDeletingId] = useState<string | null>(null);
-    const [confirmDeleteProject, setConfirmDeleteProject] =
+    const [archivingId, setArchivingId] = useState<string | null>(null);
+    const [confirmArchiveProject, setConfirmArchiveProject] =
         useState<Project | null>(null);
 
     const handleEdit = (project: Project) => {
@@ -72,28 +77,28 @@ export function ProjectList({ projects, loadProjects }: ProjectListProps) {
         setIsTeamDialogOpen(true);
     };
 
-    const handleDelete = (project: Project) => {
-        setConfirmDeleteProject(project);
+    const handleArchive = (project: Project) => {
+        setConfirmArchiveProject(project);
     };
 
-    const performDelete = async (id: string) => {
-        setDeletingId(id);
-        const result = await deleteProject(id);
-        setConfirmDeleteProject(null);
+    const performArchive = async (id: string) => {
+        setArchivingId(id);
+        const result = await archiveProject(id);
+        setConfirmArchiveProject(null);
 
         if (result.success) {
-            loadProjects();
-            toast.success("Project deleted successfully");
+            loadProjects(isAdmin);
+            toast.success("Project archived successfully");
         } else {
-            toast.error(result.error || "Failed to delete project");
+            toast.error(result.error || "Failed to archive project");
         }
 
-        setDeletingId(null);
+        setArchivingId(null);
     };
 
     const handleSuccess = () => {
         setEditingProject(null);
-        loadProjects();
+        loadProjects(isAdmin);
     };
 
     const getStatusColor = (status: string) => {
@@ -113,7 +118,10 @@ export function ProjectList({ projects, loadProjects }: ProjectListProps) {
         return (
             <div className="text-center py-12">
                 <p className="text-gray-500">
-                    No projects yet. Create your first project to get started.
+                    No projects yet.{" "}
+                    {isAdmin
+                        ? "Create your first project to get started."
+                        : "Ask an admin to add you to a project to get started."}
                 </p>
             </div>
         );
@@ -126,7 +134,7 @@ export function ProjectList({ projects, loadProjects }: ProjectListProps) {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Project</TableHead>
-                            <TableHead>Client</TableHead>
+                            {isAdmin && <TableHead>Client</TableHead>}
                             <TableHead>Status</TableHead>
                             <TableHead>Budget</TableHead>
                             <TableHead>Team</TableHead>
@@ -150,9 +158,11 @@ export function ProjectList({ projects, loadProjects }: ProjectListProps) {
                                         </span>
                                     </div>
                                 </TableCell>
-                                <TableCell>
-                                    {project.client?.name || "-"}
-                                </TableCell>
+                                {isAdmin && (
+                                    <TableCell>
+                                        {project.client?.name || "-"}
+                                    </TableCell>
+                                )}
                                 <TableCell>
                                     <Badge
                                         className={getStatusColor(
@@ -177,46 +187,50 @@ export function ProjectList({ projects, loadProjects }: ProjectListProps) {
                                         {project._count?.timeEntries || 0}
                                     </Badge>
                                 </TableCell>
-                                <TableCell>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-8 w-8 p-0"
-                                            >
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem
-                                                onClick={() =>
-                                                    handleEdit(project)
-                                                }
-                                            >
-                                                <Pencil className="mr-2 h-4 w-4" />
-                                                Edit
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                                onClick={() =>
-                                                    handleManageTeam(project)
-                                                }
-                                            >
-                                                <Users className="mr-2 h-4 w-4" />
-                                                Manage Team
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                                onClick={() =>
-                                                    handleDelete(project)
-                                                }
-                                                className="text-red-600"
-                                            >
-                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                Delete
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </TableCell>
+                                {isAdmin && (
+                                    <TableCell>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 w-8 p-0"
+                                                >
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem
+                                                    onClick={() =>
+                                                        handleEdit(project)
+                                                    }
+                                                >
+                                                    <Pencil className="mr-2 h-4 w-4" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={() =>
+                                                        handleManageTeam(
+                                                            project
+                                                        )
+                                                    }
+                                                >
+                                                    <Users className="mr-2 h-4 w-4" />
+                                                    Manage Team
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={() =>
+                                                        handleArchive(project)
+                                                    }
+                                                    className="text-red-600"
+                                                >
+                                                    <Archive className="mr-2 h-4 w-4" />
+                                                    Archive
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                )}
                             </TableRow>
                         ))}
                     </TableBody>
@@ -248,23 +262,22 @@ export function ProjectList({ projects, loadProjects }: ProjectListProps) {
             )}
 
             <Dialog
-                open={!!confirmDeleteProject}
-                onOpenChange={() => setConfirmDeleteProject(null)}
+                open={!!confirmArchiveProject}
+                onOpenChange={() => setConfirmArchiveProject(null)}
             >
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Delete project</DialogTitle>
+                        <DialogTitle>Archive project</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to delete the{" "}
-                            {confirmDeleteProject?.name} project? This action
-                            cannot be undone.
+                            Are you sure you want to archive the{" "}
+                            {confirmArchiveProject?.name} project?
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => setConfirmDeleteProject(null)}
+                            onClick={() => setConfirmArchiveProject(null)}
                         >
                             Cancel
                         </Button>
@@ -272,15 +285,15 @@ export function ProjectList({ projects, loadProjects }: ProjectListProps) {
                             type="button"
                             variant="destructive"
                             onClick={() =>
-                                confirmDeleteProject &&
-                                performDelete(confirmDeleteProject.id)
+                                confirmArchiveProject &&
+                                performArchive(confirmArchiveProject.id)
                             }
-                            disabled={deletingId === confirmDeleteProject?.id}
+                            disabled={archivingId === confirmArchiveProject?.id}
                         >
-                            {deletingId &&
-                            confirmDeleteProject?.id === deletingId
-                                ? "Deleting..."
-                                : "Delete"}
+                            {archivingId &&
+                            confirmArchiveProject?.id === archivingId
+                                ? "Archiving..."
+                                : "Archive"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

@@ -3,25 +3,22 @@
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/db/prisma";
 import { z } from "zod";
-import { auth } from "@/lib/auth/auth";
-import { headers } from "next/headers";
+import { isAdminUser, getCurrentUser } from "./clients";
 import { projectSchema, type ProjectFormData } from "@/lib/schemas/project";
 import { Decimal } from "@prisma/client/runtime/library";
-
-// Get current user from session
-async function getCurrentUser() {
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session?.user?.id) {
-        throw new Error("Unauthorized");
-    }
-    return session.user;
-}
 
 // Create a new project
 export async function createProject(data: ProjectFormData) {
     try {
-        const user = await getCurrentUser();
         const validated = projectSchema.parse(data);
+        const isAdmin = await isAdminUser();
+
+        // Check if user is admin
+        if (!isAdmin) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        const user = await getCurrentUser();
 
         const project = await prisma.project.create({
             data: {
@@ -59,20 +56,21 @@ export async function createProject(data: ProjectFormData) {
 // Update an existing project
 export async function updateProject(id: string, data: ProjectFormData) {
     try {
-        const user = await getCurrentUser();
         const validated = projectSchema.parse(data);
+        const isAdmin = await isAdminUser();
 
-        // Check if user owns the project
+        // Check if user is admin
+        if (!isAdmin) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        // Check if project exists
         const existingProject = await prisma.project.findUnique({
             where: { id },
         });
 
         if (!existingProject) {
             return { success: false, error: "Project not found" };
-        }
-
-        if (existingProject.userId !== user.id) {
-            return { success: false, error: "Unauthorized" };
         }
 
         const project = await prisma.project.update({
@@ -108,12 +106,17 @@ export async function updateProject(id: string, data: ProjectFormData) {
     }
 }
 
-// Delete a project
-export async function deleteProject(id: string) {
+// Archive a project
+export async function archiveProject(id: string) {
     try {
-        const user = await getCurrentUser();
+        const isAdmin = await isAdminUser();
 
-        // Check if user owns the project
+        // Check if user is admin
+        if (!isAdmin) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        // Check if project exists
         const existingProject = await prisma.project.findUnique({
             where: { id },
         });
@@ -122,49 +125,46 @@ export async function deleteProject(id: string) {
             return { success: false, error: "Project not found" };
         }
 
-        if (existingProject.userId !== user.id) {
-            return { success: false, error: "Unauthorized" };
-        }
-
-        await prisma.project.delete({
+        await prisma.project.update({
             where: { id },
+            data: {
+                status: "archived",
+            },
         });
 
         revalidatePath("/projects");
         return { success: true };
     } catch (error) {
-        console.error("Error deleting project:", error);
-        return { success: false, error: "Failed to delete project" };
+        console.error("Error archiving project:", error);
+        return { success: false, error: "Failed to archive project" };
     }
 }
 
-// Get all projects for the current user (owned or member of)
-export async function getProjects() {
+// Get all projects for the current user (member of)
+export async function getUsersProjects() {
     try {
         const user = await getCurrentUser();
 
-        // Get projects where user is owner or member
+        if (!user.id) {
+            return { success: false, error: "Invalid User", data: [] };
+        }
+
+        // Get projects where user is a member
         const projects = await prisma.project.findMany({
             where: {
-                OR: [
-                    { userId: user.id }, // Projects owned by user
-                    {
-                        members: {
-                            some: {
-                                userId: user.id,
-                                isActive: true,
-                            },
-                        },
-                    }, // Projects where user is active member
-                ],
+                status: "active",
+                members: {
+                    some: {
+                        userId: user.id,
+                        isActive: true,
+                    },
+                }, // Projects where user is an active member
             },
             orderBy: { name: "asc" },
             include: {
-                client: true,
                 _count: {
                     select: {
                         timeEntries: true,
-                        members: true,
                     },
                 },
             },
@@ -185,10 +185,68 @@ export async function getProjects() {
     }
 }
 
+// Get all projects (admin only)
+export async function getAllProjects(active: boolean = true) {
+    try {
+        const isAdmin = await isAdminUser();
+
+        // Check if user is admin
+        if (!isAdmin) {
+            return { success: false, error: "Unauthorized", data: [] };
+        }
+
+        // Get all projects (for admin users)
+        const projects = active
+            ? await prisma.project.findMany({
+                  where: { status: "active" },
+                  orderBy: { name: "asc" },
+                  include: {
+                      client: true,
+                      _count: {
+                          select: {
+                              timeEntries: true,
+                              members: true,
+                          },
+                      },
+                  },
+              })
+            : await prisma.project.findMany({
+                  where: { status: "archived" },
+                  orderBy: { name: "asc" },
+                  include: {
+                      client: true,
+                      _count: {
+                          select: {
+                              timeEntries: true,
+                              members: true,
+                          },
+                      },
+                  },
+              });
+
+        return {
+            success: true,
+            data: projects.map((project) => ({
+                ...project,
+                budgetAmount: project.budgetAmount
+                    ? project.budgetAmount.toNumber()
+                    : null,
+            })),
+        };
+    } catch (error) {
+        console.error("Error fetching all projects:", error);
+        return { success: false, error: "Failed to fetch projects", data: [] };
+    }
+}
+
 // Get active projects for dropdown selects (only projects where user is an active member)
 export async function getActiveProjects() {
     try {
         const user = await getCurrentUser();
+
+        if (!user.id) {
+            return { success: false, error: "Invalid User", data: [] };
+        }
 
         // Get projects where user is an active member
         const projects = await prisma.project.findMany({
@@ -222,28 +280,41 @@ export async function getActiveProjects() {
 }
 
 // Get a single project by ID
-export async function getProject(id: string) {
+export async function getProject(id: string, active: boolean = true) {
     try {
-        const user = await getCurrentUser();
+        const isAdmin = await isAdminUser();
 
-        const project = await prisma.project.findUnique({
-            where: { id },
-            include: {
-                client: true,
-                members: {
-                    include: {
-                        user: true,
-                    },
-                },
-            },
-        });
+        // Check if user is admin
+        if (!isAdmin) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        const project = active
+            ? await prisma.project.findUnique({
+                  where: { id, status: "active" },
+                  include: {
+                      client: true,
+                      members: {
+                          include: {
+                              user: true,
+                          },
+                      },
+                  },
+              })
+            : await prisma.project.findUnique({
+                  where: { id, status: "archived" },
+                  include: {
+                      client: true,
+                      members: {
+                          include: {
+                              user: true,
+                          },
+                      },
+                  },
+              });
 
         if (!project) {
             return { success: false, error: "Project not found" };
-        }
-
-        if (project.userId !== user.id) {
-            return { success: false, error: "Unauthorized" };
         }
 
         return {
