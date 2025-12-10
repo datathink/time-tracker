@@ -142,7 +142,7 @@ export function CalendarView({
                         return (
                             <Card
                                 key={day.toISOString()}
-                                className={`p-3 min-h-[160px] ${today ? "ring-2 ring-blue-500" : ""}`}
+                                className={`p-3 min-h-40 ${today ? "ring-2 ring-blue-500" : ""}`}
                             >
                                 <div className="space-y-2">
                                     {/* Day Header */}
@@ -194,7 +194,7 @@ export function CalendarView({
                                                         {entry.project && (
                                                             <div className="flex items-center gap-1.5 mb-0.5">
                                                                 <div
-                                                                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                                                    className="w-2.5 h-2.5 rounded-full shrink-0"
                                                                     style={{
                                                                         backgroundColor:
                                                                             entry

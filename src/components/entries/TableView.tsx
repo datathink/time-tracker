@@ -41,7 +41,6 @@ const formatDurationHHMM = (minutes: number): string => {
     return `${hours}:${mins.toString().padStart(2, "0")}`;
 };
 
-
 interface TimeEntry {
     id: string;
     date: Date;
@@ -287,7 +286,11 @@ export function TimeSheetTable({
                                 {daysOfWeek.map((day) => (
                                     <th
                                         key={day.toISOString()}
-                                        className="text-center p-3 font-normal text-xs min-w-[80px]"
+                                        className={`text-center p-3 font-normal text-xs min-w-20 ${
+                                            isSameDay(day, new Date())
+                                                ? "bg-blue-100"
+                                                : ""
+                                        }`}
                                     >
                                         <div>{format(day, "EEE")}</div>
                                         <div className="text-xs font-bold">
