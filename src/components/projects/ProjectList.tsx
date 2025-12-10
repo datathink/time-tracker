@@ -48,7 +48,6 @@ export function ProjectList({ projects }: ProjectListProps) {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [allProjects, setAllProjects] = useState<Project[]>(projects);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  // Removed teamProject and isTeamDialogOpen state
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const loadProjects = async () => {
