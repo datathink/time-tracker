@@ -20,7 +20,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Pencil, Trash2, Users } from "lucide-react";
+import { MoreHorizontal, Pencil, Users, Archive } from "lucide-react";
+import { toast } from "sonner";
 
 interface Project {
   id: string;
