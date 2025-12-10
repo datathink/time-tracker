@@ -2,6 +2,7 @@
 
 import { Settings, BarChart3, Building2, FileText, Folder } from "lucide-react";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import {
     Sidebar,
     SidebarContent,
@@ -20,38 +21,65 @@ import {
 } from "@/components/ui/tooltip";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-
-const navigation = [
-    {
-        title: "Time Entries",
-        url: "/entries",
-        icon: FileText,
-    },
-    {
-        title: "Projects",
-        url: "/projects",
-        icon: Folder,
-    },
-    {
-        title: "Clients",
-        url: "/clients",
-        icon: Building2,
-    },
-    {
-        title: "Reports",
-        url: "/reports",
-        icon: BarChart3,
-    },
-    {
-        title: "Settings",
-        url: "/settings",
-        icon: Settings,
-    },
-];
+import { isAdminUser } from "@/lib/actions/clients";
 
 const AppSidebar = () => {
     const pathname = usePathname();
     const { state } = useSidebar();
+    const [isAdmin, setIsAdmin] = useState(false);
+
+    useEffect(() => {
+        const checkAdminStatus = async () => {
+            try {
+                const adminStatus = await isAdminUser();
+                setIsAdmin(adminStatus);
+            } catch (error) {
+                console.error("Error checking admin status:", error);
+                setIsAdmin(false);
+            }
+        };
+
+        checkAdminStatus();
+    }, []);
+
+    const baseNavigation = [
+        {
+            title: "Time Entries",
+            url: "/entries",
+            icon: FileText,
+        },
+        {
+            title: "Projects",
+            url: "/projects",
+            icon: Folder,
+        },
+        {
+            title: "Reports",
+            url: "/reports",
+            icon: BarChart3,
+        },
+        {
+            title: "Settings",
+            url: "/settings",
+            icon: Settings,
+        },
+    ];
+
+    const adminNavigation = [
+        {
+            title: "Clients",
+            url: "/clients",
+            icon: Building2,
+        },
+    ];
+
+    const navigation = isAdmin
+        ? [
+              ...baseNavigation.slice(0, 2),
+              ...adminNavigation,
+              ...baseNavigation.slice(2),
+          ]
+        : baseNavigation;
 
     const isActive = (url: string): boolean => {
         // Handle root separately if needed

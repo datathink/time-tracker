@@ -176,6 +176,7 @@ model Client {
   name         String
   email        String?
   company      String?
+  isArchived   Boolean   @default(false)
 
   // Relations
   projects     Project[]

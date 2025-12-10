@@ -9,6 +9,7 @@ import {
   timeEntrySchema,
   type TimeEntryFormData,
 } from "@/lib/schemas/time-entry";
+import { toUTCDate } from "@/lib/utils";
 
 // Get current user from session
 async function getCurrentUser() {
@@ -44,14 +45,10 @@ export async function createTimeEntry(data: TimeEntryFormData) {
       }
     }
 
-    // Parse date in local timezone to avoid timezone issues
-    const [year, month, day] = validated.date.split("-").map(Number);
-    const localDate = new Date(Date.UTC(year, month - 1, day));
-
     const timeEntry = await prisma.timeEntry.create({
       data: {
         userId: user.id,
-        date: localDate,
+        date: toUTCDate(validated.date),
         projectId: validated.projectId,
         duration: validated.duration,
         startTime: validated.startTime || null,
@@ -109,14 +106,10 @@ export async function updateTimeEntry(id: string, data: TimeEntryFormData) {
       }
     }
 
-    // Parse date in local timezone to avoid timezone issues
-    const [year, month, day] = validated.date.split("-").map(Number);
-    const localDate = new Date(Date.UTC(year, month - 1, day));
-
     const timeEntry = await prisma.timeEntry.update({
       where: { id },
       data: {
-        date: localDate,
+        date: toUTCDate(validated.date),
         projectId: validated.projectId,
         duration: validated.duration,
         startTime: validated.startTime || null,

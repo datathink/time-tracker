@@ -2,14 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, List, Calendar } from "lucide-react";
+import { Plus, List, Calendar, Table } from "lucide-react";
 import { CalendarView } from "@/components/entries/CalendarView";
+import { TimeSheetTable } from "@/components/entries/TableView";
 import { TimeEntryList } from "@/components/entries/ListView";
 import { TimeEntryForm } from "@/components/entries/TimeEntryForm";
 import { deleteTimeEntry } from "@/lib/actions/entries";
 import { getWeekTimeEntries } from "@/lib/actions/entries";
 import { startOfWeek, endOfWeek } from "date-fns";
 import { Prisma } from "@prisma/client";
+import { useQueryState, parseAsStringLiteral } from "nuqs";
+import { toast } from "sonner";
 
 type TimeEntryWithRelations = Prisma.TimeEntryGetPayload<{
     include: {
@@ -31,7 +34,10 @@ export default function EntriesPage() {
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [editingEntry, setEditingEntry] =
         useState<TimeEntryWithRelations | null>(null);
-    const [viewMode, setViewMode] = useState<"week" | "list">("week");
+    const [viewMode, setViewMode] = useQueryState(
+        "view",
+        parseAsStringLiteral(["week", "table", "list"]).withDefault("table")
+    );
 
     const loadEntries = async (weekDate: Date) => {
         setLoading(true);
@@ -44,6 +50,8 @@ export default function EntriesPage() {
         );
         if (result.success) {
             setEntries(result.data);
+        } else {
+            toast.error(result.error || "Failed to load time entries");
         }
         setLoading(false);
     };
@@ -99,12 +107,20 @@ export default function EntriesPage() {
                 </div>
                 <div className="flex gap-2">
                     <Button
+                        variant={viewMode === "table" ? "default" : "outline"}
+                        onClick={() => setViewMode("table")}
+                        size="sm"
+                    >
+                        <Table />
+                        Table
+                    </Button>
+                    <Button
                         variant={viewMode === "week" ? "default" : "outline"}
                         onClick={() => setViewMode("week")}
                         size="sm"
                     >
                         <Calendar />
-                        Calendar View
+                        Calendar
                     </Button>
                     <Button
                         variant={viewMode === "list" ? "default" : "outline"}
@@ -112,7 +128,7 @@ export default function EntriesPage() {
                         size="sm"
                     >
                         <List />
-                        List View
+                        List
                     </Button>
                     <Button onClick={() => handleAddEntry(new Date())}>
                         <Plus className="mr-2 h-4 w-4" />
@@ -134,11 +150,18 @@ export default function EntriesPage() {
                     onEditEntry={handleEditEntry}
                     onDeleteEntry={handleDeleteEntry}
                 />
-            ) : (
+            ) : viewMode === "list" ? (
                 <TimeEntryList
                     entries={entries}
                     onEditEntry={handleEditEntry}
                     onDeleteEntry={handleDeleteEntry}
+                    loadEntries={() => loadEntries(currentWeek)}
+                />
+            ) : (
+                <TimeSheetTable
+                    entries={entries}
+                    onDeleteEntry={handleDeleteEntry}
+                    onSuccess={handleSuccess}
                 />
             )}
 
@@ -148,6 +171,7 @@ export default function EntriesPage() {
                 onSuccess={handleSuccess}
                 entry={editingEntry}
                 defaultDate={selectedDate}
+                existingEntries={entries}
             />
         </div>
     );
