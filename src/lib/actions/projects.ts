@@ -8,13 +8,13 @@ import { projectSchema, type ProjectFormData } from "@/lib/schemas/project";
 import { Decimal } from "@prisma/client/runtime/library";
 
 // Get current user from session
-export async function getCurrentUser() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
-  }
-  return session.user;
-}
+// export async function getCurrentUser() {
+//   const session = await auth.api.getSession({ headers: await headers() });
+//   if (!session?.user?.id) {
+//     throw new Error("Unauthorized");
+//   }
+//   return session.user;
+// }
 
 // Create a new project
 export async function createProject(data: ProjectFormData) {
@@ -186,56 +186,56 @@ export async function getProjects() {
 
 // Get all projects (admin only)
 export async function getAllProjects(active: boolean = true) {
-    try {
-        const isAdmin = await isAdminUser();
+  try {
+    const isAdmin = await isAdminUser();
 
-        // Check if user is admin
-        if (!isAdmin) {
-            return { success: false, error: "Unauthorized", data: [] };
-        }
-
-        // Get all projects (for admin users)
-        const projects = active
-            ? await prisma.project.findMany({
-                  where: { status: "active" },
-                  orderBy: { name: "asc" },
-                  include: {
-                      client: true,
-                      _count: {
-                          select: {
-                              timeEntries: true,
-                              members: true,
-                          },
-                      },
-                  },
-              })
-            : await prisma.project.findMany({
-                  where: { status: "archived" },
-                  orderBy: { name: "asc" },
-                  include: {
-                      client: true,
-                      _count: {
-                          select: {
-                              timeEntries: true,
-                              members: true,
-                          },
-                      },
-                  },
-              });
-
-        return {
-            success: true,
-            data: projects.map((project) => ({
-                ...project,
-                budgetAmount: project.budgetAmount
-                    ? project.budgetAmount.toNumber()
-                    : null,
-            })),
-        };
-    } catch (error) {
-        console.error("Error fetching all projects:", error);
-        return { success: false, error: "Failed to fetch projects", data: [] };
+    // Check if user is admin
+    if (!isAdmin) {
+      return { success: false, error: "Unauthorized", data: [] };
     }
+
+    // Get all projects (for admin users)
+    const projects = active
+      ? await prisma.project.findMany({
+          where: { status: "active" },
+          orderBy: { name: "asc" },
+          include: {
+            client: true,
+            _count: {
+              select: {
+                timeEntries: true,
+                members: true,
+              },
+            },
+          },
+        })
+      : await prisma.project.findMany({
+          where: { status: "archived" },
+          orderBy: { name: "asc" },
+          include: {
+            client: true,
+            _count: {
+              select: {
+                timeEntries: true,
+                members: true,
+              },
+            },
+          },
+        });
+
+    return {
+      success: true,
+      data: projects.map((project) => ({
+        ...project,
+        budgetAmount: project.budgetAmount
+          ? project.budgetAmount.toNumber()
+          : null,
+      })),
+    };
+  } catch (error) {
+    console.error("Error fetching all projects:", error);
+    return { success: false, error: "Failed to fetch projects", data: [] };
+  }
 }
 
 // Get active projects for dropdown selects (only projects where user is an active member)

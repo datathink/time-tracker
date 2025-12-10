@@ -6,7 +6,6 @@ import { z } from "zod";
 import { Role } from "@prisma/client";
 import { getCurrentUser, isAdminUser } from "./clients";
 import { Decimal } from "@prisma/client/runtime/library";
-import { getCurrentUser } from "./projects";
 
 // Check if user is admin or project owner
 async function canManageProject(projectId: string, userId: string) {

@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ProjectList } from "@/components/projects/ProjectList";
 import { ProjectForm } from "@/components/projects/ProjectForm";
-import { getUsersProjects, getAllProjects } from "@/lib/actions/projects";
+import { getProjects } from "@/lib/actions/projects";
+//import { getUsersProjects, getAllProjects } from "@/lib/actions/projects";
 import { isAdminUser } from "@/lib/actions/clients";
 import { toast } from "sonner";
 
