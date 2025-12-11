@@ -6,6 +6,24 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Convert a date string (YYYY-MM-DD) to a UTC Date for database storage.
+ * Stores at noon UTC to avoid timezone boundary issues.
+ */
+export function toUTCDate(dateString: string): Date {
+    const [year, month, day] = dateString.split("-").map(Number);
+    return new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+}
+
+/**
+ * Convert a UTC Date from the database to a local Date for display.
+ * Extracts the UTC date components to get the "true" stored date.
+ */
+export function fromUTCDate(date: Date): Date {
+    const d = new Date(date);
+    return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+}
+
+/**
  * Parse duration string into minutes
  * Supports formats: "2.5h", "2h 30m", "150m", "1:30", "150"
  */

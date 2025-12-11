@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatDuration, formatDecimalHours } from "@/lib/utils";
+import { formatDuration, formatDecimalHours, fromUTCDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
     Table,
@@ -31,6 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Pencil, Trash2, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { Prisma } from "@prisma/client";
+import { toast } from "sonner";
 
 type TimeEntry = Prisma.TimeEntryGetPayload<{
     include: {
@@ -48,15 +49,17 @@ interface TimeEntryListProps {
     entries: TimeEntry[];
     onDeleteEntry: (entryId: string) => Promise<any>;
     onEditEntry: (entry: TimeEntry) => void;
+    loadEntries: () => void;
 }
 
 export function TimeEntryList({
     entries,
     onDeleteEntry,
     onEditEntry,
+    loadEntries,
 }: TimeEntryListProps) {
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [entryToDelete, setEntryToDelete] = useState<TimeEntry | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     const handleEdit = (entry: TimeEntry) => {
         onEditEntry(entry);
@@ -64,21 +67,29 @@ export function TimeEntryList({
 
     const handleDeleteClick = (entry: TimeEntry) => {
         setEntryToDelete(entry);
-        setDeleteDialogOpen(true);
     };
 
     const handleDeleteConfirm = async () => {
         if (!entryToDelete) return;
 
-        await onDeleteEntry(entryToDelete.id);
-        setDeleteDialogOpen(false);
+        setDeletingId(entryToDelete.id);
+        const result = await onDeleteEntry(entryToDelete.id);
         setEntryToDelete(null);
+
+        if (result.success) {
+            loadEntries();
+            toast.success("Time entry deleted successfully");
+        } else {
+            toast.error(result.error || "Failed to delete time entry");
+        }
+
+        setDeletingId(null);
     };
 
     // Group entries by date
     const groupedEntries = entries.reduce(
         (acc, entry) => {
-            const dateKey = format(new Date(entry.date), "yyyy-MM-dd");
+            const dateKey = format(fromUTCDate(entry.date), "yyyy-MM-dd");
             if (!acc[dateKey]) {
                 acc[dateKey] = [];
             }
@@ -132,13 +143,13 @@ export function TimeEntryList({
                                                 <TableHead className="w-[180px] font-bold">
                                                     Project
                                                 </TableHead>
-                                                <TableHead className="w-[140px] font-bold">
+                                                <TableHead className="w-[170px] font-bold">
                                                     Time
                                                 </TableHead>
                                                 <TableHead className="w-[120px] font-bold">
                                                     Duration
                                                 </TableHead>
-                                                <TableHead className="w-[10-px] font-bold">
+                                                <TableHead className="w-[100px] font-bold">
                                                     Billed
                                                 </TableHead>
                                                 <TableHead className="min-w-[250px] font-bold">
@@ -181,7 +192,7 @@ export function TimeEntryList({
                                                             </span>
                                                         )}
                                                     </TableCell>
-                                                    <TableCell className="w-[140px] py-3 text-sm">
+                                                    <TableCell className="w-[170px] py-3 text-sm">
                                                         {entry.startTime &&
                                                         entry.endTime
                                                             ? `${entry.startTime} - ${entry.endTime}`
@@ -198,7 +209,7 @@ export function TimeEntryList({
                                                             </div>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="w-2.5 py-3">
+                                                    <TableCell className="w-[100px] py-3">
                                                         {entry.billable ? (
                                                             <Badge variant="default">
                                                                 Billable
@@ -210,7 +221,7 @@ export function TimeEntryList({
                                                         )}
                                                     </TableCell>
                                                     <TableCell className="py-3 pr-20 min-w-[250px]">
-                                                        <div className="line-clamp-2 wrap-break-word pr-4">
+                                                        <div className="line-clamp-2 break-words pr-4">
                                                             {entry.description || (
                                                                 <span className="text-gray-400 italic">
                                                                     No
@@ -271,12 +282,12 @@ export function TimeEntryList({
             </div>
 
             <AlertDialog
-                open={deleteDialogOpen}
-                onOpenChange={setDeleteDialogOpen}
+                open={!!entryToDelete}
+                onOpenChange={() => setEntryToDelete(null)}
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete time entry?</AlertDialogTitle>
+                        <AlertDialogTitle>Delete time entry</AlertDialogTitle>
                         <AlertDialogDescription>
                             This will permanently delete this time entry for
                             {entryToDelete?.project && (
@@ -295,12 +306,19 @@ export function TimeEntryList({
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel
+                            onClick={() => setEntryToDelete(null)}
+                        >
+                            Cancel
+                        </AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDeleteConfirm}
                             className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                            disabled={deletingId === entryToDelete?.id}
                         >
-                            Delete
+                            {deletingId === entryToDelete?.id
+                                ? "Deleting..."
+                                : "Delete"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

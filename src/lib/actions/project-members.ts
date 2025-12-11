@@ -3,24 +3,16 @@
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/db/prisma";
 import { z } from "zod";
-import { auth } from "@/lib/auth/auth";
-import { headers } from "next/headers";
 import { Role } from "@prisma/client";
+import { getCurrentUser, isAdminUser } from "./clients";
 import { Decimal } from "@prisma/client/runtime/library";
 
-// Get current user from session
-async function getCurrentUser() {
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session?.user?.id) {
-        throw new Error("Unauthorized");
-    }
-    return session.user;
-}
-
 // Check if user is admin or project owner
-async function canManageProject(projectId: string, userId: string) {
+async function canManageProject(projectId: string) {
+    const currentUser = await getCurrentUser();
+
     const user = await prisma.user.findUnique({
-        where: { id: userId },
+        where: { id: currentUser?.id },
         select: { role: true },
     });
 
@@ -33,7 +25,7 @@ async function canManageProject(projectId: string, userId: string) {
         select: { userId: true },
     });
 
-    return project?.userId === userId;
+    return project?.userId === currentUser?.id;
 }
 
 // Schema for adding a project member
@@ -48,14 +40,10 @@ const addMemberSchema = z.object({
 // Add a user to a project with their rate
 export async function addProjectMember(data: z.infer<typeof addMemberSchema>) {
     try {
-        const currentUser = await getCurrentUser();
         const validated = addMemberSchema.parse(data);
 
         // Check if current user can manage this project
-        const canManage = await canManageProject(
-            validated.projectId,
-            currentUser.id
-        );
+        const canManage = await canManageProject(validated.projectId);
         if (!canManage) {
             return {
                 success: false,
@@ -130,8 +118,6 @@ export async function updateProjectMember(
     }
 ) {
     try {
-        const currentUser = await getCurrentUser();
-
         // Get the member to check project ownership
         const member = await prisma.projectMember.findUnique({
             where: { id: memberId },
@@ -143,10 +129,7 @@ export async function updateProjectMember(
         }
 
         // Check if current user can manage this project
-        const canManage = await canManageProject(
-            member.projectId,
-            currentUser.id
-        );
+        const canManage = await canManageProject(member.projectId);
         if (!canManage) {
             return {
                 success: false,
@@ -196,8 +179,6 @@ export async function updateProjectMember(
 // Remove a user from a project
 export async function removeProjectMember(memberId: string) {
     try {
-        const currentUser = await getCurrentUser();
-
         // Get the member to check project ownership
         const member = await prisma.projectMember.findUnique({
             where: { id: memberId },
@@ -209,10 +190,7 @@ export async function removeProjectMember(memberId: string) {
         }
 
         // Check if current user can manage this project
-        const canManage = await canManageProject(
-            member.projectId,
-            currentUser.id
-        );
+        const canManage = await canManageProject(member.projectId);
         if (!canManage) {
             return {
                 success: false,
@@ -239,7 +217,7 @@ export async function getProjectMembers(projectId: string) {
         const currentUser = await getCurrentUser();
 
         // Check if user has access to this project
-        const canManage = await canManageProject(projectId, currentUser.id);
+        const canManage = await canManageProject(projectId);
 
         // Also check if user is a member of the project
         const isMember = await prisma.projectMember.findFirst({
@@ -292,15 +270,9 @@ export async function getProjectMembers(projectId: string) {
 // Get all users (for adding to projects) - admin only
 export async function getAllUsers() {
     try {
-        const currentUser = await getCurrentUser();
+        const isAdmin = await isAdminUser();
 
-        // Only admins can see all users
-        const user = await prisma.user.findUnique({
-            where: { id: currentUser.id },
-            select: { role: true },
-        });
-
-        if (user?.role !== "admin") {
+        if (!isAdmin) {
             return {
                 success: false,
                 error: "Only admins can view all users",
