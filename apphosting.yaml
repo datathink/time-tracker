@@ -1,0 +1,22 @@
+# Settings for Backend (on Cloud Run).
+# See https://firebase.google.com/docs/app-hosting/configure#cloud-run
+runConfig:
+    minInstances: 0
+    maxInstances: 1
+    # concurrency: 80
+    # cpu: 1
+    # memoryMiB: 512
+    cloudSqlInstances:
+        - time-tracker-befa8:us-central1:time-tracker
+# Environment variables and secrets.
+env:
+    # Configure environment variables.
+    # See https://firebase.google.com/docs/app-hosting/configure#user-defined-environment
+    - variable: BETTER_AUTH_SECRET
+      secret: projects/351890101532/secrets/BETTER_AUTH_SECRET
+    - variable: BETTER_AUTH_URL
+      secret: projects/351890101532/secrets/BETTER_AUTH_URL
+    - variable: NEXT_PUBLIC_APP_URL
+      secret: projects/351890101532/secrets/NEXT_PUBLIC_APP_URL
+    - variable: DATABASE_URL
+      secret: projects/351890101532/secrets/DATABASE_URL
