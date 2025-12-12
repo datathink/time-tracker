@@ -27,6 +27,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Pencil, Trash2, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { Prisma } from "@prisma/client";
@@ -148,7 +149,10 @@ export function TimeEntryList({
                                                 <TableHead className="w-[120px] font-bold">
                                                     Duration
                                                 </TableHead>
-                                                <TableHead className="min-w-[220px] font-bold">
+                                                <TableHead className="w-[100px] font-bold">
+                                                    Billed
+                                                </TableHead>
+                                                <TableHead className="min-w-[250px] font-bold">
                                                     Description
                                                 </TableHead>
                                                 <TableHead className="w-[100px] font-bold text-center">
@@ -205,7 +209,18 @@ export function TimeEntryList({
                                                             </div>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="py-3 pr-20 min-w-[220px]">
+                                                    <TableCell className="w-[100px] py-3">
+                                                        {entry.billable ? (
+                                                            <Badge variant="default">
+                                                                Billable
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge variant="secondary">
+                                                                Non-Billable
+                                                            </Badge>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="py-3 pr-20 min-w-[250px]">
                                                         <div className="line-clamp-2 wrap-break-words pr-4">
                                                             {entry.description || (
                                                                 <span className="text-gray-400 italic">
