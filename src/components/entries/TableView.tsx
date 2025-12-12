@@ -41,7 +41,6 @@ const formatDurationHHMM = (minutes: number): string => {
     return `${hours}:${mins.toString().padStart(2, "0")}`;
 };
 
-
 interface TimeEntry {
     id: string;
     date: Date;
@@ -94,6 +93,14 @@ export function TimeSheetTable({
     );
     const [isDeleting, setIsDeleting] = useState(false);
     const [entryToDelete, setEntryToDelete] = useState<TimeEntry | null>(null);
+
+    // State for project change confirmation dialog
+    const [projectChangeDialogOpen, setProjectChangeDialogOpen] =
+        useState(false);
+    const [projectChangeInfo, setProjectChangeInfo] = useState<{
+        rowIndex: number;
+        newProjectId: string;
+    } | null>(null);
 
     // Load active projects on mount
     useEffect(() => {
@@ -230,6 +237,29 @@ export function TimeSheetTable({
         }
     };
 
+    const handleConfirmProjectChange = () => {
+        if (projectChangeInfo) {
+            updateRowProject(
+                projectChangeInfo.rowIndex,
+                projectChangeInfo.newProjectId
+            );
+            setProjectChangeDialogOpen(false);
+            setProjectChangeInfo(null);
+        }
+    };
+
+    const handleProjectChange = (rowIndex: number, newProjectId: string) => {
+        const oldProjectId = rows[rowIndex].projectId;
+        const totalDuration = getTotalForProject(oldProjectId);
+
+        if (totalDuration > 0) {
+            setProjectChangeInfo({ rowIndex, newProjectId });
+            setProjectChangeDialogOpen(true);
+        } else {
+            updateRowProject(rowIndex, newProjectId);
+        }
+    };
+
     const updateRowProject = (index: number, projectId: string) => {
         const newRows = [...rows];
         newRows[index] = { projectId };
@@ -288,7 +318,11 @@ export function TimeSheetTable({
                                 {daysOfWeek.map((day) => (
                                     <th
                                         key={day.toISOString()}
-                                        className="text-center p-3 font-normal text-xs min-w-[80px]"
+                                        className={`text-center p-3 font-normal text-xs min-w-20 ${
+                                            isSameDay(day, new Date())
+                                                ? "bg-blue-100"
+                                                : ""
+                                        }`}
                                     >
                                         <div>{format(day, "EEE")}</div>
                                         <div className="text-xs font-bold">
@@ -321,7 +355,7 @@ export function TimeSheetTable({
                                                         undefined
                                                     }
                                                     onValueChange={(value) =>
-                                                        updateRowProject(
+                                                        handleProjectChange(
                                                             rowIndex,
                                                             value
                                                         )
@@ -612,6 +646,33 @@ export function TimeSheetTable({
                             className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
                         >
                             {isDeleting ? "Deleting..." : "Delete Entry"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <AlertDialog
+                open={projectChangeDialogOpen}
+                onOpenChange={setProjectChangeDialogOpen}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Change project?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Changing the project will affect time entry for this
+                            week (row). Are you sure you want to continue?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel
+                            onClick={() => {
+                                setProjectChangeDialogOpen(false);
+                                setProjectChangeInfo(null);
+                            }}
+                        >
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmProjectChange}>
+                            Continue
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
