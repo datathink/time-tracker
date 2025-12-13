@@ -49,11 +49,12 @@ interface TimeEntry {
   startTime: string | null;
   endTime: string | null;
   description: string;
+  billable: boolean;
   project?: {
     id: string;
     name: string;
     color: string;
-  } | null;
+    } | null;
 }
 
 interface ActiveProject {

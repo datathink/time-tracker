@@ -103,6 +103,7 @@ model TimeEntry {
   startTime    String?   // Optional: "09:00" format
   endTime      String?   // Optional: "17:30" format
   description  String
+  billable     Boolean   @default(true)
   billed       Boolean   @default(false) // Has been included in an invoice
 
   // Relations
