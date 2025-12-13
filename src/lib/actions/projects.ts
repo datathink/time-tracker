@@ -7,327 +7,314 @@ import { isAdminUser, getCurrentUser } from "./clients";
 import { projectSchema, type ProjectFormData } from "@/lib/schemas/project";
 import { Decimal } from "@prisma/client/runtime/library";
 
+// Get current user from session
+// export async function getCurrentUser() {
+//   const session = await auth.api.getSession({ headers: await headers() });
+//   if (!session?.user?.id) {
+//     throw new Error("Unauthorized");
+//   }
+//   return session.user;
+// }
+
 // Create a new project
 export async function createProject(data: ProjectFormData) {
-    try {
-        const validated = projectSchema.parse(data);
-        const isAdmin = await isAdminUser();
+  try {
+    const user = await getCurrentUser();
+    const validated = projectSchema.parse(data);
 
-        // Check if user is admin
-        if (!isAdmin) {
-            return { success: false, error: "Unauthorized" };
-        }
+    const project = await prisma.project.create({
+      data: {
+        name: validated.name,
+        clientId: validated.clientId,
+        description: validated.description || null,
+        budgetAmount: validated.budgetAmount
+          ? new Decimal(validated.budgetAmount)
+          : null,
+        status: validated.status,
+        color: validated.color,
+        userId: user.id,
+      },
+    });
 
-        const user = await getCurrentUser();
-
-        const project = await prisma.project.create({
-            data: {
-                name: validated.name,
-                clientId: validated.clientId,
-                description: validated.description || null,
-                budgetAmount: validated.budgetAmount
-                    ? new Decimal(validated.budgetAmount)
-                    : null,
-                status: validated.status,
-                color: validated.color,
-                userId: user.id,
-            },
-        });
-
-        revalidatePath("/projects");
-        return {
-            success: true,
-            data: {
-                ...project,
-                budgetAmount: project.budgetAmount
-                    ? project.budgetAmount.toNumber()
-                    : null,
-            },
-        };
-    } catch (error) {
-        console.error("Error creating project:", error);
-        if (error instanceof z.ZodError) {
-            return { success: false, error: error.issues[0].message };
-        }
-        return { success: false, error: "Failed to create project" };
+    revalidatePath("/projects");
+    return {
+      success: true,
+      data: {
+        ...project,
+        budgetAmount: project.budgetAmount
+          ? project.budgetAmount.toNumber()
+          : null,
+      },
+    };
+  } catch (error) {
+    console.error("Error creating project:", error);
+    if (error instanceof z.ZodError) {
+      return { success: false, error: error.issues[0].message };
     }
+    return { success: false, error: "Failed to create project" };
+  }
 }
 
 // Update an existing project
 export async function updateProject(id: string, data: ProjectFormData) {
-    try {
-        const validated = projectSchema.parse(data);
-        const isAdmin = await isAdminUser();
+  try {
+    const user = await getCurrentUser();
+    const validated = projectSchema.parse(data);
 
-        // Check if user is admin
-        if (!isAdmin) {
-            return { success: false, error: "Unauthorized" };
-        }
+    // Check if user owns the project
+    const existingProject = await prisma.project.findUnique({
+      where: { id },
+    });
 
-        // Check if project exists
-        const existingProject = await prisma.project.findUnique({
-            where: { id },
-        });
-
-        if (!existingProject) {
-            return { success: false, error: "Project not found" };
-        }
-
-        const project = await prisma.project.update({
-            where: { id },
-            data: {
-                name: validated.name,
-                clientId: validated.clientId,
-                description: validated.description || null,
-                budgetAmount: validated.budgetAmount
-                    ? new Decimal(validated.budgetAmount)
-                    : null,
-                status: validated.status,
-                color: validated.color,
-            },
-        });
-
-        revalidatePath("/projects");
-        return {
-            success: true,
-            data: {
-                ...project,
-                budgetAmount: project.budgetAmount
-                    ? project.budgetAmount.toNumber()
-                    : null,
-            },
-        };
-    } catch (error) {
-        console.error("Error updating project:", error);
-        if (error instanceof z.ZodError) {
-            return { success: false, error: error.issues[0].message };
-        }
-        return { success: false, error: "Failed to update project" };
+    if (!existingProject) {
+      return { success: false, error: "Project not found" };
     }
+
+    if (existingProject.userId !== user.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const project = await prisma.project.update({
+      where: { id },
+      data: {
+        name: validated.name,
+        clientId: validated.clientId,
+        description: validated.description || null,
+        budgetAmount: validated.budgetAmount
+          ? new Decimal(validated.budgetAmount)
+          : null,
+        status: validated.status,
+        color: validated.color,
+      },
+    });
+
+    revalidatePath("/projects");
+    return {
+      success: true,
+      data: {
+        ...project,
+        budgetAmount: project.budgetAmount
+          ? project.budgetAmount.toNumber()
+          : null,
+      },
+    };
+  } catch (error) {
+    console.error("Error updating project:", error);
+    if (error instanceof z.ZodError) {
+      return { success: false, error: error.issues[0].message };
+    }
+    return { success: false, error: "Failed to update project" };
+  }
 }
 
-// Archive a project
-export async function archiveProject(id: string) {
-    try {
-        const isAdmin = await isAdminUser();
+// Delete a project
+export async function deleteProject(id: string) {
+  try {
+    const user = await getCurrentUser();
 
-        // Check if user is admin
-        if (!isAdmin) {
-            return { success: false, error: "Unauthorized" };
-        }
+    // Check if user owns the project
+    const existingProject = await prisma.project.findUnique({
+      where: { id },
+    });
 
-        // Check if project exists
-        const existingProject = await prisma.project.findUnique({
-            where: { id },
-        });
-
-        if (!existingProject) {
-            return { success: false, error: "Project not found" };
-        }
-
-        await prisma.project.update({
-            where: { id },
-            data: {
-                status: "archived",
-            },
-        });
-
-        revalidatePath("/projects");
-        return { success: true };
-    } catch (error) {
-        console.error("Error archiving project:", error);
-        return { success: false, error: "Failed to archive project" };
+    if (!existingProject) {
+      return { success: false, error: "Project not found" };
     }
+
+    if (existingProject.userId !== user.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    await prisma.project.delete({
+      where: { id },
+    });
+
+    revalidatePath("/projects");
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting project:", error);
+    return { success: false, error: "Failed to delete project" };
+  }
 }
 
-// Get all projects for the current user (member of)
-export async function getUsersProjects() {
-    try {
-        const user = await getCurrentUser();
+// Get all projects for the current user (owned or member of)
+export async function getProjects() {
+  try {
+    const user = await getCurrentUser();
 
-        if (!user.id) {
-            return { success: false, error: "Invalid User", data: [] };
-        }
-
-        // Get projects where user is a member
-        const projects = await prisma.project.findMany({
-            where: {
-                status: "active",
-                members: {
-                    some: {
-                        userId: user.id,
-                        isActive: true,
-                    },
-                }, // Projects where user is an active member
+    // Get projects where user is owner or member
+    const projects = await prisma.project.findMany({
+      where: {
+        OR: [
+          { userId: user.id }, // Projects owned by user
+          {
+            members: {
+              some: {
+                userId: user.id,
+                isActive: true,
+              },
             },
-            orderBy: { name: "asc" },
-            include: {
-                _count: {
-                    select: {
-                        timeEntries: true,
-                    },
-                },
-            },
-        });
+          }, // Projects where user is active member
+        ],
+      },
+      orderBy: { name: "asc" },
+      include: {
+        client: true,
+        _count: {
+          select: {
+            timeEntries: true,
+            members: true,
+          },
+        },
+      },
+    });
 
-        return {
-            success: true,
-            data: projects.map((project) => ({
-                ...project,
-                budgetAmount: project.budgetAmount
-                    ? project.budgetAmount.toNumber()
-                    : null,
-            })),
-        };
-    } catch (error) {
-        console.error("Error fetching projects:", error);
-        return { success: false, error: "Failed to fetch projects", data: [] };
-    }
+    return {
+      success: true,
+      data: projects.map((project) => ({
+        ...project,
+        budgetAmount: project.budgetAmount
+          ? project.budgetAmount.toNumber()
+          : null,
+      })),
+    };
+  } catch (error) {
+    console.error("Error fetching projects:", error);
+    return { success: false, error: "Failed to fetch projects", data: [] };
+  }
 }
 
 // Get all projects (admin only)
 export async function getAllProjects(active: boolean = true) {
-    try {
-        const isAdmin = await isAdminUser();
+  try {
+    const isAdmin = await isAdminUser();
 
-        // Check if user is admin
-        if (!isAdmin) {
-            return { success: false, error: "Unauthorized", data: [] };
-        }
-
-        // Get all projects (for admin users)
-        const projects = active
-            ? await prisma.project.findMany({
-                  where: { status: "active" },
-                  orderBy: { name: "asc" },
-                  include: {
-                      client: true,
-                      _count: {
-                          select: {
-                              timeEntries: true,
-                              members: true,
-                          },
-                      },
-                  },
-              })
-            : await prisma.project.findMany({
-                  where: { status: "archived" },
-                  orderBy: { name: "asc" },
-                  include: {
-                      client: true,
-                      _count: {
-                          select: {
-                              timeEntries: true,
-                              members: true,
-                          },
-                      },
-                  },
-              });
-
-        return {
-            success: true,
-            data: projects.map((project) => ({
-                ...project,
-                budgetAmount: project.budgetAmount
-                    ? project.budgetAmount.toNumber()
-                    : null,
-            })),
-        };
-    } catch (error) {
-        console.error("Error fetching all projects:", error);
-        return { success: false, error: "Failed to fetch projects", data: [] };
+    // Check if user is admin
+    if (!isAdmin) {
+      return { success: false, error: "Unauthorized", data: [] };
     }
+
+    // Get all projects (for admin users)
+    const projects = active
+      ? await prisma.project.findMany({
+          where: { status: "active" },
+          orderBy: { name: "asc" },
+          include: {
+            client: true,
+            _count: {
+              select: {
+                timeEntries: true,
+                members: true,
+              },
+            },
+          },
+        })
+      : await prisma.project.findMany({
+          where: { status: "archived" },
+          orderBy: { name: "asc" },
+          include: {
+            client: true,
+            _count: {
+              select: {
+                timeEntries: true,
+                members: true,
+              },
+            },
+          },
+        });
+
+    return {
+      success: true,
+      data: projects.map((project) => ({
+        ...project,
+        budgetAmount: project.budgetAmount
+          ? project.budgetAmount.toNumber()
+          : null,
+      })),
+    };
+  } catch (error) {
+    console.error("Error fetching all projects:", error);
+    return { success: false, error: "Failed to fetch projects", data: [] };
+  }
 }
 
 // Get active projects for dropdown selects (only projects where user is an active member)
 export async function getActiveProjects() {
-    try {
-        const user = await getCurrentUser();
+  try {
+    const user = await getCurrentUser();
 
-        if (!user.id) {
-            return { success: false, error: "Invalid User", data: [] };
-        }
+    // Get projects where user is an active member
+    const projects = await prisma.project.findMany({
+      where: {
+        status: "active",
+        members: {
+          some: {
+            userId: user.id,
+            isActive: true,
+          },
+        },
+      },
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        color: true,
+        client: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
 
-        // Get projects where user is an active member
-        const projects = await prisma.project.findMany({
-            where: {
-                status: "active",
-                members: {
-                    some: {
-                        userId: user.id,
-                        isActive: true,
-                    },
-                },
-            },
-            orderBy: { name: "asc" },
-            select: {
-                id: true,
-                name: true,
-                color: true,
-                client: {
-                    select: {
-                        name: true,
-                    },
-                },
-            },
-        });
-
-        return { success: true, data: projects };
-    } catch (error) {
-        console.error("Error fetching active projects:", error);
-        return { success: false, error: "Failed to fetch projects", data: [] };
-    }
+    return { success: true, data: projects };
+  } catch (error) {
+    console.error("Error fetching active projects:", error);
+    return { success: false, error: "Failed to fetch projects", data: [] };
+  }
 }
 
 // Get a single project by ID
-export async function getProject(id: string, active: boolean = true) {
-    try {
-        const isAdmin = await isAdminUser();
+export async function getProject(id: string) {
+  try {
+    const user = await getCurrentUser();
 
-        // Check if user is admin
-        if (!isAdmin) {
-            return { success: false, error: "Unauthorized" };
-        }
+    const project = await prisma.project.findUnique({
+      where: { id },
+      include: {
+        client: true,
+        members: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
 
-        const project = active
-            ? await prisma.project.findUnique({
-                  where: { id, status: "active" },
-                  include: {
-                      client: true,
-                      members: {
-                          include: {
-                              user: true,
-                          },
-                      },
-                  },
-              })
-            : await prisma.project.findUnique({
-                  where: { id, status: "archived" },
-                  include: {
-                      client: true,
-                      members: {
-                          include: {
-                              user: true,
-                          },
-                      },
-                  },
-              });
-
-        if (!project) {
-            return { success: false, error: "Project not found" };
-        }
-
-        return {
-            success: true,
-            data: {
-                ...project,
-                budgetAmount: project.budgetAmount
-                    ? project.budgetAmount.toNumber()
-                    : null,
-            },
-        };
-    } catch (error) {
-        console.error("Error fetching project:", error);
-        return { success: false, error: "Failed to fetch project" };
+    if (!project) {
+      return { success: false, error: "Project not found" };
     }
+
+    if (project.userId !== user.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    return {
+      success: true,
+      data: {
+        ...project,
+        budgetAmount: project.budgetAmount
+          ? project.budgetAmount.toNumber()
+          : null,
+        members: project.members.map((member) => ({
+          ...member,
+          payoutRate: member.payoutRate.toNumber(),
+          chargeRate: member.chargeRate.toNumber(),
+        })),
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching project:", error);
+    return { success: false, error: "Failed to fetch project" };
+  }
 }
