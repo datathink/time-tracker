@@ -241,3 +241,5 @@ export function ProjectList({ projects }: ProjectListProps) {
         </>
     );
 }
+
+// export default ProjectList
