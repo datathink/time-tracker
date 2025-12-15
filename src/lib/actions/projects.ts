@@ -279,6 +279,56 @@ export async function getActiveProjects() {
     }
 }
 
+// RSC version: Get projects for user (no auth check - RSC validates session)
+export async function getProjectsForUserRSC(userId: string) {
+    const projects = await prisma.project.findMany({
+        where: {
+            status: "active",
+            members: {
+                some: {
+                    userId,
+                    isActive: true,
+                },
+            },
+        },
+        orderBy: { name: "asc" },
+        include: {
+            _count: {
+                select: {
+                    timeEntries: true,
+                },
+            },
+        },
+    });
+
+    return projects.map((project) => ({
+        ...project,
+        budgetAmount: project.budgetAmount ? project.budgetAmount.toNumber() : null,
+    }));
+}
+
+// RSC version: Get all projects for admin (no auth check - RSC validates session)
+export async function getAllProjectsForRSC(active: boolean = true) {
+    const projects = await prisma.project.findMany({
+        where: { status: active ? "active" : "archived" },
+        orderBy: { name: "asc" },
+        include: {
+            client: true,
+            _count: {
+                select: {
+                    timeEntries: true,
+                    members: true,
+                },
+            },
+        },
+    });
+
+    return projects.map((project) => ({
+        ...project,
+        budgetAmount: project.budgetAmount ? project.budgetAmount.toNumber() : null,
+    }));
+}
+
 // Get a single project by ID
 export async function getProject(id: string, active: boolean = true) {
     try {
