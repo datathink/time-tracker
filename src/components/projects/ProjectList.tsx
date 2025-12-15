@@ -1,18 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ProjectForm } from "./ProjectForm";
-import { ProjectTeamDialog } from "./ProjectTeamDialog";
+//import { ProjectMemberTable } from "./ProjectMemberTable";
 import { archiveProject } from "@/lib/actions/projects";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
+
 import {
     Table,
     TableBody,
@@ -30,6 +24,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Pencil, Users, Archive } from "lucide-react";
 import { toast } from "sonner";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Project {
     id: string;
@@ -59,6 +63,7 @@ export function ProjectList({
     loadProjects,
     isAdmin,
 }: ProjectListProps) {
+    const router = useRouter();
     const [editingProject, setEditingProject] = useState<Project | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [teamProject, setTeamProject] = useState<Project | null>(null);
@@ -73,8 +78,7 @@ export function ProjectList({
     };
 
     const handleManageTeam = (project: Project) => {
-        setTeamProject(project);
-        setIsTeamDialogOpen(true);
+        router.push(`/projects/${project.id}/team`);
     };
 
     const handleArchive = (project: Project) => {
@@ -133,20 +137,24 @@ export function ProjectList({
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Project</TableHead>
-                            {isAdmin && <TableHead>Client</TableHead>}
-                            <TableHead>Status</TableHead>
-                            <TableHead>Budget</TableHead>
-                            <TableHead>Team</TableHead>
-                            <TableHead>Time Entries</TableHead>
-                            <TableHead className="w-[70px]"></TableHead>
+                            <TableHead className="font-bold pl-6">
+                                Project
+                            </TableHead>
+                            <TableHead className="font-bold">Client</TableHead>
+                            <TableHead className="font-bold">Status</TableHead>
+                            <TableHead className="font-bold">Budget</TableHead>
+                            <TableHead className="font-bold">Team</TableHead>
+                            <TableHead className="font-bold">
+                                Time Entries
+                            </TableHead>
+                            <TableHead className="font-bold">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {projects.map((project) => (
                             <TableRow key={project.id}>
                                 <TableCell>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 pl-3">
                                         <div
                                             className="w-3 h-3 rounded-full"
                                             style={{
@@ -158,11 +166,9 @@ export function ProjectList({
                                         </span>
                                     </div>
                                 </TableCell>
-                                {isAdmin && (
-                                    <TableCell>
-                                        {project.client?.name || "-"}
-                                    </TableCell>
-                                )}
+                                <TableCell>
+                                    {project.client?.name || "-"}
+                                </TableCell>
                                 <TableCell>
                                     <Badge
                                         className={getStatusColor(
@@ -187,50 +193,51 @@ export function ProjectList({
                                         {project._count?.timeEntries || 0}
                                     </Badge>
                                 </TableCell>
-                                {isAdmin && (
-                                    <TableCell>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-8 w-8 p-0"
-                                                >
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem
-                                                    onClick={() =>
-                                                        handleEdit(project)
-                                                    }
-                                                >
-                                                    <Pencil className="mr-2 h-4 w-4" />
-                                                    Edit
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    onClick={() =>
-                                                        handleManageTeam(
-                                                            project
-                                                        )
-                                                    }
-                                                >
-                                                    <Users className="mr-2 h-4 w-4" />
-                                                    Manage Team
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    onClick={() =>
-                                                        handleArchive(project)
-                                                    }
-                                                    className="text-red-600"
-                                                >
-                                                    <Archive className="mr-2 h-4 w-4" />
-                                                    Archive
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                )}
+                                <TableCell>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-8 w-8 p-0"
+                                            >
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem
+                                                onClick={() =>
+                                                    handleEdit(project)
+                                                }
+                                            >
+                                                <Pencil className="mr-2 h-4 w-4" />
+                                                Edit Project
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={() =>
+                                                    handleManageTeam(project)
+                                                }
+                                            >
+                                                <Users className="mr-2 h-4 w-4" />
+                                                Manage Team
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={() =>
+                                                    handleArchive(project)
+                                                }
+                                                disabled={
+                                                    archivingId === project.id
+                                                }
+                                                className="text-red-600"
+                                            >
+                                                <Archive className="mr-2 h-4 w-4" />
+                                                {archivingId === project.id
+                                                    ? "Archiving..."
+                                                    : "Archive Project"}
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
@@ -249,55 +256,30 @@ export function ProjectList({
                 />
             )}
 
-            {teamProject && (
-                <ProjectTeamDialog
-                    project={teamProject}
-                    open={isTeamDialogOpen}
-                    onOpenChange={(open) => {
-                        setIsTeamDialogOpen(open);
-                        if (!open) setTeamProject(null);
-                    }}
-                    onSuccess={handleSuccess}
-                />
-            )}
-
-            <Dialog
+            <AlertDialog
                 open={!!confirmArchiveProject}
                 onOpenChange={() => setConfirmArchiveProject(null)}
             >
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Archive project</DialogTitle>
-                        <DialogDescription>
-                            Are you sure you want to archive the{" "}
-                            {confirmArchiveProject?.name} project?
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setConfirmArchiveProject(null)}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="destructive"
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will archive the
+                            project and all associated data.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
                             onClick={() =>
-                                confirmArchiveProject &&
-                                performArchive(confirmArchiveProject.id)
+                                performArchive(confirmArchiveProject!.id)
                             }
-                            disabled={archivingId === confirmArchiveProject?.id}
                         >
-                            {archivingId &&
-                            confirmArchiveProject?.id === archivingId
-                                ? "Archiving..."
-                                : "Archive"}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                            Continue
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </>
     );
 }
