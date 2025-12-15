@@ -321,6 +321,11 @@ export async function getProject(id: string, active: boolean = true) {
             success: true,
             data: {
                 ...project,
+                members: project.members.map((member) => ({
+                    ...member,
+                    payoutRate: member.payoutRate.toNumber(),
+                    chargeRate: member.chargeRate.toNumber(),
+                })),
                 budgetAmount: project.budgetAmount
                     ? project.budgetAmount.toNumber()
                     : null,

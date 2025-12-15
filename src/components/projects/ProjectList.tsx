@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ProjectForm } from "./ProjectForm";
-//import { ProjectMemberTable } from "./ProjectMemberTable";
 import { archiveProject } from "@/lib/actions/projects";
 import { Button } from "@/components/ui/button";
 
@@ -262,10 +261,14 @@ export function ProjectList({
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogTitle>Archive Project?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This will archive the
-                            project and all associated data.
+                            Are you sure you want to archive{" "}
+                            <span className="font-bold">
+                                {confirmArchiveProject?.name}?.
+                            </span>{" "}
+                            This will archive the project and all associated
+                            data.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -274,8 +277,9 @@ export function ProjectList({
                             onClick={() =>
                                 performArchive(confirmArchiveProject!.id)
                             }
+                            className="bg-red-600 hover:bg-red-700"
                         >
-                            Continue
+                            Archive
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

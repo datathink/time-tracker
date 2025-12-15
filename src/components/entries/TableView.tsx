@@ -41,7 +41,6 @@ const formatDurationHHMM = (minutes: number): string => {
     return `${hours}:${mins.toString().padStart(2, "0")}`;
 };
 
-
 interface TimeEntry {
     id: string;
     date: Date;
@@ -260,7 +259,7 @@ export function TimeSheetTable({
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <div className="text-sm font-medium min-w-[220px] text-center">
-                        {format(weekStart, "d MMM")} →{" "}
+                        {format(weekStart, "d MMM")} -{" "}
                         {format(weekEnd, "d MMM yyyy")}
                     </div>
                     <Button variant="outline" size="sm" onClick={goToNextWeek}>

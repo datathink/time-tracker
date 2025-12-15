@@ -6,13 +6,15 @@ import { ClientForm } from "./ClientForm";
 import { archiveClient } from "@/lib/actions/clients";
 import { Button } from "@/components/ui/button";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
     Table,
     TableBody,
@@ -29,6 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Pencil, Archive } from "lucide-react";
+import { Alert } from "../ui/alert";
 
 interface Client {
     id: string;
@@ -97,17 +100,23 @@ export function ClientList({ clients, loadClients }: ClientListProps) {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Email</TableHead>
-                            <TableHead>Company</TableHead>
-                            <TableHead>Projects</TableHead>
-                            <TableHead className="w-[70px]"></TableHead>
+                            <TableHead className="font-bold pl-6">
+                                Name
+                            </TableHead>
+                            <TableHead className="font-bold">Email</TableHead>
+                            <TableHead className="font-bold">Company</TableHead>
+                            <TableHead className="font-bold">
+                                Projects
+                            </TableHead>
+                            <TableHead className="w-[150px] font-bold">
+                                Actions
+                            </TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {clients.map((client) => (
                             <TableRow key={client.id}>
-                                <TableCell className="font-medium">
+                                <TableCell className="font-medium pl-6">
                                     {client.name}
                                 </TableCell>
                                 <TableCell>{client.email || "-"}</TableCell>
@@ -141,10 +150,10 @@ export function ClientList({ clients, loadClients }: ClientListProps) {
                                                 onClick={() =>
                                                     handleArchive(client)
                                                 }
-                                                className="text-red-600"
+                                                className="text-red-600 "
                                             >
                                                 <Archive className="mr-2 h-4 w-4" />
-                                                Archive
+                                                Archive Client
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
@@ -167,43 +176,39 @@ export function ClientList({ clients, loadClients }: ClientListProps) {
                 />
             )}
 
-            <Dialog
+            <AlertDialog
                 open={!!confirmArchiveClient}
                 onOpenChange={() => setConfirmArchiveClient(null)}
             >
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Archive client</DialogTitle>
-                    </DialogHeader>
-                    <DialogDescription>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Archive client?</AlertDialogTitle>
+                    </AlertDialogHeader>
+                    <AlertDialogDescription>
                         Are you sure you want to archive{" "}
-                        {confirmArchiveClient?.name}? This will archive all the
-                        projects of this client.
-                    </DialogDescription>
-                    <DialogFooter>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setConfirmArchiveClient(null)}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="destructive"
+                        <span className="font-bold">
+                            {confirmArchiveClient?.name}
+                        </span>
+                        ?. This will archive all the projects of this client.
+                    </AlertDialogDescription>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
                             onClick={() => {
                                 if (confirmArchiveClient) {
                                     performArchive(confirmArchiveClient.id);
                                 }
                             }}
+                            className="bg-red-600 hover:bg-red-700"
                             disabled={archivingId === confirmArchiveClient?.id}
                         >
                             {archivingId === confirmArchiveClient?.id
                                 ? "Archiving..."
                                 : "Archive"}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </>
     );
 }
