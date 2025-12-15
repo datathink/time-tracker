@@ -9,7 +9,7 @@ import { TimeEntryList } from "@/components/entries/ListView";
 import { TimeEntryForm } from "@/components/entries/TimeEntryForm";
 import { deleteTimeEntry, getWeekTimeEntries } from "@/lib/actions/entries";
 import { startOfWeek, endOfWeek } from "date-fns";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { useQueryState, parseAsStringLiteral } from "nuqs";
 import { toast } from "sonner";
 

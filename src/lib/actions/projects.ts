@@ -5,7 +5,6 @@ import prisma from "@/lib/db/prisma";
 import { z } from "zod";
 import { isAdminUser, getCurrentUser } from "./clients";
 import { projectSchema, type ProjectFormData } from "@/lib/schemas/project";
-import { Decimal } from "@prisma/client/runtime/library";
 
 // Create a new project
 export async function createProject(data: ProjectFormData) {
@@ -25,9 +24,7 @@ export async function createProject(data: ProjectFormData) {
                 name: validated.name,
                 clientId: validated.clientId,
                 description: validated.description || null,
-                budgetAmount: validated.budgetAmount
-                    ? new Decimal(validated.budgetAmount)
-                    : null,
+                budgetAmount: validated.budgetAmount,
                 status: validated.status,
                 color: validated.color,
                 userId: user.id,
@@ -79,9 +76,7 @@ export async function updateProject(id: string, data: ProjectFormData) {
                 name: validated.name,
                 clientId: validated.clientId,
                 description: validated.description || null,
-                budgetAmount: validated.budgetAmount
-                    ? new Decimal(validated.budgetAmount)
-                    : null,
+                budgetAmount: validated.budgetAmount,
                 status: validated.status,
                 color: validated.color,
             },
@@ -303,7 +298,9 @@ export async function getProjectsForUserRSC(userId: string) {
 
     return projects.map((project) => ({
         ...project,
-        budgetAmount: project.budgetAmount ? project.budgetAmount.toNumber() : null,
+        budgetAmount: project.budgetAmount
+            ? project.budgetAmount.toNumber()
+            : null,
     }));
 }
 
@@ -325,7 +322,9 @@ export async function getAllProjectsForRSC(active: boolean = true) {
 
     return projects.map((project) => ({
         ...project,
-        budgetAmount: project.budgetAmount ? project.budgetAmount.toNumber() : null,
+        budgetAmount: project.budgetAmount
+            ? project.budgetAmount.toNumber()
+            : null,
     }));
 }
 

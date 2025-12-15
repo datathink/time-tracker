@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 import { ClientList } from "@/components/clients/ClientList";
 import { ClientForm } from "@/components/clients/ClientForm";
 import { getClients } from "@/lib/actions/clients";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { toast } from "sonner";
 
 type ClientWithCount = Prisma.ClientGetPayload<{

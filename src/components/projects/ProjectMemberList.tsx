@@ -10,7 +10,7 @@ import {
     removeProjectMember,
 } from "@/lib/actions/project-members";
 import { UserX, Edit2, Check, X } from "lucide-react";
-import { Role } from "@prisma/client";
+import { Role } from "@/generated/prisma/client";
 
 interface ProjectMember {
     id: string;
