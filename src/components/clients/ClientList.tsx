@@ -6,16 +6,6 @@ import { ClientForm } from "./ClientForm";
 import { archiveClient } from "@/lib/actions/clients";
 import { Button } from "@/components/ui/button";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
     Table,
     TableBody,
     TableCell,
@@ -31,7 +21,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Pencil, Archive } from "lucide-react";
-import { Alert } from "../ui/alert";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "../ui/alert-dialog";
 
 interface Client {
     id: string;
@@ -178,7 +177,11 @@ export function ClientList({ clients, loadClients }: ClientListProps) {
 
             <AlertDialog
                 open={!!confirmArchiveClient}
-                onOpenChange={() => setConfirmArchiveClient(null)}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setConfirmArchiveClient(null);
+                    }
+                }}
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -192,7 +195,11 @@ export function ClientList({ clients, loadClients }: ClientListProps) {
                         ?. This will archive all the projects of this client.
                     </AlertDialogDescription>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel
+                            onClick={() => setConfirmArchiveClient(null)}
+                        >
+                            Cancel
+                        </AlertDialogCancel>
                         <AlertDialogAction
                             onClick={() => {
                                 if (confirmArchiveClient) {

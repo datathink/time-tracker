@@ -91,7 +91,7 @@ export function ProjectList({
             loadProjects(isAdmin);
             toast.success("Project archived successfully");
         } else {
-            toast.error(result.error);
+            toast.error(result.error || "Failed to archive project");
         }
 
         setArchivingId(null);
