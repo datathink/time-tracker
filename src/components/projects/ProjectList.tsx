@@ -65,8 +65,6 @@ export function ProjectList({
     const router = useRouter();
     const [editingProject, setEditingProject] = useState<Project | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
-    const [teamProject, setTeamProject] = useState<Project | null>(null);
-    const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
     const [archivingId, setArchivingId] = useState<string | null>(null);
     const [confirmArchiveProject, setConfirmArchiveProject] =
         useState<Project | null>(null);
@@ -93,7 +91,7 @@ export function ProjectList({
             loadProjects(isAdmin);
             toast.success("Project archived successfully");
         } else {
-            toast.error(result.error || "Failed to archive project");
+            toast.error(result.error);
         }
 
         setArchivingId(null);
