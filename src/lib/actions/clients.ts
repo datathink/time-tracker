@@ -162,6 +162,25 @@ export async function getClients(areArchived: boolean = false) {
     }
 }
 
+// RSC version: Get all clients for admin (no auth check - RSC validates session)
+export async function getClientsForRSC(areArchived: boolean = false) {
+    const clients = await prisma.client.findMany({
+        where: {
+            isArchived: areArchived,
+        },
+        orderBy: { name: "asc" },
+        include: {
+            _count: {
+                select: {
+                    projects: true,
+                },
+            },
+        },
+    });
+
+    return clients;
+}
+
 // Get a single client by ID
 export async function getClient(id: string, isArchived: boolean = false) {
     try {
