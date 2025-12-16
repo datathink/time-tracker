@@ -17,7 +17,7 @@ import { getProjectMembers } from "@/lib/actions/project-members";
 import { getProject } from "@/lib/actions/projects";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Role } from "@prisma/client";
+import { type Role } from "@/lib/schemas/role";
 
 interface ProjectMember {
     id: string;

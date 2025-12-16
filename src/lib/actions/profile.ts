@@ -106,3 +106,12 @@ export async function getUserProfile() {
         return { success: false, error: "Failed to fetch user profile" };
     }
 }
+
+// RSC version: Get user profile by userId (no auth check - RSC validates session)
+export async function getUserProfileForRSC(userId: string) {
+    const profile = await prisma.userProfile.findUnique({
+        where: { userId },
+    });
+
+    return profile;
+}

@@ -67,14 +67,17 @@ interface TimeSheetTableProps {
     entries: TimeEntry[];
     onDeleteEntry: (entryId: string) => Promise<any>;
     onSuccess: () => void;
+    currentWeek: Date;
+    onWeekChange: (week: Date) => void;
 }
 
 export function TimeSheetTable({
     entries,
     onDeleteEntry,
     onSuccess,
+    currentWeek,
+    onWeekChange,
 }: TimeSheetTableProps) {
-    const [currentWeek, setCurrentWeek] = useState(new Date());
     const [rows, setRows] = useState<Array<{ projectId: string | null }>>([
         { projectId: null },
     ]);
@@ -235,9 +238,9 @@ export function TimeSheetTable({
         setRows(newRows);
     };
 
-    const goToPreviousWeek = () => setCurrentWeek(subWeeks(currentWeek, 1));
-    const goToNextWeek = () => setCurrentWeek(addWeeks(currentWeek, 1));
-    const goToCurrentWeek = () => setCurrentWeek(new Date());
+    const goToPreviousWeek = () => onWeekChange(subWeeks(currentWeek, 1));
+    const goToNextWeek = () => onWeekChange(addWeeks(currentWeek, 1));
+    const goToCurrentWeek = () => onWeekChange(new Date());
 
     // Helper to get project details for the dialog
     const getProjectToDelete = () => {

@@ -47,7 +47,7 @@ interface Project {
     } | null;
     _count?: {
         timeEntries: number;
-        members: number;
+        members?: number;
     };
 }
 

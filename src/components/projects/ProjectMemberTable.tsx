@@ -59,7 +59,7 @@ import {
     removeProjectMember,
     updateProjectMember,
 } from "@/lib/actions/project-members";
-import { Role } from "@prisma/client";
+import { type Role, ROLE_OPTIONS } from "@/lib/schemas/role";
 
 // Helper to get initials
 function getInitials(name: string) {
@@ -195,7 +195,7 @@ export function ProjectMemberTable({
                 <TableHeader>
                     <TableRow>
                         <TableHead>Member</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead>Role</TableHead>
                         <TableHead>Charge Rate</TableHead>
                         <TableHead>Payout Rate</TableHead>
                         <TableHead className="w-[50px]"></TableHead>
@@ -370,10 +370,12 @@ export function ProjectMemberTable({
                                 <SelectValue placeholder="Select a role" />
                             </SelectTrigger>
                             <SelectContent>
-                                {Object.values(Role).map((role) => (
-                                    <SelectItem key={role} value={role}>
-                                        {role.charAt(0).toUpperCase() +
-                                            role.slice(1)}
+                                {ROLE_OPTIONS.map((option) => (
+                                    <SelectItem
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.label}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
