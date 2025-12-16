@@ -29,11 +29,11 @@ const formSchema = z.object({
     userId: z.string().min(1, "Please select a user"),
     payoutRate: z
         .string()
-        .refine((val) => parseFloat(val) > 0, "Enter a valid payout rate"),
+        .refine((val) => parseFloat(val) >= 0, "Enter a valid payout rate"),
     chargeRate: z
         .string()
         .refine(
-            (val) => parseFloat(val) > 0,
+            (val) => parseFloat(val) >= 0,
             "Enter a valid client charge rate"
         ),
     role: z.enum(["owner", "manager", "member"]),
