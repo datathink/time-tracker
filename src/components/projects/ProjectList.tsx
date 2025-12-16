@@ -137,14 +137,22 @@ export function ProjectList({
                             <TableHead className="font-bold pl-6">
                                 Project
                             </TableHead>
-                            <TableHead className="font-bold">Client</TableHead>
+                            {isAdmin && <TableHead>Client</TableHead>}
                             <TableHead className="font-bold">Status</TableHead>
-                            <TableHead className="font-bold">Budget</TableHead>
+                            {isAdmin && (
+                                <TableHead className="font-bold">
+                                    Budget
+                                </TableHead>
+                            )}
                             <TableHead className="font-bold">Team</TableHead>
                             <TableHead className="font-bold">
                                 Time Entries
                             </TableHead>
-                            <TableHead className="font-bold">Actions</TableHead>
+                            {isAdmin && (
+                                <TableHead className="font-bold">
+                                    Actions
+                                </TableHead>
+                            )}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -163,9 +171,11 @@ export function ProjectList({
                                         </span>
                                     </div>
                                 </TableCell>
-                                <TableCell>
-                                    {project.client?.name || "-"}
-                                </TableCell>
+                                {isAdmin && (
+                                    <TableCell>
+                                        {project.client?.name || "-"}
+                                    </TableCell>
+                                )}
                                 <TableCell>
                                     <Badge
                                         className={getStatusColor(
@@ -175,11 +185,13 @@ export function ProjectList({
                                         {project.status}
                                     </Badge>
                                 </TableCell>
-                                <TableCell>
-                                    {project.budgetAmount
-                                        ? `$${project.budgetAmount}`
-                                        : "-"}
-                                </TableCell>
+                                {isAdmin && (
+                                    <TableCell>
+                                        {project.budgetAmount
+                                            ? `$${project.budgetAmount}`
+                                            : "-"}
+                                    </TableCell>
+                                )}
                                 <TableCell>
                                     <Badge variant="secondary">
                                         {project._count?.members || 0} members
@@ -190,51 +202,56 @@ export function ProjectList({
                                         {project._count?.timeEntries || 0}
                                     </Badge>
                                 </TableCell>
-                                <TableCell>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-8 w-8 p-0"
-                                            >
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem
-                                                onClick={() =>
-                                                    handleEdit(project)
-                                                }
-                                            >
-                                                <Pencil className="mr-2 h-4 w-4" />
-                                                Edit Project
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                                onClick={() =>
-                                                    handleManageTeam(project)
-                                                }
-                                            >
-                                                <Users className="mr-2 h-4 w-4" />
-                                                Manage Team
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                                onClick={() =>
-                                                    handleArchive(project)
-                                                }
-                                                disabled={
-                                                    archivingId === project.id
-                                                }
-                                                className="text-red-600"
-                                            >
-                                                <Archive className="mr-2 h-4 w-4" />
-                                                {archivingId === project.id
-                                                    ? "Archiving..."
-                                                    : "Archive Project"}
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </TableCell>
+                                {isAdmin && (
+                                    <TableCell>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 w-8 p-0"
+                                                >
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem
+                                                    onClick={() =>
+                                                        handleEdit(project)
+                                                    }
+                                                >
+                                                    <Pencil className="mr-2 h-4 w-4" />
+                                                    Edit Project
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={() =>
+                                                        handleManageTeam(
+                                                            project
+                                                        )
+                                                    }
+                                                >
+                                                    <Users className="mr-2 h-4 w-4" />
+                                                    Manage Team
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={() =>
+                                                        handleArchive(project)
+                                                    }
+                                                    disabled={
+                                                        archivingId ===
+                                                        project.id
+                                                    }
+                                                    className="text-red-600"
+                                                >
+                                                    <Archive className="mr-2 h-4 w-4" />
+                                                    {archivingId === project.id
+                                                        ? "Archiving..."
+                                                        : "Archive Project"}
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                )}
                             </TableRow>
                         ))}
                     </TableBody>
@@ -276,8 +293,11 @@ export function ProjectList({
                                 performArchive(confirmArchiveProject!.id)
                             }
                             className="bg-red-600 hover:bg-red-700"
+                            disabled={archivingId === confirmArchiveProject?.id}
                         >
-                            Archive
+                            {archivingId === confirmArchiveProject?.id
+                                ? "Archiving..."
+                                : "Archive"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
