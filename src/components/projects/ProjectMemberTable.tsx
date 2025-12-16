@@ -462,8 +462,8 @@ export function ProjectMemberTable({
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                            //variant="destructive"
                             onClick={handleRemove}
+                            className="bg-red-600 hover:bg-red-700"
                         >
                             Remove
                         </AlertDialogAction>{" "}
