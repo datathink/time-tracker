@@ -31,8 +31,8 @@ async function canManageProject(projectId: string) {
 const addMemberSchema = z.object({
     projectId: z.string(),
     userId: z.string(),
-    payoutRate: z.union([z.number().positive()]),
-    chargeRate: z.union([z.number().positive()]),
+    payoutRate: z.number().nonnegative(),
+    chargeRate: z.number().nonnegative(),
     role: z.enum(["owner", "manager", "member"]).default("member"),
 });
 
