@@ -571,7 +571,7 @@ export function TimeSheetTable({
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>
-                            Delete timesheet row?
+                            Delete timesheet row
                         </AlertDialogTitle>
                         <AlertDialogDescription>
                             This will permanently delete the row and all
@@ -608,7 +608,7 @@ export function TimeSheetTable({
                             disabled={isDeleting}
                             className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
                         >
-                            {isDeleting ? "Deleting..." : "Delete Row"}
+                            {isDeleting ? "Deleting..." : "Delete"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -619,7 +619,7 @@ export function TimeSheetTable({
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete time entry?</AlertDialogTitle>
+                        <AlertDialogTitle>Delete time entry</AlertDialogTitle>
                         <AlertDialogDescription>
                             This will permanently delete this time entry for
                             {entryToDelete?.project && (
@@ -648,7 +648,7 @@ export function TimeSheetTable({
                             disabled={isDeleting}
                             className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
                         >
-                            {isDeleting ? "Deleting..." : "Delete Entry"}
+                            {isDeleting ? "Deleting..." : "Delete"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

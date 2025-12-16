@@ -260,7 +260,7 @@ export function CalendarView({
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete time entry?</AlertDialogTitle>
+                        <AlertDialogTitle>Delete time entry</AlertDialogTitle>
                         <AlertDialogDescription>
                             This will permanently delete this time entry for
                             {entryToDelete?.project && (
@@ -286,7 +286,7 @@ export function CalendarView({
                             onClick={handleDeleteConfirm}
                             className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
                         >
-                            Delete Entry
+                            Delete
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
