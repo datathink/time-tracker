@@ -22,18 +22,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { addProjectMember, getAllUsers } from "@/lib/actions/project-members";
 
 const formSchema = z.object({
     userId: z.string().min(1, "Please select a user"),
     payoutRate: z
         .string()
-        .refine((val) => parseFloat(val) > 0, "Enter a valid payout rate"),
+        .refine((val) => parseFloat(val) >= 0, "Enter a valid payout rate"),
     chargeRate: z
         .string()
         .refine(
-            (val) => parseFloat(val) > 0,
+            (val) => parseFloat(val) >= 0,
             "Enter a valid client charge rate"
         ),
     role: z.enum(["owner", "manager", "member"]),

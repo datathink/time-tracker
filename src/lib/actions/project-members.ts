@@ -3,9 +3,8 @@
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/db/prisma";
 import { z } from "zod";
-import { Role } from "@prisma/client";
+import { Role } from "@/generated/prisma/client";
 import { getCurrentUser, isAdminUser } from "./clients";
-import { Decimal } from "@prisma/client/runtime/library";
 
 // Check if user is admin or project owner
 async function canManageProject(projectId: string) {
@@ -32,8 +31,8 @@ async function canManageProject(projectId: string) {
 const addMemberSchema = z.object({
     projectId: z.string(),
     userId: z.string(),
-    payoutRate: z.union([z.number().positive(), z.instanceof(Decimal)]),
-    chargeRate: z.union([z.number().positive(), z.instanceof(Decimal)]),
+    payoutRate: z.number().nonnegative(),
+    chargeRate: z.number().nonnegative(),
     role: z.enum(["owner", "manager", "member"]).default("member"),
 });
 
@@ -73,8 +72,8 @@ export async function addProjectMember(data: z.infer<typeof addMemberSchema>) {
             data: {
                 projectId: validated.projectId,
                 userId: validated.userId,
-                payoutRate: new Decimal(validated.payoutRate),
-                chargeRate: new Decimal(validated.chargeRate),
+                payoutRate: validated.payoutRate,
+                chargeRate: validated.chargeRate,
                 role: validated.role,
                 isActive: true,
             },
@@ -142,10 +141,10 @@ export async function updateProjectMember(
             where: { id: memberId },
             data: {
                 ...(data.payoutRate !== undefined && {
-                    payoutRate: new Decimal(data.payoutRate),
+                    payoutRate: data.payoutRate,
                 }),
                 ...(data.chargeRate !== undefined && {
-                    chargeRate: new Decimal(data.chargeRate),
+                    chargeRate: data.chargeRate,
                 }),
                 ...(data.role !== undefined && { role: data.role as Role }),
                 ...(data.isActive !== undefined && { isActive: data.isActive }),

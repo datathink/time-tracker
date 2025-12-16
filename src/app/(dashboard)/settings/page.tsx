@@ -1,6 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { getValidatedSession } from "@/lib/auth/getValidatedSession";
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  await getValidatedSession();
   return (
     <div className="space-y-6">
       <div>

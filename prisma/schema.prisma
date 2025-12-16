@@ -2,46 +2,46 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // Better Auth Models
 model User {
-  id            String    @id @default(uuid())
+  id            String  @id @default(uuid())
   name          String?
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  email         String  @unique
+  emailVerified Boolean @default(false)
   image         String?
-  role          String    @default("member") // admin, member
+  role          String  @default("member") // admin, member
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  profile       UserProfile?
-  sessions      Session[]
-  accounts      Account[]
-  timeEntries   TimeEntry[]
-  projects      Project[]
+  profile        UserProfile?
+  sessions       Session[]
+  accounts       Account[]
+  timeEntries    TimeEntry[]
+  projects       Project[]
   projectMembers ProjectMember[]
 }
 
 model UserProfile {
-  id            String    @id @default(uuid())
-  userId        String    @unique
-  phone         String?
-  address       String?
-  birthDate     DateTime?
+  id        String    @id @default(uuid())
+  userId    String    @unique
+  phone     String?
+  address   String?
+  birthDate DateTime?
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
 }
@@ -54,7 +54,7 @@ model Session {
   ipAddress String?
   userAgent String?
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -63,20 +63,20 @@ model Session {
 }
 
 model Account {
-  id                String   @id @default(uuid())
-  userId            String
-  accountId         String
-  providerId        String
-  accessToken       String?
-  refreshToken      String?
-  idToken           String?
-  expiresAt         DateTime?
-  password          String?
+  id           String    @id @default(uuid())
+  userId       String
+  accountId    String
+  providerId   String
+  accessToken  String?
+  refreshToken String?
+  idToken      String?
+  expiresAt    DateTime?
+  password     String?
 
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([providerId, accountId])
   @@index([userId])
@@ -88,31 +88,31 @@ model Verification {
   value      String
   expiresAt  DateTime
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([identifier, value])
 }
 
 // Time Tracking Models
 model TimeEntry {
-  id           String    @id @default(uuid())
-  userId       String
-  projectId    String
-  date         DateTime  @db.Date // The day this entry is for
-  duration     Int       // Required: duration in minutes
-  startTime    String?   // Optional: "09:00" format
-  endTime      String?   // Optional: "17:30" format
-  description  String
-  billable     Boolean   @default(true)
-  billed       Boolean   @default(false) // Has been included in an invoice
+  id          String   @id @default(uuid())
+  userId      String
+  projectId   String
+  date        DateTime @db.Date // The day this entry is for
+  duration    Int // Required: duration in minutes
+  startTime   String? // Optional: "09:00" format
+  endTime     String? // Optional: "17:30" format
+  description String
+  billable    Boolean  @default(true)
+  billed      Boolean  @default(false) // Has been included in an invoice
 
   // Relations
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  project      Project  @relation(fields: [projectId], references: [id])
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id])
 
   // Audit fields
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId, date])
   @@index([projectId, date])
@@ -120,43 +120,43 @@ model TimeEntry {
 }
 
 model Project {
-  id            String      @id @default(uuid())
-  name          String
-  clientId      String
-  description   String?
-  budgetAmount  Decimal?    @db.Decimal(10, 2) // Optional budget amount (USD)
-  status        String      @default("active") // active, archived, completed
-  color         String      @default("#6366f1") // For UI display
-  userId        String      // Project owner
+  id           String   @id @default(uuid())
+  name         String
+  clientId     String
+  description  String?
+  budgetAmount Decimal? @db.Decimal(10, 2) // Optional budget amount (USD)
+  status       String   @default("active") // active, archived, completed
+  color        String   @default("#6366f1") // For UI display
+  userId       String // Project owner
 
   // Relations
-  client       Client?   @relation(fields: [clientId], references: [id])
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  timeEntries  TimeEntry[]
-  members      ProjectMember[]
+  client      Client?         @relation(fields: [clientId], references: [id])
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timeEntries TimeEntry[]
+  members     ProjectMember[]
 
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId, status])
   @@index([clientId])
 }
 
 model ProjectMember {
-  id               String    @id @default(uuid())
-  projectId        String
-  userId           String
-  role             Role      @default(member)
-  payoutRate       Decimal   @db.Decimal(10, 2) // Individual pay rate for this user on this project (USD/hr)
-  chargeRate       Decimal   @db.Decimal(10, 2) // Rate charged to client for this user on this project (USD/hr)
-  isActive         Boolean   @default(true)
+  id         String  @id @default(uuid())
+  projectId  String
+  userId     String
+  role       Role    @default(member)
+  payoutRate Decimal @db.Decimal(10, 2) // Individual pay rate for this user on this project (USD/hr)
+  chargeRate Decimal @db.Decimal(10, 2) // Rate charged to client for this user on this project (USD/hr)
+  isActive   Boolean @default(true)
 
   // Relations
-  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([projectId, userId])
   @@index([userId, isActive])
@@ -171,14 +171,14 @@ enum Role {
 }
 
 model Client {
-  id           String    @id @default(uuid())
-  name         String
-  email        String?
-  company      String?
-  isArchived   Boolean   @default(false)
+  id         String  @id @default(uuid())
+  name       String
+  email      String?
+  company    String?
+  isArchived Boolean @default(false)
 
   // Relations
-  projects     Project[]
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  projects  Project[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }

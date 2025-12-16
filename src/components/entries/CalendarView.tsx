@@ -15,7 +15,7 @@ import {
     isToday,
 } from "date-fns";
 import { formatDecimalHours, fromUTCDate } from "@/lib/utils";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import {
     AlertDialog,
     AlertDialogAction,

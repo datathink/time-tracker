@@ -48,7 +48,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { format, isSameDay } from "date-fns";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { Calendar } from "@/components/ui/calendar";
 import {
     Popover,
