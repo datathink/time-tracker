@@ -30,7 +30,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Pencil, Trash2, Clock } from "lucide-react";
 import { format } from "date-fns";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { toast } from "sonner";
 
 type TimeEntry = Prisma.TimeEntryGetPayload<{
