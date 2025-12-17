@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { ProjectForm } from "./ProjectForm";
 import { archiveProject } from "@/lib/actions/projects";
 import { Button } from "@/components/ui/button";
-
 import {
     Table,
     TableBody,
@@ -21,7 +20,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Pencil, Users, Archive } from "lucide-react";
+import { MoreHorizontal, Pencil, Archive } from "lucide-react";
 import { toast } from "sonner";
 import {
     AlertDialog,
@@ -72,10 +71,6 @@ export function ProjectList({
     const handleEdit = (project: Project) => {
         setEditingProject(project);
         setIsFormOpen(true);
-    };
-
-    const handleManageTeam = (project: Project) => {
-        router.push(`/projects/${project.id}/team`);
     };
 
     const handleArchive = (project: Project) => {
@@ -157,7 +152,13 @@ export function ProjectList({
                     </TableHeader>
                     <TableBody>
                         {projects.map((project) => (
-                            <TableRow key={project.id}>
+                            <TableRow
+                                key={project.id}
+                                className="cursor-pointer"
+                                onClick={() =>
+                                    router.push(`/projects/${project.id}`)
+                                }
+                            >
                                 <TableCell>
                                     <div className="flex items-center gap-2 pl-3">
                                         <div
@@ -222,16 +223,6 @@ export function ProjectList({
                                                 >
                                                     <Pencil className="mr-2 h-4 w-4" />
                                                     Edit Project
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    onClick={() =>
-                                                        handleManageTeam(
-                                                            project
-                                                        )
-                                                    }
-                                                >
-                                                    <Users className="mr-2 h-4 w-4" />
-                                                    Manage Team
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                     onClick={() =>

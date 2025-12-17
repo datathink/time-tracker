@@ -1,75 +1,29 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import {
-    ArrowLeft,
-    Plus,
-    Loader2,
-    Users,
-    DollarSign,
-    Briefcase,
-} from "lucide-react";
+import { Plus, Users, DollarSign, Briefcase } from "lucide-react";
 import { ProjectMemberTable } from "@/components/projects/ProjectMemberTable";
 import { ProjectMemberForm } from "@/components/projects/ProjectMemberForm";
-import { getProjectMembers } from "@/lib/actions/project-members";
-import { getProject } from "@/lib/actions/projects";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { type Role } from "@/lib/schemas/role";
+import { getProjectMembers } from "@/lib/actions/project-members";
+import type { ProjectData, ProjectMember } from "@/lib/types/project";
 
-interface ProjectMember {
-    id: string;
-    userId: string;
-    projectId: string;
-    isActive: boolean;
-    chargeRate: number;
-    payoutRate: number;
-    role: Role;
-    user: {
-        id: string;
-        name: string | null;
-        email: string;
-    };
+interface ProjectTeamPageProps {
+    project: ProjectData;
 }
 
-interface ProjectData {
-    id: string;
-    name: string;
-}
-
-export default function ProjectTeamPage() {
-    const params = useParams();
-    const router = useRouter();
-    const projectIdParam = params.projectId;
-    const projectId = Array.isArray(projectIdParam)
-        ? projectIdParam[0]
-        : projectIdParam;
-
-    const [project, setProject] = useState<ProjectData | null>(null);
-    const [members, setMembers] = useState<ProjectMember[]>([]);
-    const [loading, setLoading] = useState(true);
+export function ProjectTeamPage({ project }: ProjectTeamPageProps) {
+    const [members, setMembers] = useState<ProjectMember[]>(project.members);
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
 
-    const loadData = useCallback(async () => {
-        if (!projectId) return;
-        setLoading(true);
-        const [projectResult, membersResult] = await Promise.all([
-            getProject(projectId),
-            getProjectMembers(projectId),
-        ]);
-
-        if (projectResult.success && projectResult.data)
-            setProject(projectResult.data);
-        if (membersResult.success && membersResult.data)
-            setMembers(membersResult.data);
-        setLoading(false);
-    }, [projectId]);
-
-    useEffect(() => {
-        if (projectId) loadData();
-    }, [projectId, loadData]);
+    const loadMembers = useCallback(async () => {
+        const result = await getProjectMembers(project.id);
+        if (result.success && result.data) {
+            setMembers(result.data as ProjectMember[]);
+        }
+    }, [project.id]);
 
     const totalCostRate = members.reduce(
         (acc, curr) => acc + (curr.payoutRate || 0),
@@ -80,40 +34,14 @@ export default function ProjectTeamPage() {
         0
     );
 
-    if (!projectId || (!project && !loading)) {
-        return (
-            <div className="p-8 text-center">
-                <p className="text-red-500">Invalid Project ID</p>
-            </div>
-        );
-    }
-
-    if (loading && !project) {
-        return (
-            <div className="flex h-screen items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-        );
-    }
-
     return (
         <div className="max-w-7xl mx-auto py-10 px-6 space-y-10">
             {/* Page Header */}
             <div className="flex flex-col gap-6">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-fit -ml-2 text-muted-foreground hover:text-foreground"
-                    onClick={() => router.push("/projects")}
-                >
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Projects
-                </Button>
-
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
                     <div>
                         <h1 className="text-4xl font-bold tracking-tight">
-                            {project?.name}
+                            {project.name}
                         </h1>
                         <p className="text-muted-foreground mt-2 text-sm">
                             Manage team access, roles, and financial rates.
@@ -192,16 +120,19 @@ export default function ProjectTeamPage() {
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <ProjectMemberTable members={members} onUpdate={loadData} />
+                    <ProjectMemberTable
+                        members={members}
+                        onUpdate={loadMembers}
+                    />
                 </CardContent>
             </Card>
 
             {/* Add Member Modal */}
             <ProjectMemberForm
-                projectId={projectId}
+                projectId={project.id}
                 open={isAddMemberOpen}
                 onOpenChange={setIsAddMemberOpen}
-                onSuccess={loadData}
+                onSuccess={loadMembers}
                 existingMemberIds={members.map((m) => m.userId)}
             />
         </div>
