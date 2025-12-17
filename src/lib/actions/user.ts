@@ -4,8 +4,6 @@ import prisma from "@/lib/db/prisma";
 import { z } from "zod";
 import { usernameSchema, type UsernameUpdateData } from "@/lib/schemas/user";
 
-
-
 // Update name on User model
 export async function updateUserName(userId: string, name: UsernameUpdateData) {
     try {
@@ -23,4 +21,23 @@ export async function updateUserName(userId: string, name: UsernameUpdateData) {
         }
         return { success: false, error: "Failed to update user name" };
     }
+}
+
+export async function getUsers() {
+    try {
+        const users = await prisma.user.findMany({
+            orderBy: { name: "asc" },
+        });
+        return { success: true, data: users };
+    } catch (error) {
+        console.error("Error fetching users:", error);
+        return { success: false, error: "Failed to fetch users", data: [] };
+    }
+}
+
+export async function getUsersForRSC() {
+    const users = await prisma.user.findMany({
+        orderBy: { name: "asc" },
+    });
+    return users;
 }

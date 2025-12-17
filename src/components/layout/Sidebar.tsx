@@ -1,6 +1,13 @@
 "use client";
 
-import { Settings, BarChart3, Building2, FileText, Folder } from "lucide-react";
+import {
+    Settings,
+    BarChart3,
+    Building2,
+    FileText,
+    Folder,
+    Users,
+} from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import {
@@ -70,6 +77,11 @@ const AppSidebar = () => {
             title: "Clients",
             url: "/clients",
             icon: Building2,
+        },
+        {
+            title: "Users",
+            url: "/users",
+            icon: Users,
         },
     ];
 
