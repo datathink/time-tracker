@@ -1,8 +1,14 @@
 "use client";
-
-import { Settings, BarChart3, Building2, FileText, Folder } from "lucide-react";
+import {
+    Settings,
+    BarChart3,
+    Building2,
+    FileText,
+    Folder,
+    LucideIcon,
+    Shield,
+} from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
 import {
     Sidebar,
     SidebarContent,
@@ -21,28 +27,20 @@ import {
 } from "@/components/ui/tooltip";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { isAdminUser } from "@/lib/actions/clients";
+import { cn } from "@/lib/utils";
 
-const AppSidebar = () => {
+interface NavigationItem {
+    title: string;
+    url: string;
+    icon: LucideIcon;
+    isAdminPage?: boolean;
+}
+
+const AppSidebar = ({ isAdmin }: { isAdmin: boolean }) => {
     const pathname = usePathname();
     const { state } = useSidebar();
-    const [isAdmin, setIsAdmin] = useState(false);
 
-    useEffect(() => {
-        const checkAdminStatus = async () => {
-            try {
-                const adminStatus = await isAdminUser();
-                setIsAdmin(adminStatus);
-            } catch (error) {
-                console.error("Error checking admin status:", error);
-                setIsAdmin(false);
-            }
-        };
-
-        checkAdminStatus();
-    }, []);
-
-    const baseNavigation = [
+    const baseNavigationItems: NavigationItem[] = [
         {
             title: "Time Entries",
             url: "/entries",
@@ -65,21 +63,18 @@ const AppSidebar = () => {
         },
     ];
 
-    const adminNavigation = [
+    const adminNavigationItems: NavigationItem[] = [
         {
             title: "Clients",
             url: "/clients",
             icon: Building2,
+            isAdminPage: true,
         },
     ];
 
-    const navigation = isAdmin
-        ? [
-              ...baseNavigation.slice(0, 2),
-              ...adminNavigation,
-              ...baseNavigation.slice(2),
-          ]
-        : baseNavigation;
+    const navigationItems = isAdmin
+        ? [...baseNavigationItems, ...adminNavigationItems]
+        : baseNavigationItems;
 
     const isActive = (url: string): boolean => {
         // Handle root separately if needed
@@ -121,7 +116,7 @@ const AppSidebar = () => {
                 <SidebarGroup>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {navigation.map((item, index) => (
+                            {navigationItems.map((item, index) => (
                                 <SidebarMenuItem
                                     key={`nav-item-${index}-${item.title}`}
                                 >
@@ -133,13 +128,20 @@ const AppSidebar = () => {
                                                     isActive={isActive(
                                                         item.url
                                                     )}
-                                                    className="text-[16px] py-5 hover:bg-sidebar-border data-[active=true]:bg-sidebar-border data-[active=true]:text-sidebar-accent-foreground"
+                                                    className={cn(
+                                                        item.isAdminPage &&
+                                                            "flex items-center justify-between",
+                                                        "text-base py-5 hover:bg-sidebar-border data-[active=true]:bg-sidebar-border data-[active=true]:text-sidebar-accent-foreground"
+                                                    )}
                                                 >
                                                     <Link href={item.url}>
                                                         <item.icon className="mr-2 h-4 w-4" />
                                                         <span>
                                                             {item.title}
                                                         </span>
+                                                        {item.isAdminPage && (
+                                                            <Shield className="ml-auto h-2 w-2" />
+                                                        )}
                                                     </Link>
                                                 </SidebarMenuButton>
                                             </TooltipTrigger>
@@ -159,6 +161,9 @@ const AppSidebar = () => {
                                             <Link href={item.url}>
                                                 <item.icon className="mr-2 h-4 w-4" />
                                                 <span>{item.title}</span>
+                                                {item.isAdminPage && (
+                                                    <Shield className="ml-auto h-4 w-4" />
+                                                )}
                                             </Link>
                                         </SidebarMenuButton>
                                     )}

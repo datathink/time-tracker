@@ -8,10 +8,7 @@ runConfig:
     # memoryMiB: 512
     cloudSqlInstances:
         - time-tracker-befa8:us-central1:time-tracker
-# Environment variables and secrets.
 env:
-    # Configure environment variables.
-    # See https://firebase.google.com/docs/app-hosting/configure#user-defined-environment
     - variable: BETTER_AUTH_SECRET
       secret: projects/351890101532/secrets/BETTER_AUTH_SECRET
     - variable: BETTER_AUTH_URL
