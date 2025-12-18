@@ -2,25 +2,25 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // Better Auth Models
 model User {
-  id            String    @id @default(uuid())
+  id            String  @id @default(uuid())
   name          String?
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  email         String  @unique
+  emailVerified Boolean @default(false)
   image         String?
-  role          String    @default("member") // admin, member
+  role          String  @default("member") // admin, member
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
   profile         UserProfile?
@@ -31,17 +31,17 @@ model User {
 }
 
 model UserProfile {
-  id            String    @id @default(uuid())
-  userId        String    @unique
-  phone         String?
-  address       String?
-  birthDate     DateTime?
+  id        String    @id @default(uuid())
+  userId    String    @unique
+  phone     String?
+  address   String?
+  birthDate DateTime?
 
   // Relations
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
 }
@@ -64,20 +64,20 @@ model Session {
 }
 
 model Account {
-  id                String   @id @default(uuid())
-  userId            String
-  accountId         String
-  providerId        String
-  accessToken       String?
-  refreshToken      String?
-  idToken           String?
-  expiresAt         DateTime?
-  password          String?
+  id           String    @id @default(uuid())
+  userId       String
+  accountId    String
+  providerId   String
+  accessToken  String?
+  refreshToken String?
+  idToken      String?
+  expiresAt    DateTime?
+  password     String?
 
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([providerId, accountId])
   @@index([userId])
@@ -89,7 +89,7 @@ model Verification {
   value      String
   expiresAt  DateTime
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([identifier, value])
 }
@@ -103,47 +103,48 @@ model TimeEntry {
   startTime         String?   // Optional: "09:00" format
   endTime           String?   // Optional: "17:30" format
   description       String
+  billable    Boolean  @default(true)
   billed            Boolean   @default(false) // Has been included in an invoice
 
   // Relations
   projectMember     ProjectMember    @relation(fields: [projectMemberId], references: [id], onDelete: Cascade)
 
   // Audit fields
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([projectMemberId, date])
 
 }
 
 model Project {
-  id            String      @id @default(uuid())
-  name          String
-  clientId      String
-  description   String?
-  budgetAmount  Decimal?    @db.Decimal(10, 2) // Optional budget amount (USD)
-  status        String      @default("active") // active, archived, completed
-  color         String      @default("#6366f1") // For UI display
-  userId        String      // Project owner
+  id           String   @id @default(uuid())
+  name         String
+  clientId     String
+  description  String?
+  budgetAmount Decimal? @db.Decimal(10, 2) // Optional budget amount (USD)
+  status       String   @default("active") // active, archived, completed
+  color        String   @default("#6366f1") // For UI display
+  userId       String // Project owner
 
   // Relations
   client       Client    @relation(fields: [clientId], references: [id])
   members      ProjectMember[]
 
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([clientId])
 }
 
 model ProjectMember {
-  id               String    @id @default(uuid())
-  projectId        String
-  userId           String
-  role             Role      @default(member)
-  payoutRate       Decimal   @db.Decimal(10, 2) // Individual pay rate for this user on this project (USD/hr)
-  chargeRate       Decimal   @db.Decimal(10, 2) // Rate charged to client for this user on this project (USD/hr)
-  isActive         Boolean   @default(true)
+  id         String  @id @default(uuid())
+  projectId  String
+  userId     String
+  role       Role    @default(member)
+  payoutRate Decimal @db.Decimal(10, 2) // Individual pay rate for this user on this project (USD/hr)
+  chargeRate Decimal @db.Decimal(10, 2) // Rate charged to client for this user on this project (USD/hr)
+  isActive   Boolean @default(true)
 
 
  
@@ -153,8 +154,8 @@ model ProjectMember {
   timeEntries  TimeEntry[]
 
 
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([projectId, userId])
   @@index([userId, isActive])
@@ -169,11 +170,11 @@ enum Role {
 }
 
 model Client {
-  id           String    @id @default(uuid())
-  name         String
-  email        String?
-  company      String?
-  isArchived   Boolean   @default(false)
+  id         String  @id @default(uuid())
+  name       String
+  email      String?
+  company    String?
+  isArchived Boolean @default(false)
 
   // Relations
   projects     Project[]

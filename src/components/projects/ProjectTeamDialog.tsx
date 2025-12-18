@@ -13,7 +13,7 @@ import { ProjectMemberList } from "./ProjectMemberList";
 import { ProjectMemberForm } from "./ProjectMemberForm";
 import { getProjectMembers } from "@/lib/actions/project-members";
 import { Plus } from "lucide-react";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 
 type RawProjectMemberWithUser = Prisma.ProjectMemberGetPayload<{
     include: {

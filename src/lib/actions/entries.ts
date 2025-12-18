@@ -54,6 +54,7 @@ export async function createTimeEntry(data: TimeEntryFormData) {
         startTime: validated.startTime || null,
         endTime: validated.endTime || null,
         description: validated.description,
+        billable: validated.billable,
       },
     });
 
@@ -115,6 +116,7 @@ export async function updateTimeEntry(id: string, data: TimeEntryFormData) {
         startTime: validated.startTime || null,
         endTime: validated.endTime || null,
         description: validated.description,
+        billable: validated.billable,
       },
     });
 
@@ -283,6 +285,35 @@ export async function getWeekTimeEntries(weekStart: string, weekEnd: string) {
       data: [],
     };
   }
+}
+
+// RSC version: Get time entries for a specific week (accepts userId directly)
+export async function getWeekTimeEntriesForUser(
+  userId: string,
+  weekStart: string,
+  weekEnd: string
+) {
+  const entries = await prisma.timeEntry.findMany({
+    where: {
+      userId,
+      date: {
+        gte: new Date(weekStart),
+        lte: new Date(weekEnd),
+      },
+    },
+    orderBy: [{ date: "asc" }, { createdAt: "asc" }],
+    include: {
+      project: {
+        select: {
+          id: true,
+          name: true,
+          color: true,
+        },
+      },
+    },
+  });
+
+  return entries;
 }
 
 // Get time entry stats

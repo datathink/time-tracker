@@ -10,6 +10,7 @@ export const timeEntrySchema = z.object({
   startTime: z.string().optional().nullable(),
   endTime: z.string().optional().nullable(),
   description: z.string().min(10, "Description is required"),
+  billable: z.boolean().default(true),
 });
 
 export type TimeEntryFormData = z.infer<typeof timeEntrySchema>;
