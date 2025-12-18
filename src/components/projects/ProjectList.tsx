@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ProjectForm } from "./ProjectForm";
 import { archiveProject } from "@/lib/actions/projects";
-import { Button } from "@/components/ui/button";
 import {
     Table,
     TableBody,
@@ -13,14 +12,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Pencil, Archive } from "lucide-react";
 import { toast } from "sonner";
 import {
     AlertDialog,
@@ -32,23 +24,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-interface Project {
-    id: string;
-    name: string;
-    clientId: string;
-    description: string | null;
-    budgetAmount: number | null;
-    status: string;
-    color: string;
-    client?: {
-        name: string;
-    } | null;
-    _count?: {
-        timeEntries: number;
-        members?: number;
-    };
-}
+import { type Project } from "@/lib/types/project";
 
 interface ProjectListProps {
     projects: Project[];
@@ -67,15 +43,6 @@ export function ProjectList({
     const [archivingId, setArchivingId] = useState<string | null>(null);
     const [confirmArchiveProject, setConfirmArchiveProject] =
         useState<Project | null>(null);
-
-    const handleEdit = (project: Project) => {
-        setEditingProject(project);
-        setIsFormOpen(true);
-    };
-
-    const handleArchive = (project: Project) => {
-        setConfirmArchiveProject(project);
-    };
 
     const performArchive = async (id: string) => {
         setArchivingId(id);
@@ -132,7 +99,11 @@ export function ProjectList({
                             <TableHead className="font-bold pl-6">
                                 Project
                             </TableHead>
-                            {isAdmin && <TableHead>Client</TableHead>}
+                            {isAdmin && (
+                                <TableHead className="font-bold">
+                                    Client
+                                </TableHead>
+                            )}
                             <TableHead className="font-bold">Status</TableHead>
                             {isAdmin && (
                                 <TableHead className="font-bold">
@@ -143,18 +114,13 @@ export function ProjectList({
                             <TableHead className="font-bold">
                                 Time Entries
                             </TableHead>
-                            {isAdmin && (
-                                <TableHead className="font-bold">
-                                    Actions
-                                </TableHead>
-                            )}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {projects.map((project) => (
                             <TableRow
                                 key={project.id}
-                                className="cursor-pointer"
+                                className="h-14 cursor-pointer"
                                 onClick={() =>
                                     router.push(`/projects/${project.id}`)
                                 }
@@ -203,46 +169,6 @@ export function ProjectList({
                                         {project._count?.timeEntries || 0}
                                     </Badge>
                                 </TableCell>
-                                {isAdmin && (
-                                    <TableCell>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-8 w-8 p-0"
-                                                >
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem
-                                                    onClick={() =>
-                                                        handleEdit(project)
-                                                    }
-                                                >
-                                                    <Pencil className="mr-2 h-4 w-4" />
-                                                    Edit Project
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    onClick={() =>
-                                                        handleArchive(project)
-                                                    }
-                                                    disabled={
-                                                        archivingId ===
-                                                        project.id
-                                                    }
-                                                    className="text-red-600"
-                                                >
-                                                    <Archive className="mr-2 h-4 w-4" />
-                                                    {archivingId === project.id
-                                                        ? "Archiving..."
-                                                        : "Archive Project"}
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                )}
                             </TableRow>
                         ))}
                     </TableBody>

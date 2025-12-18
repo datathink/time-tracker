@@ -61,6 +61,8 @@ import {
 } from "@/lib/actions/project-members";
 import { type Role, ROLE_OPTIONS } from "@/lib/schemas/role";
 
+import { toast } from "sonner";
+
 // Helper to get initials
 function getInitials(name: string) {
     return name
@@ -112,12 +114,13 @@ export function ProjectMemberTable({
         try {
             const result = await removeProjectMember(memberToRemove.id);
             if (result.success) {
+                toast.success("Project member removed successfully.");
                 onUpdate();
             } else {
-                console.error(result.error);
+                toast.error(result.error);
             }
         } catch (error) {
-            console.error("Something went wrong during removal.");
+            toast.error("Something went wrong during removal.");
         } finally {
             setLoadingId(null);
             setMemberToRemove(null);
@@ -135,12 +138,17 @@ export function ProjectMemberTable({
             });
 
             if (result.success) {
+                toast.success(
+                    `Project member ${
+                        newStatus ? "activated" : "deactivated"
+                    } successfully.`
+                );
                 onUpdate();
             } else {
-                console.error(result.error);
+                toast.error(result.error);
             }
         } catch (error) {
-            console.error("Something went wrong.");
+            toast.error("Something went wrong.");
         } finally {
             setLoadingId(null);
         }
@@ -169,13 +177,14 @@ export function ProjectMemberTable({
             });
 
             if (result.success) {
+                toast.success("Project member updated successfully.");
                 setEditingMember(null); // Close modal
                 onUpdate();
             } else {
-                console.error(result.error);
+                toast.error(result.error);
             }
         } catch (error) {
-            console.error("Failed to update member.");
+            toast.error("Failed to update member.");
         } finally {
             setIsSaving(false);
         }

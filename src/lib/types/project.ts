@@ -1,5 +1,22 @@
 import { type Role } from "@/lib/schemas/role";
 
+export interface Project {
+    id: string;
+    name: string;
+    clientId: string;
+    description: string | null;
+    budgetAmount: number | null;
+    status: string;
+    color: string;
+    client?: {
+        name: string;
+    } | null;
+    _count?: {
+        timeEntries: number;
+        members?: number;
+    };
+}
+
 export interface ProjectMemberUser {
     id: string;
     name: string | null;

@@ -328,6 +328,16 @@ export async function getAllProjectsForRSC(active: boolean = true) {
     }));
 }
 
+// Get all archived projects (admin only)
+export async function getAllArchivedProjects() {
+    return getAllProjects(false);
+}
+
+// RSC version: Get all archived projects for admin (no auth check - RSC validates session)
+export async function getArchivedProjectsRSC() {
+    return getAllProjectsForRSC(false);
+}
+
 // Get a single project by ID
 export async function getProject(id: string, active: boolean = true) {
     try {
@@ -383,5 +393,36 @@ export async function getProject(id: string, active: boolean = true) {
     } catch (error) {
         console.error("Error fetching project:", error);
         return { success: false, error: "Failed to fetch project" };
+    }
+}
+
+// Delete a project
+export async function deleteProject(id: string) {
+    try {
+        const isAdmin = await isAdminUser();
+
+        // Check if user is admin
+        if (!isAdmin) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        // Check if project exists
+        const existingProject = await prisma.project.findUnique({
+            where: { id },
+        });
+
+        if (!existingProject) {
+            return { success: false, error: "Project not found" };
+        }
+
+        await prisma.project.delete({
+            where: { id },
+        });
+
+        revalidatePath("/projects");
+        return { success: true };
+    } catch (error) {
+        console.error("Error deleting project:", error);
+        return { success: false, error: "Failed to delete project" };
     }
 }
