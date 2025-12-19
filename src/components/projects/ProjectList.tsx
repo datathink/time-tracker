@@ -38,8 +38,6 @@ export function ProjectList({
     isAdmin,
 }: ProjectListProps) {
     const router = useRouter();
-    const [editingProject, setEditingProject] = useState<Project | null>(null);
-    const [isFormOpen, setIsFormOpen] = useState(false);
     const [archivingId, setArchivingId] = useState<string | null>(null);
     const [confirmArchiveProject, setConfirmArchiveProject] =
         useState<Project | null>(null);
@@ -57,11 +55,6 @@ export function ProjectList({
         }
 
         setArchivingId(null);
-    };
-
-    const handleSuccess = () => {
-        setEditingProject(null);
-        loadProjects(isAdmin);
     };
 
     const getStatusColor = (status: string) => {
@@ -174,19 +167,6 @@ export function ProjectList({
                     </TableBody>
                 </Table>
             </div>
-
-            {editingProject && (
-                <ProjectForm
-                    open={isFormOpen}
-                    onOpenChange={(open) => {
-                        setIsFormOpen(open);
-                        if (!open) setEditingProject(null);
-                    }}
-                    project={editingProject || undefined}
-                    onSuccess={handleSuccess}
-                />
-            )}
-
             <AlertDialog
                 open={!!confirmArchiveProject}
                 onOpenChange={() => setConfirmArchiveProject(null)}

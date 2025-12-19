@@ -46,9 +46,6 @@ export function ArchivedProjectList({
     loadProjects,
     isAdmin,
 }: ProjectListProps) {
-    const router = useRouter();
-    const [editingProject, setEditingProject] = useState<Project | null>(null);
-    const [isFormOpen, setIsFormOpen] = useState(false);
     const [restoringId, setRestoringId] = useState<string | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -56,11 +53,6 @@ export function ArchivedProjectList({
         useState<Project | null>(null);
     const [confirmDeleteProject, setConfirmDeleteProject] =
         useState<Project | null>(null);
-
-    const handleEdit = (project: Project) => {
-        setEditingProject(project);
-        setIsFormOpen(true);
-    };
 
     const handleRestore = (project: Project) => {
         setConfirmRestoreProject(project);
@@ -108,11 +100,6 @@ export function ArchivedProjectList({
         }
 
         setDeletingId(null);
-    };
-
-    const handleSuccess = () => {
-        setEditingProject(null);
-        loadProjects(isAdmin);
     };
 
     const getStatusColor = (status: string) => {
@@ -227,15 +214,6 @@ export function ArchivedProjectList({
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuItem
                                                     onClick={() =>
-                                                        handleEdit(project)
-                                                    }
-                                                >
-                                                    <Pencil className="mr-2 h-4 w-4" />
-                                                    Edit Project
-                                                </DropdownMenuItem>
-
-                                                <DropdownMenuItem
-                                                    onClick={() =>
                                                         handleRestore(project)
                                                     }
                                                     disabled={
@@ -248,22 +226,6 @@ export function ArchivedProjectList({
                                                         ? "Restoring..."
                                                         : "Restore Project"}
                                                 </DropdownMenuItem>
-
-                                                <DropdownMenuItem
-                                                    onClick={() =>
-                                                        handleDelete(project)
-                                                    }
-                                                    disabled={
-                                                        deletingId ===
-                                                        project.id
-                                                    }
-                                                    className="text-red-600"
-                                                >
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                    {deletingId === project.id
-                                                        ? "Deleting..."
-                                                        : "Delete Project"}
-                                                </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
@@ -273,19 +235,6 @@ export function ArchivedProjectList({
                     </TableBody>
                 </Table>
             </div>
-
-            {editingProject && (
-                <ProjectForm
-                    open={isFormOpen}
-                    onOpenChange={(open) => {
-                        setIsFormOpen(open);
-                        if (!open) setEditingProject(null);
-                    }}
-                    project={editingProject || undefined}
-                    onSuccess={handleSuccess}
-                />
-            )}
-
             <AlertDialog
                 open={!!confirmRestoreProject}
                 onOpenChange={() => setConfirmRestoreProject(null)}

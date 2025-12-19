@@ -31,7 +31,6 @@ export async function createProject(data: ProjectFormData) {
             },
         });
 
-        revalidatePath("/projects");
         return {
             success: true,
             data: {

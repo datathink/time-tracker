@@ -27,7 +27,6 @@ import { ProjectMemberTable } from "@/components/projects/ProjectMemberTable";
 import { ProjectMemberForm } from "@/components/projects/ProjectMemberForm";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { getProjectMembers } from "@/lib/actions/project-members";
 import { archiveProject } from "@/lib/actions/projects";
 import type { ProjectData, ProjectMember } from "@/lib/types/project";
@@ -39,25 +38,10 @@ interface ProjectTeamPageProps {
 export function ProjectTeamPage({ project }: ProjectTeamPageProps) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
-    const [editingProject, setEditingProject] = useState<ProjectData | null>(
-        null
-    );
-    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [editFormOpen, setEditFormOpen] = useState(false);
     const [members, setMembers] = useState<ProjectMember[]>(project.members);
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
     const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
-
-    const handleEdit = (project: ProjectData) => {
-        setEditingProject(project);
-        setIsFormOpen(true);
-    };
-
-    const handleSuccess = () => {
-        setEditingProject(null);
-        setIsFormOpen(false);
-        router.refresh();
-        loadMembers();
-    };
 
     const loadMembers = useCallback(async () => {
         const result = await getProjectMembers(project.id);
@@ -88,21 +72,11 @@ export function ProjectTeamPage({ project }: ProjectTeamPageProps) {
     );
 
     return (
-        <div className="max-w-5xl mx-auto py-10 px-6 space-y-10">
-            {/* Page Header */}
+        <div className="space-y-10">
             <div className="space-y-6">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => router.push("/projects")}
-                >
-                    <ArrowLeft className="h-4 w-4" /> Back to Projects
-                </Button>
-
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight">
+                        <h1 className="text-3xl font-bold tracking-tight">
                             {project.name}
                         </h1>
                         <p className="text-muted-foreground mt-2 text-sm">
@@ -112,37 +86,26 @@ export function ProjectTeamPage({ project }: ProjectTeamPageProps) {
 
                     <div className="flex gap-4 md:gap-6">
                         <Button
-                            size="sm"
-                            className="px-6"
-                            onClick={() => setIsAddMemberOpen(true)}
+                            variant="outline"
+                            onClick={() => setEditFormOpen(true)}
                         >
-                            <Plus className="h-4 w-4" />
-                            Add Member
+                            <Edit />
+                            Edit
                         </Button>
                         <Button
-                            size="sm"
-                            className="px-6"
-                            onClick={() => handleEdit(project)}
-                        >
-                            <Edit className="h-4 w-4" />
-                            Edit Project
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            size="sm"
-                            className="px-6"
+                            variant="outline"
                             onClick={() => setIsArchiveConfirmOpen(true)}
                         >
-                            <Archive className=" h-4 w-4" />
-                            Archive Project
+                            <Archive />
+                            Archive
+                        </Button>
+                        <Button onClick={() => setIsAddMemberOpen(true)}>
+                            <Plus />
+                            Add Member
                         </Button>
                     </div>
                 </div>
             </div>
-
-            <Separator />
-
-            {/* Stats Section */}
             <div className="grid gap-6 md:grid-cols-3">
                 <Card className="rounded-2xl shadow-sm">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
@@ -217,14 +180,11 @@ export function ProjectTeamPage({ project }: ProjectTeamPageProps) {
                 existingMemberIds={members.map((m) => m.userId)}
             />
 
-            {editingProject && (
-                <ProjectForm
-                    open={isFormOpen}
-                    onOpenChange={setIsFormOpen}
-                    project={editingProject}
-                    onSuccess={handleSuccess}
-                />
-            )}
+            <ProjectForm
+                open={editFormOpen}
+                onOpenChange={setEditFormOpen}
+                project={project}
+            />
 
             <AlertDialog
                 open={isArchiveConfirmOpen}

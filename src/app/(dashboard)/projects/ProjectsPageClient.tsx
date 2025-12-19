@@ -9,6 +9,7 @@ import { ProjectForm } from "@/components/projects/ProjectForm";
 import { getUsersProjects, getAllProjects } from "@/lib/actions/projects";
 import type { Project } from "@/lib/types/project";
 import { toast } from "sonner";
+import Link from "next/link";
 
 interface ProjectsPageClientProps {
     initialProjects: Project[];
@@ -22,7 +23,6 @@ export function ProjectsPageClient({
     const [projects, setProjects] = useState<Project[]>(initialProjects);
     const [loading, setLoading] = useState(false);
     const [isFormOpen, setIsFormOpen] = useState(false);
-    const router = useRouter();
 
     const loadProjects = async (adminStatus: boolean) => {
         setLoading(true);
@@ -44,10 +44,6 @@ export function ProjectsPageClient({
         setLoading(false);
     };
 
-    const handleSuccess = () => {
-        loadProjects(isAdmin);
-    };
-
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -65,18 +61,17 @@ export function ProjectsPageClient({
                 </div>
                 <div className="flex gap-5">
                     {isAdmin && (
-                        <Button onClick={() => setIsFormOpen(true)}>
-                            <Plus className="h-4 w-4" />
-                            New Project
-                        </Button>
-                    )}
-                    {isAdmin && (
-                        <Button
-                            variant="outline"
-                            onClick={() => router.push("/projects/archived")}
-                        >
-                            View Archived Projects
-                        </Button>
+                        <>
+                            <Button variant="outline" asChild>
+                                <Link href="/projects/archived">
+                                    Archived Projects
+                                </Link>
+                            </Button>
+                            <Button onClick={() => setIsFormOpen(true)}>
+                                <Plus />
+                                New Project
+                            </Button>
+                        </>
                     )}
                 </div>
             </div>
@@ -94,11 +89,7 @@ export function ProjectsPageClient({
             )}
 
             {isAdmin && (
-                <ProjectForm
-                    open={isFormOpen}
-                    onOpenChange={setIsFormOpen}
-                    onSuccess={handleSuccess}
-                />
+                <ProjectForm open={isFormOpen} onOpenChange={setIsFormOpen} />
             )}
         </div>
     );
