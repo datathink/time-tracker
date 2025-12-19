@@ -87,9 +87,11 @@ interface ProjectMember {
 export function ProjectMemberTable({
     members,
     onUpdate,
+    isArchived = false,
 }: {
     members: ProjectMember[];
     onUpdate: () => void;
+    isArchived?: boolean;
 }) {
     const [loadingId, setLoadingId] = useState<string | null>(null);
     const [editingMember, setEditingMember] = useState<ProjectMember | null>(
@@ -207,7 +209,7 @@ export function ProjectMemberTable({
                         <TableHead>Role</TableHead>
                         <TableHead>Charge Rate</TableHead>
                         <TableHead>Payout Rate</TableHead>
-                        <TableHead className="w-[50px]"></TableHead>
+                        {!isArchived && <TableHead className="w-[50px]"></TableHead>}
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -278,71 +280,73 @@ export function ProjectMemberTable({
                             </TableCell>
 
                             {/* Actions Menu */}
-                            <TableCell>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button
-                                            variant="ghost"
-                                            className="h-8 w-8 p-0"
-                                            disabled={loadingId === member.id}
-                                        >
-                                            <span className="sr-only">
-                                                Open menu
-                                            </span>
-                                            {loadingId === member.id ? (
-                                                <Loader2 className="h-4 w-4 animate-spin" />
+                            {!isArchived && (
+                                <TableCell>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                className="h-8 w-8 p-0"
+                                                disabled={loadingId === member.id}
+                                            >
+                                                <span className="sr-only">
+                                                    Open menu
+                                                </span>
+                                                {loadingId === member.id ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                )}
+                                            </Button>
+                                        </DropdownMenuTrigger>
+
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem
+                                                onClick={() =>
+                                                    openEditModal(member)
+                                                }
+                                            >
+                                                <Pencil className="mr-2 h-4 w-4" />
+                                                Edit User
+                                            </DropdownMenuItem>
+
+                                            <DropdownMenuSeparator />
+
+                                            {member.isActive ? (
+                                                <DropdownMenuItem
+                                                    onClick={() =>
+                                                        handleToggleStatus(member)
+                                                    }
+                                                    className="text-orange-600 focus:text-orange-700 focus:bg-orange-50"
+                                                >
+                                                    <Ban className="mr-2 h-4 w-4" />
+                                                    Deactivate
+                                                </DropdownMenuItem>
                                             ) : (
-                                                <MoreHorizontal className="h-4 w-4" />
+                                                <DropdownMenuItem
+                                                    onClick={() =>
+                                                        handleToggleStatus(member)
+                                                    }
+                                                    className="text-green-600 focus:text-green-700 focus:bg-green-50"
+                                                >
+                                                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                                                    Activate
+                                                </DropdownMenuItem>
                                             )}
-                                        </Button>
-                                    </DropdownMenuTrigger>
 
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem
-                                            onClick={() =>
-                                                openEditModal(member)
-                                            }
-                                        >
-                                            <Pencil className="mr-2 h-4 w-4" />
-                                            Edit User
-                                        </DropdownMenuItem>
-
-                                        <DropdownMenuSeparator />
-
-                                        {member.isActive ? (
                                             <DropdownMenuItem
                                                 onClick={() =>
-                                                    handleToggleStatus(member)
+                                                    setMemberToRemove(member)
                                                 }
-                                                className="text-orange-600 focus:text-orange-700 focus:bg-orange-50"
+                                                className="text-red-600 focus:text-red-700 focus:bg-red-50"
                                             >
-                                                <Ban className="mr-2 h-4 w-4" />
-                                                Deactivate
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                Remove
                                             </DropdownMenuItem>
-                                        ) : (
-                                            <DropdownMenuItem
-                                                onClick={() =>
-                                                    handleToggleStatus(member)
-                                                }
-                                                className="text-green-600 focus:text-green-700 focus:bg-green-50"
-                                            >
-                                                <CheckCircle2 className="mr-2 h-4 w-4" />
-                                                Activate
-                                            </DropdownMenuItem>
-                                        )}
-
-                                        <DropdownMenuItem
-                                            onClick={() =>
-                                                setMemberToRemove(member)
-                                            }
-                                            className="text-red-600 focus:text-red-700 focus:bg-red-50"
-                                        >
-                                            <Trash2 className="mr-2 h-4 w-4" />
-                                            Remove
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </TableCell>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </TableCell>
+                            )}
                         </TableRow>
                     ))}
                 </TableBody>

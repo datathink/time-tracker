@@ -338,7 +338,7 @@ export async function getArchivedProjectsRSC() {
 }
 
 // Get a single project by ID
-export async function getProject(id: string, active: boolean = true) {
+export async function getProject(id: string) {
     try {
         const isAdmin = await isAdminUser();
 
@@ -347,29 +347,17 @@ export async function getProject(id: string, active: boolean = true) {
             return { success: false, error: "Unauthorized" };
         }
 
-        const project = active
-            ? await prisma.project.findUnique({
-                  where: { id, status: "active" },
-                  include: {
-                      client: true,
-                      members: {
-                          include: {
-                              user: true,
-                          },
-                      },
-                  },
-              })
-            : await prisma.project.findUnique({
-                  where: { id, status: "archived" },
-                  include: {
-                      client: true,
-                      members: {
-                          include: {
-                              user: true,
-                          },
-                      },
-                  },
-              });
+        const project = await prisma.project.findUnique({
+            where: { id },
+            include: {
+                client: true,
+                members: {
+                    include: {
+                        user: true,
+                    },
+                },
+            },
+        });
 
         if (!project) {
             return { success: false, error: "Project not found" };
