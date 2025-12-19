@@ -1,30 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ProjectList } from "@/components/projects/ProjectList";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { getUsersProjects, getAllProjects } from "@/lib/actions/projects";
+import type { Project } from "@/lib/types/project";
 import { toast } from "sonner";
-
-interface Project {
-    id: string;
-    name: string;
-    clientId: string;
-    description: string | null;
-    budgetAmount: number | null;
-    status: string;
-    color: string;
-    client?: {
-        name: string;
-        clientId: string | null;
-    } | null;
-    _count?: {
-        timeEntries: number;
-        members?: number;
-    };
-}
+import Link from "next/link";
 
 interface ProjectsPageClientProps {
     initialProjects: Project[];
@@ -59,25 +44,36 @@ export function ProjectsPageClient({
         setLoading(false);
     };
 
-    const handleSuccess = () => {
-        loadProjects(isAdmin);
-    };
-
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold">Projects</h1>
-                    <p className="text-gray-600">
-                        Manage your projects and team members
-                    </p>
+                    {isAdmin ? (
+                        <p className="text-gray-600">
+                            Manage users projects and team members
+                        </p>
+                    ) : (
+                        <p className="text-gray-600">
+                            View your list of projects
+                        </p>
+                    )}
                 </div>
-                {isAdmin && (
-                    <Button onClick={() => setIsFormOpen(true)}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        New Project
-                    </Button>
-                )}
+                <div className="flex gap-5">
+                    {isAdmin && (
+                        <>
+                            <Button variant="outline" asChild>
+                                <Link href="/projects/archived">
+                                    Archived Projects
+                                </Link>
+                            </Button>
+                            <Button onClick={() => setIsFormOpen(true)}>
+                                <Plus />
+                                New Project
+                            </Button>
+                        </>
+                    )}
+                </div>
             </div>
 
             {loading ? (
@@ -93,11 +89,7 @@ export function ProjectsPageClient({
             )}
 
             {isAdmin && (
-                <ProjectForm
-                    open={isFormOpen}
-                    onOpenChange={setIsFormOpen}
-                    onSuccess={handleSuccess}
-                />
+                <ProjectForm open={isFormOpen} onOpenChange={setIsFormOpen} />
             )}
         </div>
     );

@@ -1,16 +1,4 @@
 "use client";
-
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { createProject, updateProject } from "@/lib/actions/projects";
-import { type ProjectFormData } from "@/lib/schemas/project";
-import { getClients } from "@/lib/actions/clients";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
     Select,
     SelectContent,
@@ -26,7 +14,19 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { createProject, updateProject } from "@/lib/actions/projects";
+import { type ProjectFormData } from "@/lib/schemas/project";
+import { getClients } from "@/lib/actions/clients";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Prisma } from "@/generated/prisma/client";
+import { useRouter } from "next/navigation";
 
 type ClientWithCount = Prisma.ClientGetPayload<{
     select: {
@@ -65,18 +65,13 @@ interface ProjectFormProps {
         status: string;
         color: string;
     };
-    onSuccess?: () => void;
 }
 
-export function ProjectForm({
-    open,
-    onOpenChange,
-    project,
-    onSuccess,
-}: ProjectFormProps) {
+export function ProjectForm({ open, onOpenChange, project }: ProjectFormProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [clients, setClients] = useState<ClientWithCount[]>([]);
+    const router = useRouter();
 
     const {
         register,
@@ -137,7 +132,7 @@ export function ProjectForm({
         if (result.success) {
             reset();
             onOpenChange(false);
-            onSuccess?.();
+            router.push(`/projects/${result.data?.id}`);
         } else {
             setError(result.error || "An error occurred");
         }
@@ -248,7 +243,6 @@ export function ProjectForm({
                                 <Input
                                     id="budgetAmount"
                                     type="number"
-                                    step="100"
                                     min="0"
                                     placeholder="5000.00"
                                     {...register("budgetAmount", {

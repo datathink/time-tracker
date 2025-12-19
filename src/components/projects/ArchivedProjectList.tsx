@@ -1,9 +1,6 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ProjectForm } from "./ProjectForm";
-import { archiveProject } from "@/lib/actions/projects";
 import {
     Table,
     TableBody,
@@ -13,49 +10,18 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { type Project } from "@/lib/types/project";
 
 interface ProjectListProps {
     projects: Project[];
-    loadProjects: (adminStatus: boolean) => Promise<void>;
     isAdmin: boolean;
 }
 
-export function ProjectList({
+export function ArchivedProjectList({
     projects,
-    loadProjects,
     isAdmin,
 }: ProjectListProps) {
     const router = useRouter();
-    const [archivingId, setArchivingId] = useState<string | null>(null);
-    const [confirmArchiveProject, setConfirmArchiveProject] =
-        useState<Project | null>(null);
-
-    const performArchive = async (id: string) => {
-        setArchivingId(id);
-        const result = await archiveProject(id);
-        setConfirmArchiveProject(null);
-
-        if (result.success) {
-            loadProjects(isAdmin);
-            toast.success("Project archived successfully");
-        } else {
-            toast.error(result.error || "Failed to archive project");
-        }
-
-        setArchivingId(null);
-    };
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -73,12 +39,7 @@ export function ProjectList({
     if (projects.length === 0) {
         return (
             <div className="text-center py-12">
-                <p className="text-gray-500">
-                    No projects yet.{" "}
-                    {isAdmin
-                        ? "Create your first project to get started."
-                        : "Ask an admin to add you to a project to get started."}
-                </p>
+                <p className="text-gray-500">No archived projects found.</p>
             </div>
         );
     }
@@ -92,11 +53,7 @@ export function ProjectList({
                             <TableHead className="font-bold pl-6">
                                 Project
                             </TableHead>
-                            {isAdmin && (
-                                <TableHead className="font-bold">
-                                    Client
-                                </TableHead>
-                            )}
+                            {isAdmin && <TableHead>Client</TableHead>}
                             <TableHead className="font-bold">Status</TableHead>
                             {isAdmin && (
                                 <TableHead className="font-bold">
@@ -109,14 +66,12 @@ export function ProjectList({
                             </TableHead>
                         </TableRow>
                     </TableHeader>
-                    <TableBody>
+                    <TableBody className="h-15">
                         {projects.map((project) => (
                             <TableRow
                                 key={project.id}
-                                className="h-14 cursor-pointer"
-                                onClick={() =>
-                                    router.push(`/projects/${project.id}`)
-                                }
+                                className="h-14 cursor-pointer hover:bg-muted/50"
+                                onClick={() => router.push(`/projects/${project.id}`)}
                             >
                                 <TableCell>
                                     <div className="flex items-center gap-2 pl-3">
@@ -167,38 +122,6 @@ export function ProjectList({
                     </TableBody>
                 </Table>
             </div>
-            <AlertDialog
-                open={!!confirmArchiveProject}
-                onOpenChange={() => setConfirmArchiveProject(null)}
-            >
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Archive Project?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Are you sure you want to archive{" "}
-                            <span className="font-bold">
-                                {confirmArchiveProject?.name}?.
-                            </span>{" "}
-                            This will archive the project and all associated
-                            data.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={() =>
-                                performArchive(confirmArchiveProject!.id)
-                            }
-                            className="bg-red-600 hover:bg-red-700"
-                            disabled={archivingId === confirmArchiveProject?.id}
-                        >
-                            {archivingId === confirmArchiveProject?.id
-                                ? "Archiving..."
-                                : "Archive"}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
         </>
     );
 }
