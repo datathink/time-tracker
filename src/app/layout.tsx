@@ -15,8 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-    title: "Time Tracker",
-    description: "Simple and efficient time tracking application",
+    title: "Time by DataThink",
+    description:
+        "Track hours, projects, and clients with ease, all in one place.",
 };
 
 export default function RootLayout({

@@ -7,6 +7,7 @@ import {
     Folder,
     LucideIcon,
     Shield,
+    AlarmClockCheck,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -25,7 +26,6 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -91,22 +91,10 @@ const AppSidebar = ({ isAdmin }: { isAdmin: boolean }) => {
             <SidebarHeader className="bg-sidebar">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild>
-                            <Link
-                                href="/entries"
-                                className="mt-3.5 mb-4 flex items-center space-x-2"
-                            >
-                                <Image
-                                    src="/logo.svg"
-                                    alt="logo"
-                                    width={24}
-                                    height={24}
-                                    className="shrink-0"
-                                />
-                                <span className="font-bold text-lg">
-                                    Time Tracker Pro
-                                </span>
-                            </Link>
+                        <SidebarMenuButton className="mt-2 flex items-center">
+                            <AlarmClockCheck className="size-10" />
+                            <span className="font-bold text-xl">Time</span>
+                            <span className="text-sm mt-1">by DataThink</span>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
