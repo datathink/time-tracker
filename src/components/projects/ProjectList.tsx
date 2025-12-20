@@ -113,10 +113,11 @@ export function ProjectList({
                         {projects.map((project) => (
                             <TableRow
                                 key={project.id}
-                                className="h-14 cursor-pointer"
-                                onClick={() =>
-                                    router.push(`/projects/${project.id}`)
-                                }
+                                className={`h-14 ${isAdmin ? "cursor-pointer" : "hover:bg-gray-50"}`}
+                                onClick={() => {
+                                    if (isAdmin)
+                                        router.push(`/projects/${project.id}`);
+                                }}
                             >
                                 <TableCell>
                                     <div className="flex items-center gap-2 pl-3">
