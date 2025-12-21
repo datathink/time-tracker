@@ -23,12 +23,11 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  profile        UserProfile?
-  sessions       Session[]
-  accounts       Account[]
-  timeEntries    TimeEntry[]
-  projects       Project[]
-  projectMembers ProjectMember[]
+  profile         UserProfile?
+  sessions        Session[]
+  accounts        Account[]
+  projectMembers  ProjectMember[]
+  invoices        UserInvoice[]
 }
 
 model UserProfile {
@@ -38,7 +37,8 @@ model UserProfile {
   address   String?
   birthDate DateTime?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -54,7 +54,8 @@ model Session {
   ipAddress String?
   userAgent String?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -95,28 +96,25 @@ model Verification {
 
 // Time Tracking Models
 model TimeEntry {
-  id          String   @id @default(uuid())
-  userId      String
-  projectId   String
-  date        DateTime @db.Date // The day this entry is for
-  duration    Int // Required: duration in minutes
-  startTime   String? // Optional: "09:00" format
-  endTime     String? // Optional: "17:30" format
-  description String
+  id                String    @id @default(uuid())
+  projectMemberId   String
+  date              DateTime  @db.Date // The day this entry is for
+  duration          Int       // Required: duration in minutes
+  startTime         String?   // Optional: "09:00" format
+  endTime           String?   // Optional: "17:30" format
+  description       String
   billable    Boolean  @default(true)
-  billed      Boolean  @default(false) // Has been included in an invoice
+  billed            Boolean   @default(false) // Has been included in an invoice
 
   // Relations
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  project Project @relation(fields: [projectId], references: [id])
+  projectMember     ProjectMember    @relation(fields: [projectMemberId], references: [id], onDelete: Cascade)
 
   // Audit fields
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([userId, date])
-  @@index([projectId, date])
-  @@index([projectId, userId])
+  @@index([projectMemberId, date])
+
 }
 
 model Project {
@@ -130,15 +128,12 @@ model Project {
   userId       String // Project owner
 
   // Relations
-  client      Client?         @relation(fields: [clientId], references: [id])
-  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  timeEntries TimeEntry[]
-  members     ProjectMember[]
+  client       Client    @relation(fields: [clientId], references: [id])
+  members      ProjectMember[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([userId, status])
   @@index([clientId])
 }
 
@@ -151,9 +146,13 @@ model ProjectMember {
   chargeRate Decimal @db.Decimal(10, 2) // Rate charged to client for this user on this project (USD/hr)
   isActive   Boolean @default(true)
 
-  // Relations
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+ 
+ // Relations  
+  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timeEntries  TimeEntry[]
+
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -178,7 +177,54 @@ model Client {
   isArchived Boolean @default(false)
 
   // Relations
-  projects  Project[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  projects     Project[]
+  invoices     ClientInvoice[]
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model ClientInvoice {
+  id                String    @id @default(uuid())
+  clientId          String
+  invoiceTotal      Decimal   @db.Decimal(10, 2)
+
+  // Relations
+  lineItems         ClientLineItem[]
+  client            Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+model ClientLineItem {
+  id           String    @id @default(uuid())
+  invoiceId    String
+  name         String
+  summary      String
+  approved     Boolean   @default(false)
+  amount       Decimal   @db.Decimal(10, 2)
+
+  // Relations
+  invoice      ClientInvoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model UserInvoice {
+  id           String    @id @default(uuid())
+  userId       String
+
+
+  // Relations
+  lineItems    UserLineItem[]
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+}
+
+model UserLineItem {
+  id           String    @id @default(uuid())
+  invoiceId    String
+  name         String
+  summary      String
+  amount       Decimal   @db.Decimal(10, 2)
+
+
+  // Relations
+  invoice      UserInvoice    @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 }
