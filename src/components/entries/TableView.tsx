@@ -226,12 +226,10 @@ export function TimeSheetTable({
         );
 
         try {
-            // Execute all deletes
             await Promise.all(
                 entriesToDelete.map((entry) => onDeleteEntry(entry.id))
             );
 
-            // Update UI
             setRows(rows.filter((_, i) => i !== rowToDeleteIndex));
             setDeleteDialogOpen(false);
             setRowToDeleteIndex(null);
@@ -268,7 +266,7 @@ export function TimeSheetTable({
             const project = projects.find((p) => p.id === projectId);
             setDuplicateProjectInfo({ project, rowIndex: index });
             setDuplicateProjectWarningOpen(true);
-            return; // Prevent update
+            return;
         }
 
         const totalDuration = getTotalForProject(currentRow.projectId);
@@ -724,7 +722,7 @@ export function TimeSheetTable({
                                 setRows([...rows]);
                             }
                         }
-                        setDuplicateProjectInfo({}); // Reset for next time
+                        setDuplicateProjectInfo({});
                     }
                 }}
             >
