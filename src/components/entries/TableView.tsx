@@ -106,6 +106,14 @@ export function TimeSheetTable({
         newProjectId: string;
     } | null>(null);
 
+    // State for duplicate project warning
+    const [duplicateProjectWarningOpen, setDuplicateProjectWarningOpen] =
+        useState(false);
+    const [duplicateProjectInfo, setDuplicateProjectInfo] = useState<{
+        project?: ActiveProject;
+        rowIndex?: number;
+    }>({});
+
     // Load active projects on mount
     useEffect(() => {
         const loadProjects = async () => {
@@ -250,6 +258,18 @@ export function TimeSheetTable({
     const updateRowProject = (index: number, projectId: string) => {
         const currentRow = rows[index];
         if (currentRow.projectId === projectId) return;
+
+        // Check if another row already has this project ID
+        const isDuplicate = rows.some(
+            (row, i) => i !== index && row.projectId === projectId
+        );
+
+        if (isDuplicate) {
+            const project = projects.find((p) => p.id === projectId);
+            setDuplicateProjectInfo({ project, rowIndex: index });
+            setDuplicateProjectWarningOpen(true);
+            return; // Prevent update
+        }
 
         const totalDuration = getTotalForProject(currentRow.projectId);
 
@@ -687,6 +707,46 @@ export function TimeSheetTable({
                         <AlertDialogAction onClick={handleConfirmProjectChange}>
                             Continue
                         </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <AlertDialog
+                open={duplicateProjectWarningOpen}
+                onOpenChange={(isOpen) => {
+                    setDuplicateProjectWarningOpen(isOpen);
+                    if (!isOpen) {
+                        const rowIndex = duplicateProjectInfo.rowIndex;
+                        if (rowIndex !== undefined) {
+                            const originalRow = rows[rowIndex];
+                            if (originalRow && originalRow.projectId === null) {
+                                setRows(rows.filter((_, i) => i !== rowIndex));
+                            } else {
+                                setRows([...rows]);
+                            }
+                        }
+                        setDuplicateProjectInfo({}); // Reset for next time
+                    }
+                }}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            Project Already Exists
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            A row for project{" "}
+                            <span className="font-bold">
+                                {duplicateProjectInfo.project?.name}
+                            </span>{" "}
+                            already exists for this week.
+                            <br />
+                            <br />
+                            You can edit the existing entries for this project.
+                            Adding a duplicate row is not permitted.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogAction>OK</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
