@@ -170,6 +170,7 @@ export function CalendarView({
                                     {/* Daily Total */}
                                     {totalMinutes > 0 && (
                                         <div className="text-xs font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded">
+                                            Total:{" "}
                                             {formatDecimalHours(totalMinutes)}h
                                         </div>
                                     )}
@@ -191,26 +192,36 @@ export function CalendarView({
                                                 >
                                                     {/* Project & Description */}
                                                     <div className="pr-7">
-                                                        {entry.project && (
-                                                            <div className="flex items-center gap-1.5 mb-0.5">
-                                                                <div
-                                                                    className="w-2.5 h-2.5 rounded-full shrink-0"
-                                                                    style={{
-                                                                        backgroundColor:
+                                                        <div className="flex justify-between items-center mb-0.5">
+                                                            {entry.project ? (
+                                                                <div className="flex items-center gap-1.5 overflow-hidden">
+                                                                    <div
+                                                                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                                                                        style={{
+                                                                            backgroundColor:
+                                                                                entry
+                                                                                    .project
+                                                                                    .color,
+                                                                        }}
+                                                                    />
+                                                                    <span className="text-xs font-medium truncate">
+                                                                        {
                                                                             entry
                                                                                 .project
-                                                                                .color,
-                                                                    }}
-                                                                />
-                                                                <span className="text-xs font-medium truncate">
-                                                                    {
-                                                                        entry
-                                                                            .project
-                                                                            .name
-                                                                    }
-                                                                </span>
-                                                            </div>
-                                                        )}
+                                                                                .name
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                            ) : (
+                                                                <div />
+                                                            )}
+                                                            <span className="text-xs font-medium shrink-0 pl-2 ml-auto">
+                                                                {formatDecimalHours(
+                                                                    entry.duration
+                                                                )}
+                                                                h
+                                                            </span>
+                                                        </div>
                                                         {entry.description && (
                                                             <p className="text-xs text-gray-600 line-clamp-2">
                                                                 {
@@ -250,7 +261,7 @@ export function CalendarView({
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete time entry?</AlertDialogTitle>
+                        <AlertDialogTitle>Delete time entry</AlertDialogTitle>
                         <AlertDialogDescription>
                             This will permanently delete this time entry for
                             {entryToDelete?.project && (

@@ -221,7 +221,7 @@ export function TimeEntryList({
                                                         )}
                                                     </TableCell>
                                                     <TableCell className="py-3 pr-20 min-w-[250px]">
-                                                        <div className="line-clamp-2 break-words pr-4">
+                                                        <div className="line-clamp-2 wrap-break-words pr-4">
                                                             {entry.description || (
                                                                 <span className="text-gray-400 italic">
                                                                     No

@@ -29,6 +29,7 @@ import {
     subWeeks,
     isSameDay,
     isWithinInterval,
+    isToday,
 } from "date-fns";
 import { formatDecimalHours, fromUTCDate } from "@/lib/utils";
 import { TimeEntryForm } from "./TimeEntryForm";
@@ -290,7 +291,11 @@ export function TimeSheetTable({
                                 {daysOfWeek.map((day) => (
                                     <th
                                         key={day.toISOString()}
-                                        className="text-center p-3 font-normal text-xs min-w-[80px]"
+                                        className={`text-center p-3 font-normal text-xs min-w-20 ${
+                                            isToday(day)
+                                                ? "bg-blue-50 text-blue-700"
+                                                : ""
+                                        }`}
                                     >
                                         <div>{format(day, "EEE")}</div>
                                         <div className="text-xs font-bold">
@@ -385,7 +390,11 @@ export function TimeSheetTable({
                                             return (
                                                 <td
                                                     key={day.toISOString()}
-                                                    className="p-2"
+                                                    className={`p-2 ${
+                                                        isToday(day)
+                                                            ? "bg-blue-50/30"
+                                                            : ""
+                                                    }`}
                                                 >
                                                     <div className="flex flex-col gap-1">
                                                         {dayEntries.length >
@@ -491,7 +500,11 @@ export function TimeSheetTable({
                                 {daysOfWeek.map((day) => (
                                     <td
                                         key={day.toISOString()}
-                                        className="text-center p-3 text-sm"
+                                        className={`text-center p-3 text-sm ${
+                                            isToday(day)
+                                                ? "bg-blue-50/30 font-medium text-blue-700"
+                                                : ""
+                                        }`}
                                     >
                                         {formatDurationHHMM(
                                             getTotalForDay(day)
@@ -536,7 +549,7 @@ export function TimeSheetTable({
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>
-                            Delete timesheet row?
+                            Delete timesheet row
                         </AlertDialogTitle>
                         <AlertDialogDescription>
                             This will permanently delete the row and all
@@ -584,7 +597,7 @@ export function TimeSheetTable({
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete time entry?</AlertDialogTitle>
+                        <AlertDialogTitle>Delete time entry</AlertDialogTitle>
                         <AlertDialogDescription>
                             This will permanently delete this time entry for
                             {entryToDelete?.project && (
