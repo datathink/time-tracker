@@ -29,6 +29,7 @@ import {
     subWeeks,
     isSameDay,
     isWithinInterval,
+    isToday,
 } from "date-fns";
 import { formatDecimalHours, fromUTCDate } from "@/lib/utils";
 import { TimeEntryForm } from "./TimeEntryForm";
@@ -97,6 +98,22 @@ export function TimeSheetTable({
     const [isDeleting, setIsDeleting] = useState(false);
     const [entryToDelete, setEntryToDelete] = useState<TimeEntry | null>(null);
 
+    //State for project change warning
+    const [projectChangeWarningOpen, setProjectChangeWarningOpen] =
+        useState(false);
+    const [pendingProjectChange, setPendingProjectChange] = useState<{
+        index: number;
+        newProjectId: string;
+    } | null>(null);
+
+    // State for duplicate project warning
+    const [duplicateProjectWarningOpen, setDuplicateProjectWarningOpen] =
+        useState(false);
+    const [duplicateProjectInfo, setDuplicateProjectInfo] = useState<{
+        project?: ActiveProject;
+        rowIndex?: number;
+    }>({});
+
     // Load active projects on mount
     useEffect(() => {
         const loadProjects = async () => {
@@ -105,6 +122,12 @@ export function TimeSheetTable({
         };
         loadProjects();
     }, []);
+
+    const performRowUpdate = (index: number, projectId: string) => {
+        const newRows = [...rows];
+        newRows[index] = { projectId };
+        setRows(newRows);
+    };
 
     // Auto-populate rows based on existing entries
     useEffect(() => {
@@ -203,12 +226,10 @@ export function TimeSheetTable({
         );
 
         try {
-            // Execute all deletes
             await Promise.all(
                 entriesToDelete.map((entry) => onDeleteEntry(entry.id))
             );
 
-            // Update UI
             setRows(rows.filter((_, i) => i !== rowToDeleteIndex));
             setDeleteDialogOpen(false);
             setRowToDeleteIndex(null);
@@ -233,9 +254,40 @@ export function TimeSheetTable({
     };
 
     const updateRowProject = (index: number, projectId: string) => {
-        const newRows = [...rows];
-        newRows[index] = { projectId };
-        setRows(newRows);
+        const currentRow = rows[index];
+        if (currentRow.projectId === projectId) return;
+
+        // Check if another row already has this project ID
+        const isDuplicate = rows.some(
+            (row, i) => i !== index && row.projectId === projectId
+        );
+
+        if (isDuplicate) {
+            const project = projects.find((p) => p.id === projectId);
+            setDuplicateProjectInfo({ project, rowIndex: index });
+            setDuplicateProjectWarningOpen(true);
+            return;
+        }
+
+        const totalDuration = getTotalForProject(currentRow.projectId);
+
+        if (totalDuration > 0) {
+            setPendingProjectChange({ index, newProjectId: projectId });
+            setProjectChangeWarningOpen(true);
+        } else {
+            performRowUpdate(index, projectId);
+        }
+    };
+
+    const handleConfirmProjectChange = () => {
+        if (pendingProjectChange) {
+            performRowUpdate(
+                pendingProjectChange.index,
+                pendingProjectChange.newProjectId
+            );
+            setPendingProjectChange(null);
+            setProjectChangeWarningOpen(false);
+        }
     };
 
     const goToPreviousWeek = () => onWeekChange(subWeeks(currentWeek, 1));
@@ -290,7 +342,11 @@ export function TimeSheetTable({
                                 {daysOfWeek.map((day) => (
                                     <th
                                         key={day.toISOString()}
-                                        className="text-center p-3 font-normal text-xs min-w-[80px]"
+                                        className={`text-center p-3 font-normal text-xs min-w-20 ${
+                                            isToday(day)
+                                                ? "bg-blue-50 text-blue-700"
+                                                : ""
+                                        }`}
                                     >
                                         <div>{format(day, "EEE")}</div>
                                         <div className="text-xs font-bold">
@@ -385,7 +441,11 @@ export function TimeSheetTable({
                                             return (
                                                 <td
                                                     key={day.toISOString()}
-                                                    className="p-2"
+                                                    className={`p-2 ${
+                                                        isToday(day)
+                                                            ? "bg-blue-50/30"
+                                                            : ""
+                                                    }`}
                                                 >
                                                     <div className="flex flex-col gap-1">
                                                         {dayEntries.length >
@@ -491,7 +551,11 @@ export function TimeSheetTable({
                                 {daysOfWeek.map((day) => (
                                     <td
                                         key={day.toISOString()}
-                                        className="text-center p-3 text-sm"
+                                        className={`text-center p-3 text-sm ${
+                                            isToday(day)
+                                                ? "bg-blue-50/30 font-medium text-blue-700"
+                                                : ""
+                                        }`}
                                     >
                                         {formatDurationHHMM(
                                             getTotalForDay(day)
@@ -536,7 +600,7 @@ export function TimeSheetTable({
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>
-                            Delete timesheet row?
+                            Delete timesheet row
                         </AlertDialogTitle>
                         <AlertDialogDescription>
                             This will permanently delete the row and all
@@ -584,7 +648,7 @@ export function TimeSheetTable({
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete time entry?</AlertDialogTitle>
+                        <AlertDialogTitle>Delete time entry</AlertDialogTitle>
                         <AlertDialogDescription>
                             This will permanently delete this time entry for
                             {entryToDelete?.project && (
@@ -615,6 +679,72 @@ export function TimeSheetTable({
                         >
                             {isDeleting ? "Deleting..." : "Delete Entry"}
                         </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <AlertDialog
+                open={projectChangeWarningOpen}
+                onOpenChange={setProjectChangeWarningOpen}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Change Project</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This row has recorded time. Changing the project
+                            will hide these entries from the current view.
+                            <br />
+                            Are you sure you want to continue?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel
+                            onClick={() => setPendingProjectChange(null)}
+                        >
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmProjectChange}>
+                            Continue
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <AlertDialog
+                open={duplicateProjectWarningOpen}
+                onOpenChange={(isOpen) => {
+                    setDuplicateProjectWarningOpen(isOpen);
+                    if (!isOpen) {
+                        const rowIndex = duplicateProjectInfo.rowIndex;
+                        if (rowIndex !== undefined) {
+                            const originalRow = rows[rowIndex];
+                            if (originalRow && originalRow.projectId === null) {
+                                setRows(rows.filter((_, i) => i !== rowIndex));
+                            } else {
+                                setRows([...rows]);
+                            }
+                        }
+                        setDuplicateProjectInfo({});
+                    }
+                }}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            Project Already Exists
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            A row for project{" "}
+                            <span className="font-bold">
+                                {duplicateProjectInfo.project?.name}
+                            </span>{" "}
+                            already exists for this week.
+                            <br />
+                            <br />
+                            You can edit the existing entries for this project.
+                            Adding a duplicate row is not permitted.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogAction>OK</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
